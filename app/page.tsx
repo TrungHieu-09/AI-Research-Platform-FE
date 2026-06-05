@@ -15,9 +15,9 @@ export default function Home() {
         <div className="flex items-center gap-sm">
           <Link
             href="/"
-            className="text-[24px] font-semibold tracking-tight text-primary dark:text-primary-fixed-dim"
+            className="text-[28px] font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-[#0058be] to-[#316bf3] dark:from-[#adc6ff] dark:to-[#dbe1ff] drop-shadow-sm hover:scale-[1.02] transition-transform cursor-pointer"
           >
-            ResearchHub
+            Lumis
           </Link>
         </div>
 
@@ -237,10 +237,10 @@ export default function Home() {
 
       <footer className="w-full py-md px-margin-mobile md:px-margin-desktop flex justify-between items-center mt-auto border-t border-on-surface/5 bg-surface dark:bg-inverse-surface z-50 relative">
         <div className="text-[14px] font-semibold tracking-wider text-on-surface">
-          ResearchHub
+          Lumis
         </div>
         <div className="text-[14px] text-on-surface-variant">
-          © 2024 ResearchHub. Precision in Discovery.
+          © 2024 Lumis. Precision in Discovery.
         </div>
         <div className="flex gap-md">
           <Link

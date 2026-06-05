@@ -18,7 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ResearchHub AI - Intelligence for your Research",
+  title: "Lumis - Intelligence for your Research",
   description:
     "Accelerate your discovery process with an AI-first workspace designed for deep academic and professional research.",
 };
