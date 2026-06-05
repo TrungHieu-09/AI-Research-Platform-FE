@@ -5,6 +5,49 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-surface-container-highest: #d9e3f6;
+  --color-on-secondary-container: #fefcff;
+  --color-secondary-container: #316bf3;
+  --color-surface-container-high: #dee9fc;
+  --color-surface: #f8f9ff;
+  --color-primary-container: #2170e4;
+  --color-on-background: #121c2a;
+  --color-inverse-surface: #27313f;
+  --color-surface-container-low: #eff4ff;
+  --color-on-surface: #121c2a;
+  --color-on-surface-variant: #424754;
+  --color-outline-variant: #c2c6d6;
+  --color-tertiary-container: #b75b00;
+  --color-surface-variant: #d9e3f6;
+  --color-primary: #0058be;
+  --color-secondary: #0051d5;
+  --color-tertiary: #924700;
+  --color-on-primary: #ffffff;
+  --color-primary-fixed: #d8e2ff;
+  --color-primary-fixed-dim: #adc6ff;
+  --color-secondary-fixed: #dbe1ff;
+  --color-outline: #727785;
+
+  --spacing-gutter: 24px;
+  --spacing-margin-mobile: 16px;
+  --spacing-lg: 48px;
+  --spacing-md: 24px;
+  --spacing-xs: 4px;
+  --spacing-sm: 12px;
+  --spacing-margin-desktop: 64px;
+  --spacing-xl: 80px;
+  --spacing-base: 8px;
+
+  --font-headline-xl: "Geist", var(--font-geist-sans), sans-serif;
+  --font-headline-md: "Geist", var(--font-geist-sans), sans-serif;
+  --font-body-lg: var(--font-inter), sans-serif;
+  --font-label-sm: "Geist", var(--font-geist-sans), sans-serif;
+  --font-body-sm: var(--font-inter), sans-serif;
+  --font-headline-lg-mobile: "Geist", var(--font-geist-sans), sans-serif;
+  --font-headline-lg: "Geist", var(--font-geist-sans), sans-serif;
+  --font-label-md: "Geist", var(--font-geist-sans), sans-serif;
+  --font-body-md: var(--font-inter), sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -122,9 +165,63 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-surface);
+    color: var(--color-on-background);
+    font-family: var(--font-inter), sans-serif;
+    overflow-x: hidden;
   }
   html {
     @apply font-sans;
   }
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 40px rgba(31, 41, 55, 0.08);
+}
+
+.ai-spark-border {
+  position: relative;
+  z-index: 1;
+}
+
+.ai-spark-border::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-secondary-container),
+    var(--color-primary)
+  );
+  background-size: 200% 200%;
+  animation: gradientBorder 3s ease infinite;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+@keyframes gradientBorder {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.ambient-blob {
+  position: absolute;
+  filter: blur(80px);
+  opacity: 0.4;
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
 }
