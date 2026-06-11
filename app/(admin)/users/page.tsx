@@ -20,15 +20,8 @@ export default function UsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-on-surface mb-2">User Management</h1>
-          <p className="text-on-surface-variant">Manage your organization's users and their account permissions.</p>
+          <p className="text-on-surface-variant font-medium">View and manage your organization's user profiles and access roles.</p>
         </div>
-        <Link 
-          href="/users/invite"
-          className="bg-primary hover:bg-secondary text-white px-6 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 w-fit"
-        >
-          <Users size={18} />
-          <span>Invite User</span>
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -75,8 +68,8 @@ export default function UsersPage() {
             </thead>
             <tbody className="divide-y divide-outline/5">
               {users.map((user) => (
-                <tr 
-                  key={user.id} 
+                <tr
+                  key={user.id}
                   onClick={() => router.push(`/users/${user.id}`)}
                   className="hover:bg-primary/5 transition-colors group cursor-pointer"
                 >
@@ -98,9 +91,8 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td className="px-6 py-5">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-bold ${
-                      user.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-bold ${user.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}>
                       {user.status}
                     </span>
                   </td>
@@ -108,7 +100,13 @@ export default function UsersPage() {
                     {user.joinDate}
                   </td>
                   <td className="px-6 py-5 text-right">
-                    <button className="p-2 text-on-surface-variant hover:text-primary transition-colors">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/users/${user.id}`);
+                      }}
+                      className="p-2 text-on-surface-variant hover:text-primary transition-colors"
+                    >
                       <MoreVertical size={18} />
                     </button>
                   </td>

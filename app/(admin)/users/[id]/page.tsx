@@ -120,16 +120,26 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
         {/* Right Column: Experience & Activity */}
         <div className="lg:col-span-2 space-y-8">
-          <div className="glass-panel p-8 space-y-4">
-            <h3 className="text-xl font-bold text-on-surface">About</h3>
+          <div className="glass-panel p-8 space-y-6">
+            <h3 className="text-xl font-extrabold text-on-surface">About User</h3>
             <p className="text-on-surface-variant leading-relaxed font-medium">
               {user.bio}
             </p>
+            <div className="pt-6 border-t border-outline-variant grid grid-cols-1 sm:grid-cols-2 gap-4">
+               <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant">
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Preferred Department</p>
+                  <p className="text-[14px] font-bold text-on-surface">Information Technology</p>
+               </div>
+               <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant">
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Current Semester</p>
+                  <p className="text-[14px] font-bold text-on-surface">Summer 2024</p>
+               </div>
+            </div>
           </div>
 
           <div className="glass-panel p-8">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-xl font-bold text-on-surface">Recent Activity</h3>
+              <h3 className="text-xl font-extrabold text-on-surface">Activity History</h3>
               <button className="p-2 hover:bg-surface-container-low rounded-xl">
                 <MoreVertical size={20} />
               </button>
