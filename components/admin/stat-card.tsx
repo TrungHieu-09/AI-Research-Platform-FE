@@ -1,26 +1,28 @@
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 interface StatCardProps {
   title: string
   value: string | number
   icon: LucideIcon
   description: string
+  href?: string
   trend?: {
     value: number
     isUp: boolean
   }
 }
 
-export function StatCard({ title, value, icon: Icon, description, trend }: StatCardProps) {
-  return (
-    <div className="glass-panel p-6 border border-outline-variant hover:border-primary/30 transition-all group cursor-default">
+export function StatCard({ title, value, icon: Icon, description, href, trend }: StatCardProps) {
+  const content = (
+    <div className="glass-panel p-6 border border-outline-variant hover:border-primary/30 transition-all group cursor-pointer h-full">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[14px] font-medium text-on-surface-variant mb-1 group-hover:text-primary transition-colors">
+          <p className="text-[14px] font-bold text-on-surface-variant mb-1 group-hover:text-primary transition-colors">
             {title}
           </p>
-          <h3 className="text-3xl font-bold tracking-tight text-on-surface mb-2">{value}</h3>
+          <h3 className="text-3xl font-extrabold tracking-tight text-on-surface mb-2">{value}</h3>
           <div className="flex items-center gap-2">
             {trend && (
               <span
@@ -41,4 +43,10 @@ export function StatCard({ title, value, icon: Icon, description, trend }: StatC
       </div>
     </div>
   )
+
+  if (href) {
+    return <Link href={href}>{content}</Link>
+  }
+
+  return content
 }
