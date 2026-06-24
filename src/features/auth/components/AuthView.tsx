@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-type AuthMode = "login" | "register";
+import { AuthMode } from "../types";
 
 interface AuthViewProps {
   initialMode: AuthMode;

@@ -1,6 +1,6 @@
 "use client"
 
-import { StatCard } from "@/components/admin/stat-card"
+import { StatCard } from "@/features/dashboard/components/stat-card"
 import { Users, User as UserIcon, FileText, Clock, AlertCircle, TrendingUp, BookOpen, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -27,7 +27,7 @@ const DATA_30D = {
   labels: Array.from({ length: 30 }, (_, i) => `D${i + 1}`)
 }
 
-export default function DashboardPage() {
+export function AdminDashboardPage() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d')
   const currentData = timeRange === '7d' ? DATA_7D : DATA_30D
 

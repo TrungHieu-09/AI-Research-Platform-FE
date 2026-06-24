@@ -1,4 +1,4 @@
-import { ResearchSidebar } from "@/components/user-navbar"
+import { ResearchSidebar } from "@/components/layouts/user-navbar"
 import Link from "next/link"
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
