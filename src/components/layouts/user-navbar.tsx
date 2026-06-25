@@ -20,8 +20,7 @@ import { cn } from "@/lib/utils"
 
 const navigation = [
   { name: "Dashboard", href: "/hub/dashboard", icon: LayoutDashboard },
-  { name: "Library", href: "/hub/documents", icon: BookOpen },
-  { name: "Collections", href: "/hub/collections", icon: FolderOpen },
+  { name: "Library", href: "/hub/library", icon: BookOpen },
   { name: "Shared Documents", href: "/hub/shared", icon: Share2 },
   { name: "AI Workspace", href: "/hub/synthesis", icon: Brain },
   { name: "Storage & Billing", href: "/hub/billing", icon: Wallet },
