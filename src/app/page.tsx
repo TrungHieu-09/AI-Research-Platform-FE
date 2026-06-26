@@ -240,7 +240,7 @@ export default function Home() {
           Lumis
         </div>
         <div className="text-[14px] text-on-surface-variant">
-          © 2024 Lumis. Precision in Discovery.
+          © 2026 Lumis. Precision in Discovery.
         </div>
         <div className="flex gap-md">
           <Link
