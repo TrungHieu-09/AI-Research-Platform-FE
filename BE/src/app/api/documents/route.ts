@@ -2,6 +2,47 @@ import { NextRequest, NextResponse } from "next/server"
 import { UploadMetadataSchema } from "@/lib/validation/doc"
 import { getUserDocuments, createDocument } from "@/lib/services/doc-service"
 
+/**
+ * @swagger
+ * /api/documents:
+ *   get:
+ *     summary: List User Documents
+ *     tags: [Documents]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: pageSize
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: A paginated list of documents
+ *   post:
+ *     summary: Register Document Metadata
+ *     tags: [Documents]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               description: { type: string }
+ *               fileHash: { type: string }
+ *               fileSize: { type: integer }
+ *               mimeType: { type: string }
+ *               fileUrl: { type: string }
+ *               subjectId: { type: string }
+ *     responses:
+ *       201:
+ *         description: Document metadata registered
+ */
 // GET /api/documents — list caller's documents (paginated)
 export async function GET(req: NextRequest) {
   try {

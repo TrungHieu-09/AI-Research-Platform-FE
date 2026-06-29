@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server"
 import { initiatePayment } from "@/lib/services/payment-service"
 import { z } from "zod"
 
+/**
+ * @swagger
+ * /api/payments/checkout:
+ *   post:
+ *     summary: Initiate Order Checkout
+ *     tags: [Payments]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               planId: { type: string }
+ *     responses:
+ *       201:
+ *         description: Payment intent initiated
+ */
 const CheckoutSchema = z.object({
   planId: z.enum(["PREMIUM_MONTHLY", "PREMIUM_YEARLY"]),
 })

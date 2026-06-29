@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from "next/server"
 import { handlePaymentWebhook } from "@/lib/services/payment-service"
 import { z } from "zod"
 
+/**
+ * @swagger
+ * /api/payments/webhook:
+ *   post:
+ *     summary: Payment Callback Webhook
+ *     tags: [Payments]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Webhook received and processed
+ */
 const WebhookSchema = z.object({
   transferContent: z.string().min(1),
   amount: z.number().positive(),

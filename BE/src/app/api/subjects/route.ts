@@ -2,6 +2,33 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { CreateSubjectSchema } from "@/lib/validation/subject"
 
+/**
+ * @swagger
+ * /api/subjects:
+ *   get:
+ *     summary: List Subjects
+ *     tags: [Subjects]
+ *     responses:
+ *       200:
+ *         description: List of subjects
+ *   post:
+ *     summary: Create Subject
+ *     tags: [Subjects]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               code: { type: string }
+ *     responses:
+ *       201:
+ *         description: Subject created
+ */
 // GET /api/subjects — public subject list
 export async function GET(req: NextRequest) {
   try {

@@ -2,6 +2,27 @@ import { NextRequest, NextResponse } from "next/server"
 import { PresignedUrlSchema } from "@/lib/validation/doc"
 import { getPresignedUploadUrl } from "@/lib/storage"
 
+/**
+ * @swagger
+ * /api/documents/upload-url:
+ *   post:
+ *     summary: Get Presigned Upload URL
+ *     tags: [Documents]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fileName: { type: string }
+ *               mimeType: { type: string }
+ *     responses:
+ *       200:
+ *         description: Presigned URL generated
+ */
 // POST /api/documents/upload-url — returns a presigned S3 upload URL
 export async function POST(req: NextRequest) {
   try {

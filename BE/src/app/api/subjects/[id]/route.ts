@@ -2,6 +2,56 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { UpdateSubjectSchema } from "@/lib/validation/subject"
 
+/**
+ * @swagger
+ * /api/subjects/{id}:
+ *   get:
+ *     summary: Get Subject Detail
+ *     tags: [Subjects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Subject detail
+ *   put:
+ *     summary: Edit Subject Metadata
+ *     tags: [Subjects]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               status: { type: string }
+ *     responses:
+ *       200:
+ *         description: Subject updated
+ *   delete:
+ *     summary: Disable/Remove Subject
+ *     tags: [Subjects]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       204:
+ *         description: Subject removed
+ */
 // GET /api/subjects/[id]
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const subject = await db.subject.findUnique({ where: { id: params.id } })

@@ -1,6 +1,36 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getDocumentById, softDeleteDocument } from "@/lib/services/doc-service"
 
+/**
+ * @swagger
+ * /api/documents/{id}:
+ *   get:
+ *     summary: Get Document Details
+ *     tags: [Documents]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Document details
+ *   delete:
+ *     summary: Soft Delete Document
+ *     tags: [Documents]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       204:
+ *         description: Document soft deleted
+ */
 // GET /api/documents/[id]
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
