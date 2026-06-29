@@ -76,7 +76,7 @@ Manages metadata calculation, client-side direct S3/Cloud Storage upload, conten
 sequenceDiagram
     autonumber
     actor Student
-    actor Mod as Moderator
+    actor Mod as Admin
     participant App as Next.js Client
     participant DocAPI as Documents API Handler
     participant Storage as Cloud Bucket (S3/GCS)
@@ -109,7 +109,7 @@ sequenceDiagram
             deactivate DocAPI
             App->>Storage: Directly upload binary PDF stream via Presigned URL
             Storage-->>App: 200 File Saved
-            App-->>Student: Update UI to "Awaiting Moderator Approval" status
+            App-->>Student: Update UI to "Awaiting Admin Approval" status
         end
     end
     deactivate App

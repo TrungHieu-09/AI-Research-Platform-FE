@@ -23,7 +23,7 @@ src/
 │       │   ├── [id]/
 │       │   │   ├── route.ts         # GET: File details | DELETE: Soft delete (student)
 │       │   │   ├── audit/route.ts   # GET: Document action logs
-│       │   │   └── moderate/route.ts # POST: Approve / Reject (Moderator/Admin) with notes
+│       │   │   └── moderate/route.ts # POST: Approve / Reject (Admin) with notes
 │       │   └── upload-url/route.ts  # POST: Get presigned upload URL (S3/GCS bucket)
 │       │
 │       ├── subjects/
@@ -73,13 +73,12 @@ import { jwtVerify } from "jose" // Lightweight JWT library compatible with Edge
 const ROLE_HIERARCHY = {
   GUEST: 0,
   STUDENT: 1,
-  MODERATOR: 2,
-  ADMIN: 3,
+  ADMIN: 2,
 }
 
 // Defines routes and the minimum role required to access them
-const ROUTE_RULES: { path: string; minRole: "STUDENT" | "MODERATOR" | "ADMIN" }[] = [
-  { path: "/api/documents/moderate", minRole: "MODERATOR" },
+const ROUTE_RULES: { path: string; minRole: "STUDENT" | "ADMIN" }[] = [
+  { path: "/api/documents/moderate", minRole: "ADMIN" },
   { path: "/api/subjects/suggest", minRole: "STUDENT" },
   { path: "/api/subjects", minRole: "ADMIN" }, // Custom creation
   { path: "/api/users", minRole: "ADMIN" },
@@ -103,7 +102,7 @@ export async function middleware(request: NextRequest) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET)
     const { payload } = await jwtVerify(token, secret)
     
-    const userRole = (payload.role as "STUDENT" | "MODERATOR" | "ADMIN") || "STUDENT"
+    const userRole = (payload.role as "STUDENT" | "ADMIN") || "STUDENT"
     
     if (ROLE_HIERARCHY[userRole] < ROLE_HIERARCHY[matchedRule.minRole]) {
       return NextResponse.json({ error: "Access denied. Insufficient privileges" }, { status: 403 })

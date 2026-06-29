@@ -31,7 +31,7 @@ erDiagram
         string name
         string email UK
         string passwordHash
-        string role "STUDENT | MODERATOR | ADMIN"
+        string role "STUDENT | ADMIN"
         string status "ACTIVE | SUSPENDED"
         string tier "FREE | PREMIUM"
         datetime createdAt
@@ -156,7 +156,7 @@ Tracks registered users and active billing packages.
 * **Fields**:
   * `id`: `UUID` (Primary Key, unique generation)
   * `email`: `VARCHAR(255)` (Unique index, must validate format pattern `@fpt.edu.vn` at application level)
-  * `role`: `ENUM('STUDENT', 'MODERATOR', 'ADMIN')` (Default: `'STUDENT'`)
+  * `role`: `ENUM('STUDENT', 'ADMIN')` (Default: `'STUDENT'`)
   * `status`: `ENUM('ACTIVE', 'SUSPENDED')` (Default: `'ACTIVE'`)
   * `tier`: `ENUM('FREE', 'PREMIUM')` (Default: `'FREE'`)
 * **Indexes**: Unique index on `email` to prevent duplication audits.
@@ -202,7 +202,6 @@ generator client {
 
 enum Role {
   STUDENT
-  MODERATOR
   ADMIN
 }
 
