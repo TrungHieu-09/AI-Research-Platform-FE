@@ -74,7 +74,7 @@ export default function PaymentManagementPage() {
               <p className="text-[13px] text-[#424753] mt-1 h-10">Essential tools for individual researchers.</p>
             </div>
             <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">$0</span>
+              <span className="font-bold text-[32px] text-[#121c2a]">0₫</span>
               <span className="text-[14px] text-[#424753]">/month</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
@@ -103,7 +103,7 @@ export default function PaymentManagementPage() {
               <p className="text-[13px] text-[#424753] mt-1 h-10">For heavy document and data management.</p>
             </div>
             <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">$5</span>
+              <span className="font-bold text-[32px] text-[#121c2a]">125.000₫</span>
               <span className="text-[14px] text-[#424753]">/month</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
@@ -120,7 +120,7 @@ export default function PaymentManagementPage() {
                 Priority Support
               </div>
             </div>
-            <Link href="/hub/payment/checkout?plan=storage" className="w-full bg-[#ffffff] text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
+            <Link href="/user/payment/checkout?plan=storage" className="w-full bg-[#ffffff] text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
               Upgrade Storage
             </Link>
           </div>
@@ -132,7 +132,7 @@ export default function PaymentManagementPage() {
               <p className="text-[13px] text-[#424753] mt-1 h-10">Unleash advanced AI synthesis and analysis.</p>
             </div>
             <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">$10</span>
+              <span className="font-bold text-[32px] text-[#121c2a]">250.000₫</span>
               <span className="text-[14px] text-[#424753]">/month</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
@@ -149,7 +149,7 @@ export default function PaymentManagementPage() {
                 5 GB Cloud Storage
               </div>
             </div>
-            <Link href="/hub/payment/checkout?plan=ai" className="w-full bg-[#ffffff] text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
+            <Link href="/user/payment/checkout?plan=ai" className="w-full bg-[#ffffff] text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
               Upgrade AI
             </Link>
           </div>
@@ -166,7 +166,7 @@ export default function PaymentManagementPage() {
               <p className="text-[13px] text-[#424753] mt-1 h-10">The complete research workstation.</p>
             </div>
             <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">$12</span>
+              <span className="font-bold text-[32px] text-[#121c2a]">300.000₫</span>
               <span className="text-[14px] text-[#424753]">/month</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
@@ -183,7 +183,7 @@ export default function PaymentManagementPage() {
                 24/7 Dedicated Support
               </div>
             </div>
-            <Link href="/hub/payment/checkout?plan=ultimate" className="w-full bg-gradient-to-br from-[#004191] to-[#0051d6] text-white font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-md text-center block">
+            <Link href="/user/payment/checkout?plan=ultimate" className="w-full bg-gradient-to-br from-[#004191] to-[#0051d6] text-white font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-md text-center block">
               Upgrade to Ultimate
             </Link>
           </div>

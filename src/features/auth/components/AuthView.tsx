@@ -30,12 +30,12 @@ export default function AuthView({ initialMode }: AuthViewProps) {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/hub/dashboard");
+    router.push("/user/dashboard");
   };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/hub/dashboard");
+    router.push("/user/dashboard");
   };
 
   return (

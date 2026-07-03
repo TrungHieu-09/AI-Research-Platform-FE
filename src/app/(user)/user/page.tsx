@@ -149,7 +149,7 @@ export default function InsightsPage() {
                 <FileText size={13} className="text-[#727785]" />
               </div>
               <Link
-                href={`/hub/documents/${featuredInsight.id}`}
+                href={`/user/documents/${featuredInsight.id}`}
                 className="flex items-center gap-1.5 text-[13px] font-semibold text-[#0058be] hover:gap-2.5 transition-all group"
               >
                 Read Full Synthesis
@@ -210,7 +210,7 @@ export default function InsightsPage() {
               </p>
             </div>
             <Link
-              href="/hub/documents"
+              href="/user/documents"
               className="mt-1 px-5 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[13px] font-semibold transition-all shadow-sm shadow-[#0058be]/20"
             >
               Browse Collections
@@ -224,7 +224,7 @@ export default function InsightsPage() {
             <h3 className="text-[16px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
               Recent Reports
             </h3>
-            <Link href="/hub/documents" className="text-[13px] font-semibold text-[#0058be] hover:underline">
+            <Link href="/user/documents" className="text-[13px] font-semibold text-[#0058be] hover:underline">
               View All
             </Link>
           </div>

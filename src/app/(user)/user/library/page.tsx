@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   Search, ChevronDown, Upload, List, LayoutGrid,
   FolderOpen, Plus, Tag, X, FileText, Check, Sparkles,
@@ -144,10 +145,10 @@ export default function LibraryPage() {
                 <LayoutGrid size={16} />
               </button>
             </div>
-            <button className="flex items-center gap-2 px-6 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[14px] font-semibold transition-all shadow-md shadow-[#0058be]/20">
+            <Link href="/user/upload" className="flex items-center gap-2 px-6 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[14px] font-semibold transition-all shadow-md shadow-[#0058be]/20">
               <Upload size={16} />
               Upload
-            </button>
+            </Link>
           </div>
         </div>
       </div>

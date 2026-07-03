@@ -12,10 +12,7 @@ export default function HubDashboardPage() {
           <h2 className="font-semibold text-[24px] md:text-[32px] tracking-[-0.02em] text-[#121c2a]">Command Center</h2>
           <p className="font-normal text-[14px] text-[#424753] mt-1">Overview of your active workspace and AI synthesis tasks.</p>
         </div>
-        <button className="bg-gradient-to-br from-[#004191] to-[#0051d6] text-white px-6 py-3 rounded-lg flex items-center gap-3 hover:opacity-90 transition-opacity shadow-[0px_4px_14px_rgba(0,65,145,0.25)]">
-          <span className="material-symbols-outlined text-[20px]">upload_file</span>
-          <span className="font-semibold text-[14px] tracking-widest uppercase">Ingest Document</span>
-        </button>
+
       </div>
 
       {/* Bento Grid Layout */}
@@ -79,10 +76,10 @@ export default function HubDashboardPage() {
               <div className="bg-[#004191] h-2 rounded-full w-[42%]"></div>
             </div>
           </div>
-          <button className="w-full border border-[#004191] text-[#004191] font-semibold text-[14px] tracking-widest uppercase py-3 rounded-lg hover:bg-[#004191]/5 transition-colors flex justify-center items-center gap-1">
+          <Link href="/user/payment" className="w-full border border-[#004191] text-[#004191] font-semibold text-[14px] tracking-widest uppercase py-3 rounded-lg hover:bg-[#004191]/5 transition-colors flex justify-center items-center gap-1">
             <span className="material-symbols-outlined text-[18px]">rocket_launch</span>
             Upgrade Plan
-          </button>
+          </Link>
         </div>
 
         {/* MIDDLE ROW */}

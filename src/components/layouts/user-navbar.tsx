@@ -19,11 +19,11 @@ import {
 import { cn } from "@/lib/utils"
 
 const navigation = [
-  { name: "Dashboard", href: "/hub/dashboard", icon: LayoutDashboard },
-  { name: "Library", href: "/hub/library", icon: BookOpen },
-  { name: "Shared Documents", href: "/hub/shared", icon: Share2 },
-  { name: "AI Workspace", href: "/hub/ai-workspace", icon: Brain },
-  { name: "Payment Management", href: "/hub/payment", icon: Wallet },
+  { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
+  { name: "Library", href: "/user/library", icon: BookOpen },
+  { name: "Shared Documents", href: "/user/shared", icon: Share2 },
+  { name: "AI Workspace", href: "/user/ai-workspace", icon: Brain },
+  { name: "Payment Management", href: "/user/payment", icon: Wallet },
 ]
 
 export function ResearchSidebar() {
@@ -31,7 +31,7 @@ export function ResearchSidebar() {
   const [mobileOpen, setMobileOpen] = React.useState(false)
 
   const isActive = (href: string) => {
-    if (href === "/hub") return pathname === "/hub"
+    if (href === "/user") return pathname === "/user"
     return pathname.startsWith(href)
   }
 
@@ -65,7 +65,7 @@ export function ResearchSidebar() {
       >
         {/* Logo */}
         <div className="px-6 pt-6 pb-4">
-          <Link href="/hub" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
+          <Link href="/user" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
             <div className="w-8 h-8 rounded-xl bg-[#0058be] flex items-center justify-center shadow-md shadow-[#0058be]/25 shrink-0">
               <Sparkles size={15} className="text-white" />
             </div>
@@ -78,10 +78,10 @@ export function ResearchSidebar() {
 
         {/* New Request button */}
         <div className="px-4 mb-5">
-          <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[13px] font-semibold transition-all shadow-md shadow-[#0058be]/20 active:scale-[0.98]">
+          <Link href="/user/ai-workspace" onClick={() => setMobileOpen(false)} className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[13px] font-semibold transition-all shadow-md shadow-[#0058be]/20 active:scale-[0.98]">
             <Plus size={16} strokeWidth={2.5} />
             New Request
-          </button>
+          </Link>
         </div>
 
         {/* Navigation */}
@@ -113,18 +113,18 @@ export function ResearchSidebar() {
         {/* Bottom Settings */}
         <div className="px-3 pb-6 pt-4 border-t border-[#c2c6d6]/30 mt-2">
           <Link
-            href="/hub/settings"
+            href="/user/settings"
             onClick={() => setMobileOpen(false)}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-2xl text-[14px] font-medium transition-all duration-150 group",
-              isActive("/hub/settings")
+              isActive("/user/settings")
                 ? "bg-[#0058be] text-white shadow-sm shadow-[#0058be]/20"
                 : "text-[#424754] hover:bg-[#eff4ff] hover:text-[#0058be]"
             )}
           >
             <Settings
               size={18}
-              className={cn("shrink-0 transition-colors", isActive("/hub/settings") ? "text-white" : "text-[#727785] group-hover:text-[#0058be]")}
+              className={cn("shrink-0 transition-colors", isActive("/user/settings") ? "text-white" : "text-[#727785] group-hover:text-[#0058be]")}
             />
             <span>Settings</span>
           </Link>

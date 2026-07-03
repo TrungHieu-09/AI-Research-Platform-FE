@@ -7,17 +7,17 @@ import Link from "next/link"
 const PLANS = {
   storage: {
     name: "Storage Pro",
-    price: 5,
+    price: "125.000",
     features: ["100 GB Cloud Storage", "500 AI Queries / month", "Priority Support"]
   },
   ai: {
     name: "AI Pro",
-    price: 10,
+    price: "250.000",
     features: ["Unlimited AI Queries", "Advanced Models (GPT-4)", "5 GB Cloud Storage"]
   },
   ultimate: {
     name: "Ultimate",
-    price: 12,
+    price: "300.000",
     features: ["Unlimited AI Queries & Models", "100 GB Cloud Storage", "24/7 Dedicated Support"]
   }
 }
@@ -33,7 +33,7 @@ function CheckoutContent() {
       <div className="flex-1 flex flex-col items-center justify-center py-20">
         <span className="material-symbols-outlined text-[48px] text-[#c2c6d6] mb-4">error</span>
         <h2 className="text-[20px] font-semibold mb-2 text-[#121c2a]">Invalid Plan Selected</h2>
-        <Link href="/hub/payment" className="text-[#004191] hover:underline font-medium text-[14px]">
+        <Link href="/user/payment" className="text-[#004191] hover:underline font-medium text-[14px]">
           Return to Payment Management
         </Link>
       </div>
@@ -45,7 +45,7 @@ function CheckoutContent() {
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-6 flex items-center gap-3">
-        <Link href="/hub/payment" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-[#424753] transition-colors">
+        <Link href="/user/payment" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-[#424753] transition-colors">
           <span className="material-symbols-outlined text-[20px]">arrow_back</span>
         </Link>
         <h2 className="font-semibold text-[24px] md:text-[28px] tracking-[-0.02em] text-[#121c2a]">Secure Checkout</h2>
@@ -63,7 +63,7 @@ function CheckoutContent() {
                 <p className="text-[13px] text-[#424753] mt-1">Monthly Subscription</p>
               </div>
               <div className="text-right">
-                <span className="font-bold text-[18px] text-[#121c2a]">${plan.price}</span>
+                <span className="font-bold text-[18px] text-[#121c2a]">{plan.price}₫</span>
                 <span className="text-[13px] text-[#424753]">/mo</span>
               </div>
             </div>
@@ -80,15 +80,15 @@ function CheckoutContent() {
             <div className="bg-white rounded-lg p-4 border border-[#c2c6d6]/30">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[14px] text-[#424753]">Subtotal</span>
-                <span className="font-medium text-[14px] text-[#121c2a]">${plan.price}.00</span>
+                <span className="font-medium text-[14px] text-[#121c2a]">{plan.price}₫</span>
               </div>
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-dashed border-[#c2c6d6]/50">
                 <span className="text-[14px] text-[#424753]">Tax (0%)</span>
-                <span className="font-medium text-[14px] text-[#121c2a]">$0.00</span>
+                <span className="font-medium text-[14px] text-[#121c2a]">0₫</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-[16px] text-[#121c2a]">Total to pay</span>
-                <span className="font-bold text-[24px] text-[#004191]">${plan.price}.00</span>
+                <span className="font-bold text-[24px] text-[#004191]">{plan.price}₫</span>
               </div>
             </div>
           </div>
@@ -162,7 +162,7 @@ function CheckoutContent() {
                 <span className="material-symbols-outlined text-[18px]">check_circle</span>
                 I have completed the transfer
               </button>
-              <Link href="/hub/payment" className="flex-1 bg-white text-[#424753] border border-[#c2c6d6] font-semibold text-[14px] py-3 rounded-lg hover:bg-[#f8f9ff] transition-colors text-center flex items-center justify-center">
+              <Link href="/user/payment" className="flex-1 bg-white text-[#424753] border border-[#c2c6d6] font-semibold text-[14px] py-3 rounded-lg hover:bg-[#f8f9ff] transition-colors text-center flex items-center justify-center">
                 Cancel
               </Link>
             </div>
