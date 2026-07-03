@@ -24,7 +24,7 @@ export default function UploadDocumentPage() {
             <div className="w-16 h-16 rounded-full bg-[#eff3ff] flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 group-hover:bg-[#0058be]/20">
               <span className="material-symbols-outlined text-[32px] text-[#0058be]">cloud_upload</span>
             </div>
-            <h3 className="text-[24px] font-semibold text-[#121c2a] mb-1">Drag & drop your file here</h3>
+            <h3 className="text-[24px] font-semibold text-[#121c2a] mb-1">Drag &amp; drop your file here</h3>
             <p className="text-[16px] text-[#424753] mb-6">or click to browse from your computer</p>
             <p className="text-[12px] font-medium text-[#727784] uppercase tracking-wider">Supported formats: PDF, DOCX (Max 50MB)</p>
             <input className="hidden" id="file-upload" type="file" />
@@ -141,7 +141,7 @@ export default function UploadDocumentPage() {
           </Link>
           <button className="px-12 py-2 rounded-[16px] text-[14px] font-semibold tracking-wide text-white bg-[#0058be] hover:bg-[#2170e4] transition-all h-12 flex items-center justify-center gap-1 shadow-[0_4px_14px_rgba(0,65,145,0.2)] hover:shadow-[0_6px_20px_rgba(0,65,145,0.3)] hover:-translate-y-0.5">
             <span className="material-symbols-outlined text-[20px]">cloud_done</span>
-            Upload & Save
+            Upload &amp; Save
           </button>
         </div>
       </div>

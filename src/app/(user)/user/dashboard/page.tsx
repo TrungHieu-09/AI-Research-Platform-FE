@@ -99,7 +99,7 @@ export default function HubDashboardPage() {
                 <span className="font-medium text-[12px] uppercase font-bold">Recent Ingestion Summary</span>
               </div>
               <p className="font-normal text-[14px] text-[#424753] leading-relaxed bg-[#004191]/5 p-3 rounded-lg border border-[#004191]/10">
-                Based on the last 4 uploaded papers regarding "Neural Plasticity", current literature strongly correlates immediate post-trauma intervention with accelerated synaptic regeneration.
+                Based on the last 4 uploaded papers regarding &quot;Neural Plasticity&quot;, current literature strongly correlates immediate post-trauma intervention with accelerated synaptic regeneration.
               </p>
             </div>
             {/* Insight Block 2 */}
