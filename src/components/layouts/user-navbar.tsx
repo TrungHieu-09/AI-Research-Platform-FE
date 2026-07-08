@@ -10,6 +10,7 @@ import {
   Share2,
   Brain,
   Wallet,
+  HardDrive,
   Settings,
   Plus,
   Sparkles,
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Library", href: "/user/library", icon: BookOpen },
   { name: "Shared Documents", href: "/user/shared", icon: Share2 },
   { name: "AI Workspace", href: "/user/ai-workspace", icon: Brain },
+  { name: "Storage", href: "/user/storage", icon: HardDrive },
   { name: "Payment Management", href: "/user/payment", icon: Wallet },
 ]
 
