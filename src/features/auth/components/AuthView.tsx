@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { AuthMode } from "../types";
+import { setAuthUser } from "@/components/layouts/landing-header";
 
 interface AuthViewProps {
   initialMode: AuthMode;
@@ -30,12 +31,16 @@ export default function AuthView({ initialMode }: AuthViewProps) {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/user/dashboard");
+    // Mock: save user to localStorage then go back to landing
+    setAuthUser({ name: "Dr. Jane Doe", email: "jane.doe@university.edu", initials: "JD" });
+    router.push("/");
   };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/user/dashboard");
+    // Mock: save user to localStorage then go back to landing
+    setAuthUser({ name: "Dr. Jane Doe", email: "jane.doe@university.edu", initials: "JD" });
+    router.push("/");
   };
 
   return (

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import Link from "next/link"
@@ -85,7 +85,7 @@ export default function LibraryPage() {
   const [search, setSearch] = React.useState("")
 
   return (
-    <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden bg-[#f8f9ff]">
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9ff]">
       {/* Top Header Section */}
       <div className="shrink-0 px-6 pt-6 pb-4 flex flex-col gap-5">
         <div className="flex justify-between items-start">
@@ -209,6 +209,50 @@ export default function LibraryPage() {
                   {tag.name}
                 </span>
               ))}
+            </div>
+          </div>
+
+          {/* ── Mini Workspace Overview (Dashboard merged) ── */}
+          <div className="mt-2 space-y-3">
+            <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider px-1">Workspace</h3>
+
+            {/* 2x2 stat grid */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { label: "Docs", value: "248", icon: "description" },
+                { label: "AI Chats", value: "105", icon: "forum" },
+                { label: "Collections", value: "14", icon: "folder" },
+                { label: "Tags", value: "62", icon: "label" },
+              ].map(({ label, value, icon }) => (
+                <div key={label} className="bg-white border border-[#c2c6d6]/40 rounded-xl p-2.5 shadow-sm hover:border-[#0058be]/30 transition-colors">
+                  <span className="material-symbols-outlined text-[13px] text-[#727785] block mb-1">{icon}</span>
+                  <p className="text-[17px] font-extrabold text-[#0058be] leading-none mb-0.5 tracking-tight">{value}</p>
+                  <p className="text-[10px] text-[#727785] font-semibold uppercase tracking-wide">{label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Storage mini bar */}
+            <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-bold text-[#424754] uppercase tracking-wide">Storage</span>
+                <span className="text-[11px] font-semibold text-[#0058be]">2.1 / 5 GB</span>
+              </div>
+              <div className="w-full h-1.5 bg-[#e6eeff] rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-[#0058be] to-[#316bf3] rounded-full" style={{ width: "42%" }} />
+              </div>
+              <p className="text-[10px] text-[#727785] mt-1.5 font-medium">42% used · Free plan</p>
+            </div>
+
+            {/* AI Insight snippet */}
+            <div className="bg-gradient-to-br from-[#eff4ff] to-[#f8f9ff] border border-[#0058be]/15 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="material-symbols-outlined text-[14px] text-[#0058be]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+                <span className="text-[10px] font-bold text-[#0058be] uppercase tracking-wide">AI Insight</span>
+              </div>
+              <p className="text-[11px] text-[#424754] leading-relaxed line-clamp-3">
+                87% methodological overlap across Neural Plasticity papers. 2 research gaps identified.
+              </p>
             </div>
           </div>
         </div>

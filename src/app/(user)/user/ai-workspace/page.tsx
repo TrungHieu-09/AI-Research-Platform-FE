@@ -3,8 +3,8 @@
 import * as React from "react"
 import {
   Bell, HelpCircle, ChevronDown, FileText, FlaskConical,
-  AlertTriangle, ArrowRightLeft, Paperclip, Send, Sparkles, User,
-  Layers
+  AlertTriangle, ArrowRightLeft, Paperclip, Send, Sparkles,
+  Layers, Share2
 } from "lucide-react"
 
 const sourceReferences = [
@@ -36,9 +36,9 @@ const sourceReferences = [
 
 export default function AIWorkspacePage() {
   return (
-    <div className="flex flex-col h-[calc(100vh-0px)] overflow-hidden bg-[#fafbff]">
-      {/* Top Header */}
-      <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-[#c2c6d6]/30 bg-[#fafbff]">
+    <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#fafbff]">
+      {/* Sub-toolbar: Collection selector + actions */}
+      <div className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-[#c2c6d6]/30 bg-[#fafbff]">
         {/* Left: Collection Selector */}
         <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[#c2c6d6]/50 rounded-lg text-[13px] font-bold text-[#424754] hover:bg-gray-50 shadow-sm transition-colors">
           <Layers size={14} className="text-[#727785]" />
@@ -46,20 +46,17 @@ export default function AIWorkspacePage() {
           <ChevronDown size={14} className="text-[#727785] ml-1" />
         </button>
 
-        {/* Right: Actions & User */}
-        <div className="flex items-center gap-5">
-          <button className="text-[#727785] hover:text-[#121c2a] transition-colors">
-            <Bell size={18} />
+        {/* Right: Quick actions */}
+        <div className="flex items-center gap-3">
+          <button className="p-2 rounded-xl text-[#727785] hover:text-[#121c2a] hover:bg-white hover:shadow-sm transition-all">
+            <Bell size={17} />
           </button>
-          <button className="text-[#727785] hover:text-[#121c2a] transition-colors">
-            <HelpCircle size={18} />
+          <button className="p-2 rounded-xl text-[#727785] hover:text-[#121c2a] hover:bg-white hover:shadow-sm transition-all">
+            <HelpCircle size={17} />
           </button>
-          <div className="w-8 h-8 rounded-full bg-[#e6eeff] border border-[#c2c6d6]/40 flex items-center justify-center overflow-hidden">
-            {/* Placeholder for Avatar */}
-            <User size={16} className="text-[#0058be]" />
-          </div>
         </div>
       </div>
+
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden flex">
@@ -125,9 +122,15 @@ export default function AIWorkspacePage() {
                 rows={2}
               />
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#c2c6d6]/20">
-                <button className="p-2 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-lg transition-colors">
-                  <Paperclip size={18} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button className="p-2 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-lg transition-colors" title="Attach file">
+                    <Paperclip size={17} />
+                  </button>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors text-[12px] font-semibold" title="Share this session">
+                    <Share2 size={14} />
+                    Share session
+                  </button>
+                </div>
                 <button className="flex items-center gap-2 px-5 py-2 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-xl text-[14px] font-semibold transition-all shadow-md shadow-[#0058be]/20">
                   <Send size={16} />
                   Send

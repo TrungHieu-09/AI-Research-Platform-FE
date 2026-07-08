@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { LandingHeader } from "@/components/layouts/landing-header";
 
 export default function Home() {
   return (
@@ -8,60 +8,7 @@ export default function Home() {
       <div className="ambient-blob bg-secondary-fixed w-[500px] h-[500px] top-[20%] right-[-100px]"></div>
       <div className="ambient-blob bg-surface-container-high w-[700px] h-[700px] bottom-[-200px] left-[20%]"></div>
 
-      <header
-        className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-gutter h-16 bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-xl border-b border-on-surface/10 shadow-sm transition-all duration-300"
-        id="main-nav"
-      >
-        <div className="flex items-center gap-sm">
-          <Link
-            href="/"
-            className="text-[28px] font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-[#0058be] to-[#316bf3] dark:from-[#adc6ff] dark:to-[#dbe1ff] drop-shadow-sm hover:scale-[1.02] transition-transform cursor-pointer"
-          >
-            Lumis
-          </Link>
-        </div>
-
-        <nav className="hidden md:flex gap-lg items-center">
-          <Link
-            href="#features"
-            className="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface text-[14px] font-semibold tracking-wider transition-colors"
-          >
-            Features
-          </Link>
-          <Link
-            href="#how-it-works"
-            className="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface text-[14px] font-semibold tracking-wider transition-colors"
-          >
-            How it works
-          </Link>
-          <Link
-            href="#pricing"
-            className="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface text-[14px] font-semibold tracking-wider transition-colors"
-          >
-            Pricing
-          </Link>
-        </nav>
-
-        <div className="flex items-center gap-md">
-          <button className="hidden md:flex items-center gap-xs text-on-surface-variant hover:text-on-surface transition-colors p-xs rounded-full hover:bg-surface-container-highest/50">
-            <span className="material-symbols-outlined text-[20px]">
-              search
-            </span>
-          </button>
-          <Link
-            href="/login"
-            className="text-[14px] font-semibold tracking-wider text-[#0058be] hover:text-[#2170e4] transition-colors"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="bg-[#0058be] hover:bg-[#2170e4] text-white text-[14px] font-semibold tracking-wider py-sm px-md rounded-full shadow-sm transition-all duration-200 hover:shadow-md border-none"
-          >
-            Get Started
-          </Link>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main className="flex-grow pt-xl mt-lg px-margin-mobile md:px-margin-desktop w-full max-w-[1400px] mx-auto z-10">
         <section className="flex flex-col lg:flex-row items-center justify-between gap-lg py-[80px] min-h-[80vh]">
