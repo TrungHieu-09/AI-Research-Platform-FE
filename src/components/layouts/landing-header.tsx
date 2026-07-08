@@ -53,6 +53,7 @@ export function LandingHeader() {
   const [user, setUser] = React.useState<AuthUser | null>(null)
   const [profileOpen, setProfileOpen] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
+  const [isVisible, setIsVisible] = React.useState(true)
 
   const profileRef = React.useRef<HTMLDivElement>(null)
 
@@ -61,10 +62,43 @@ export function LandingHeader() {
     setUser(getAuthUser())
   }, [])
 
-  /* Scroll shadow */
+  /* Scroll handler for show/hide header and scroll shadow */
   React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8)
-    window.addEventListener("scroll", onScroll)
+    let lastY = window.scrollY
+
+    const onScroll = () => {
+      const currentY = window.scrollY
+      
+      // Update background shadow
+      setScrolled(currentY > 8)
+
+      // Always show at the top of the page
+      if (currentY <= 10) {
+        setIsVisible(true)
+        lastY = currentY
+        return
+      }
+
+      // Check diff to filter small movements
+      const diff = currentY - lastY
+      if (Math.abs(diff) < 15) {
+        return
+      }
+
+      if (diff > 0) {
+        // Scrolling down -> Hide header
+        setIsVisible(false)
+        // Also close profile dropdown when header hides to avoid floating menu
+        setProfileOpen(false)
+      } else {
+        // Scrolling up -> Show header
+        setIsVisible(true)
+      }
+
+      lastY = currentY
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
@@ -92,8 +126,9 @@ export function LandingHeader() {
       id="main-nav"
       className={cn(
         "fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 md:px-16 h-16",
-        "bg-[#f8f9ff]/80 backdrop-blur-xl border-b border-black/5 transition-all duration-300",
-        scrolled && "shadow-sm bg-white/90"
+        "bg-[#f8f9ff]/80 backdrop-blur-xl border-b border-black/5 transition-all duration-300 ease-in-out transform",
+        scrolled && "shadow-sm bg-white/90",
+        isVisible ? "translate-y-0" : "-translate-y-full"
       )}
     >
       {/* ── Logo ── */}
