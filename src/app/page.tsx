@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LandingHeader } from "@/components/layouts/landing-header";
+import { FadeInSection } from "@/components/animations/fade-in-section";
 
 export default function Home() {
   return (
@@ -10,8 +11,8 @@ export default function Home() {
 
       <LandingHeader />
 
-      <main className="flex-grow pt-xl mt-lg px-margin-mobile md:px-margin-desktop w-full max-w-[1400px] mx-auto z-10">
-        <section className="flex flex-col lg:flex-row items-center justify-between gap-lg py-[80px] min-h-[80vh]">
+      <main className="flex-grow pt-xl mt-lg px-margin-mobile md:px-margin-desktop w-full max-w-[1400px] mx-auto z-10 overflow-hidden">
+        <FadeInSection className="flex flex-col lg:flex-row items-center justify-between gap-lg py-[80px] min-h-[80vh]">
           <div className="flex-1 flex flex-col items-start gap-lg w-full max-w-[672px]">
             <div className="inline-flex items-center gap-xs px-sm py-xs bg-surface-container-high rounded-full text-[#0058be] text-[12px] font-medium border border-[#adc6ff]">
               <span className="material-symbols-outlined text-[16px]">
@@ -78,9 +79,9 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </FadeInSection>
 
-        <section className="py-xl" id="features">
+        <FadeInSection className="py-xl" id="features">
           <div className="text-center mb-xl">
             <h2 className="text-[32px] font-semibold leading-[1.2] tracking-tight text-on-surface mb-md">
               Built for Deep Work
@@ -179,7 +180,134 @@ export default function Home() {
               </button>
             </div>
           </div>
-        </section>
+        </FadeInSection>
+
+        <FadeInSection className="pt-xl pb-12" id="how-it-works">
+          {/* Hero for How It Works */}
+          <div className="text-center mb-xl">
+            <div className="inline-block mb-4 px-3 py-1 bg-[#eff4ff] text-[#0058be] text-[12px] font-bold tracking-wide rounded-full border border-[#0058be]/20 uppercase">
+              Simple. Fast. Intelligent.
+            </div>
+            <h2 className="text-[36px] md:text-[48px] font-bold leading-[1.2] tracking-tight text-[#121c2a] mb-md">
+              From raw papers to real <span className="text-[#0058be]">insight</span>
+            </h2>
+            <p className="text-[18px] text-[#424754] max-w-[672px] mx-auto leading-relaxed">
+              Lumis seamlessly ingests your research library, understands the semantic connections, and allows you to chat with your collective knowledge base.
+            </p>
+          </div>
+          
+          {/* 4-Step Process */}
+          <div className="relative max-w-[1200px] mx-auto px-6 mb-24">
+            {/* Connecting line for desktop */}
+            <div className="hidden lg:block absolute top-[60px] left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-[#c2c6d6]/50 to-transparent"></div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center text-center group bg-white p-6 rounded-3xl border border-[#c2c6d6]/40 shadow-sm hover:shadow-md hover:border-[#0058be]/30 transition-all">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-[#0058be]/20 flex items-center justify-center text-[#0058be] mb-6 shadow-sm group-hover:scale-110 group-hover:bg-[#0058be] group-hover:text-white transition-all relative">
+                  <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">01</span>
+                  <span className="material-symbols-outlined text-[28px]">upload_file</span>
+                </div>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Upload Your Documents</h3>
+                <p className="text-[14px] text-[#424754] leading-relaxed">
+                  Ingest PDFs, Word docs, and research papers directly into your secure Library.
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="flex flex-col items-center text-center group bg-white p-6 rounded-3xl border border-[#c2c6d6]/40 shadow-sm hover:shadow-md hover:border-[#0058be]/30 transition-all lg:mt-8">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-[#0058be]/20 flex items-center justify-center text-[#0058be] mb-6 shadow-sm group-hover:scale-110 group-hover:bg-[#0058be] group-hover:text-white transition-all relative">
+                  <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">02</span>
+                  <span className="material-symbols-outlined text-[28px]">auto_awesome</span>
+                </div>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">AI Reads & Organizes</h3>
+                <p className="text-[14px] text-[#424754] leading-relaxed">
+                  Lumis auto-tags metadata and categorizes your documents by topic and field automatically.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex flex-col items-center text-center group bg-white p-6 rounded-3xl border border-[#c2c6d6]/40 shadow-sm hover:shadow-md hover:border-[#0058be]/30 transition-all">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-[#0058be]/20 flex items-center justify-center text-[#0058be] mb-6 shadow-sm group-hover:scale-110 group-hover:bg-[#0058be] group-hover:text-white transition-all relative">
+                  <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">03</span>
+                  <span className="material-symbols-outlined text-[28px]">hub</span>
+                </div>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Synthesize Across Papers</h3>
+                <p className="text-[14px] text-[#424754] leading-relaxed">
+                  Discover cross-paper correlations, identify research gaps, and build comprehensive reviews.
+                </p>
+              </div>
+
+              {/* Step 4 */}
+              <div className="flex flex-col items-center text-center group bg-white p-6 rounded-3xl border border-[#c2c6d6]/40 shadow-sm hover:shadow-md hover:border-[#0058be]/30 transition-all lg:mt-8">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-[#0058be]/20 flex items-center justify-center text-[#0058be] mb-6 shadow-sm group-hover:scale-110 group-hover:bg-[#0058be] group-hover:text-white transition-all relative">
+                  <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">04</span>
+                  <span className="material-symbols-outlined text-[28px]">chat</span>
+                </div>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Ask & Explore</h3>
+                <p className="text-[14px] text-[#424754] leading-relaxed">
+                  Query your entire library in natural language. Get instant answers with precise citations.
+                </p>
+              </div>
+            </div>
+          </div>
+        </FadeInSection>
+
+        {/* Visual / Mockup Section */}
+        <FadeInSection className="max-w-[1000px] mx-auto px-6 mb-32">
+          <div className="bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-[32px] p-8 shadow-xl shadow-[#0058be]/5">
+              <div className="bg-white border border-[#c2c6d6]/50 rounded-2xl overflow-hidden shadow-sm">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-[#c2c6d6]/30 bg-[#fafbff]">
+                  <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-amber-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                  <div className="ml-4 text-[12px] font-semibold text-[#727785]">AI Synthesis Insights</div>
+                </div>
+                <div className="p-6 md:p-8 flex flex-col gap-6">
+                  {/* Mockup Chat / Insight Panel */}
+                  <div className="self-end bg-[#eef2fc] rounded-2xl rounded-tr-sm px-5 py-4 max-w-[85%] text-[14px] text-[#121c2a] shadow-sm">
+                    Find the correlation between topological protection and error rates in these 5 papers.
+                  </div>
+                  
+                  <div className="self-start bg-white border border-[#c2c6d6]/40 shadow-sm rounded-2xl rounded-tl-sm px-6 py-5 max-w-[95%]">
+                    <div className="flex items-center gap-2 mb-4 text-[#0058be]">
+                      <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                      <span className="text-[14px] font-bold">Lumis Synthesis</span>
+                    </div>
+                    <p className="text-[14px] text-[#424754] leading-relaxed mb-4">
+                      Based on your library, 4 out of 5 papers suggest that non-Abelian anyons increase topological protection by approximately 87%, effectively reducing logical error rates below the fault-tolerance threshold.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 bg-[#f0f2f5] text-[#424754] rounded border border-[#c2c6d6]/30 text-[11px] font-semibold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">description</span> Fowler et al.
+                      </span>
+                      <span className="px-2 py-1 bg-[#f0f2f5] text-[#424754] rounded border border-[#c2c6d6]/30 text-[11px] font-semibold flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">description</span> Zhang & Liu
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </FadeInSection>
+
+        {/* CTA Section */}
+        <FadeInSection className="text-center max-w-[600px] mx-auto px-6 mb-32">
+          <h2 className="text-[32px] font-bold text-[#121c2a] mb-4">
+              Ready to accelerate your research?
+            </h2>
+            <p className="text-[16px] text-[#727785] mb-8">
+              Join thousands of researchers using Lumis to synthesize knowledge faster and smarter.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button className="w-full sm:w-auto bg-[#0058be] hover:bg-[#2170e4] text-white text-[15px] font-bold py-3 px-8 rounded-full shadow-md shadow-[#0058be]/20 transition-all hover:-translate-y-0.5 border-none">
+                Get Started for Free
+              </button>
+              <button className="w-full sm:w-auto bg-white border-2 border-[#c2c6d6]/60 text-[#424754] text-[15px] font-bold py-3 px-8 rounded-full hover:bg-gray-50 hover:border-[#424754]/30 transition-all">
+                Watch Demo
+              </button>
+          </div>
+        </FadeInSection>
       </main>
 
       <footer className="w-full py-md px-margin-mobile md:px-margin-desktop flex justify-between items-center mt-auto border-t border-on-surface/5 bg-surface dark:bg-inverse-surface z-50 relative">
