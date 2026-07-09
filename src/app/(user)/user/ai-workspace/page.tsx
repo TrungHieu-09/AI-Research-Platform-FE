@@ -1,11 +1,20 @@
 "use client"
 
 import * as React from "react"
+import { useSearchParams } from "next/navigation"
 import {
   Bell, HelpCircle, ChevronDown, FileText, FlaskConical,
   AlertTriangle, ArrowRightLeft, Paperclip, Send, Sparkles,
-  Layers, Share2
+  Layers, Share2, X
 } from "lucide-react"
+
+const mockDocs = [
+  { id: 1, title: "Attention Is All You Need", authors: "Ashish Vaswani, Noam Shazeer, Niki Parmar" },
+  { id: 2, title: "Language Models are Few-Shot Learners", authors: "Tom B. Brown, Benjamin Mann, Nick Ryder" },
+  { id: 3, title: "Deep Residual Learning for Image Recognition", authors: "Kaiming He, Xiangyu Zhang, Shaoqing Ren" },
+  { id: 4, title: "BERT: Pre-training of Deep Bidirectional Transformers", authors: "Jacob Devlin, Ming-Wei Chang, Kenton Lee" },
+  { id: 5, title: "Generative Adversarial Nets", authors: "Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza" },
+]
 
 const sourceReferences = [
   {
@@ -34,7 +43,34 @@ const sourceReferences = [
   }
 ]
 
-export default function AIWorkspacePage() {
+function WorkspaceContent() {
+  const searchParams = useSearchParams()
+  const docId = searchParams.get("docId")
+  const attachedDoc = docId ? mockDocs.find(d => d.id === Number(docId)) : null
+
+  const [input, setInput] = React.useState("")
+  const [messages, setMessages] = React.useState<{role: string, content: string}[]>([])
+  const [isTyping, setIsTyping] = React.useState(false)
+  const [isDocAttached, setIsDocAttached] = React.useState(!!attachedDoc)
+
+  const handleSend = () => {
+    if (!input.trim()) return
+    const userMsg = input
+    setMessages(prev => [...prev, { role: "user", content: userMsg }])
+    setInput("")
+    setIsTyping(true)
+
+    setTimeout(() => {
+      setIsTyping(false)
+      setMessages(prev => [...prev, { 
+        role: "ai", 
+        content: (isDocAttached && attachedDoc)
+          ? `Based on the document "${attachedDoc.title}", here is an analysis...\n\n(This is a mock response demonstrating the flow.)` 
+          : `Here is an analysis based on the entire collection...\n\n(This is a mock response demonstrating the flow without a specific document.)`
+      }])
+    }, 1500)
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#fafbff]">
       {/* Sub-toolbar: Collection selector + actions */}
@@ -85,40 +121,64 @@ export default function AIWorkspacePage() {
           </div>
 
           {/* Chat History */}
-          <div className="flex flex-col gap-6 flex-1 mb-8">
-            {/* User Message */}
-            <div className="self-end bg-[#eef2fc] rounded-2xl rounded-tr-sm px-5 py-4 max-w-[85%] text-[14px] text-[#121c2a] leading-relaxed shadow-sm">
-              Can you synthesize the key findings regarding error correction mechanisms in topological quantum computers from the recent papers in this collection?
-            </div>
+          <div className="flex flex-col gap-6 flex-1 mb-8 overflow-y-auto">
+            {messages.length === 0 && (
+              <div className="flex items-center justify-center h-full text-[#727785] text-[14px]">
+                {(isDocAttached && attachedDoc) ? `Ask something about "${attachedDoc.title}"...` : "Start a new conversation..."}
+              </div>
+            )}
+            
+            {messages.map((msg, idx) => (
+              msg.role === "user" ? (
+                <div key={idx} className="self-end bg-[#eef2fc] rounded-2xl rounded-tr-sm px-5 py-4 max-w-[85%] text-[14px] text-[#121c2a] leading-relaxed shadow-sm">
+                  {msg.content}
+                </div>
+              ) : (
+                <div key={idx} className="self-start bg-white border border-[#c2c6d6]/40 shadow-sm rounded-2xl rounded-tl-sm px-6 py-5 max-w-[95%]">
+                  <div className="flex items-center gap-2 mb-3 text-[#0058be]">
+                    <Sparkles size={16} />
+                    <span className="text-[13px] font-bold">Lumis Synthesis</span>
+                  </div>
+                  <div className="text-[14px] text-[#424754] leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                  </div>
+                </div>
+              )
+            ))}
 
-            {/* AI Message */}
-            <div className="self-start bg-white border border-[#c2c6d6]/40 shadow-sm rounded-2xl rounded-tl-sm px-6 py-5 max-w-[95%]">
-              <div className="flex items-center gap-2 mb-3 text-[#0058be]">
-                <Sparkles size={16} />
-                <span className="text-[13px] font-bold">Lumis Synthesis</span>
+            {isTyping && (
+              <div className="self-start bg-white border border-[#c2c6d6]/40 shadow-sm rounded-2xl rounded-tl-sm px-6 py-5 max-w-[95%]">
+                <div className="flex items-center gap-2 text-[#0058be]">
+                  <Sparkles size={16} className="animate-pulse" />
+                  <span className="text-[13px] font-bold animate-pulse">Lumis is thinking...</span>
+                </div>
               </div>
-              <div className="text-[14px] text-[#424754] leading-relaxed">
-                <p className="mb-4">
-                  Based on the selected collection, recent advancements in topological quantum error correction (TQEC) focus primarily on surface codes and their scalability. Here is a synthesis of the key findings:
-                </p>
-                <ul className="space-y-3 list-disc pl-5">
-                  <li>
-                    <strong className="text-[#121c2a]">Surface Code Thresholds:</strong> Fowler et al. (2023) demonstrate that the practical fault-tolerance threshold for planar surface codes remains near 1%, but novel decoder architectures can significantly reduce the classical computational overhead <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#0058be] text-white text-[9px] font-bold mx-0.5 relative -top-0.5">1</span>.
-                  </li>
-                  <li>
-                    <strong className="text-[#121c2a]">Majorana Zero Modes:</strong> The implementation of non-Abelian anyons, specifically Majorana zero modes, offers intrinsic topological protection. However, Zhang & Liu (2024) highlight that environmental factors...
-                  </li>
-                </ul>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Input Area */}
-          <div className="relative mt-auto">
+          <div className="relative mt-auto flex flex-col gap-3">
+            {/* Attached File Indicator */}
+            {(isDocAttached && attachedDoc) && (
+              <div className="flex items-center gap-2 self-start bg-white border border-[#0058be]/30 px-3 py-1.5 rounded-lg shadow-sm">
+                <FileText size={14} className="text-[#0058be]" />
+                <span className="text-[12px] font-semibold text-[#121c2a] truncate max-w-[300px]">{attachedDoc.title}</span>
+                <button onClick={() => setIsDocAttached(false)} className="text-[#727785] hover:text-red-500 ml-1"><X size={12} /></button>
+              </div>
+            )}
+
             <div className="bg-white border border-[#c2c6d6]/50 rounded-2xl shadow-sm focus-within:border-[#0058be]/40 focus-within:shadow-[0_0_0_3px_rgba(0,88,190,0.08)] transition-all p-3 flex flex-col">
               <textarea 
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
                 className="w-full bg-transparent border-none outline-none resize-none text-[14px] text-[#121c2a] placeholder:text-[#727785] min-h-[44px] max-h-[120px]"
-                placeholder="Ask Lumis to synthesize, analyze, or compare documents..."
+                placeholder={(isDocAttached && attachedDoc) ? `Ask Lumis to analyze ${attachedDoc.title}...` : "Ask Lumis to synthesize, analyze, or compare documents..."}
                 rows={2}
               />
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#c2c6d6]/20">
@@ -131,7 +191,11 @@ export default function AIWorkspacePage() {
                     Share session
                   </button>
                 </div>
-                <button className="flex items-center gap-2 px-5 py-2 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-xl text-[14px] font-semibold transition-all shadow-md shadow-[#0058be]/20">
+                <button 
+                  onClick={handleSend}
+                  disabled={!input.trim() || isTyping}
+                  className="flex items-center gap-2 px-5 py-2 bg-[#0058be] disabled:opacity-50 hover:bg-[#2170e4] text-white rounded-xl text-[14px] font-semibold transition-all shadow-md shadow-[#0058be]/20"
+                >
                   <Send size={16} />
                   Send
                 </button>
@@ -180,5 +244,13 @@ export default function AIWorkspacePage() {
 
       </div>
     </div>
+  )
+}
+
+export default function AIWorkspacePage() {
+  return (
+    <React.Suspense fallback={<div className="p-10 text-center text-[#727785]">Loading workspace...</div>}>
+      <WorkspaceContent />
+    </React.Suspense>
   )
 }

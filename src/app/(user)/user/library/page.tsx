@@ -1,11 +1,11 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
 import {
   Search, ChevronDown, Upload, List, LayoutGrid,
   FolderOpen, Plus, Tag, X, FileText, Check, Sparkles,
-  MoreVertical, Calendar, Hash, Users, BookOpen
+  MoreVertical, Calendar, Hash, Users, BookOpen, Download
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -83,6 +83,11 @@ const documents = [
 
 export default function LibraryPage() {
   const [search, setSearch] = React.useState("")
+  const [selectedDocs, setSelectedDocs] = React.useState<number[]>([1])
+
+  const toggleDoc = (id: number) => {
+    setSelectedDocs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9ff]">
@@ -268,17 +273,27 @@ export default function LibraryPage() {
                 8 matching documents in the current workspace.
               </p>
             </div>
-            <div className="px-3 py-1 rounded-full bg-[#eff4ff] border border-[#0058be]/20 text-[#0058be] text-[12px] font-semibold">
-              AI-ready
+            <div className="flex items-center gap-3">
+              <Link 
+                href={`/user/ai-workspace${selectedDocs.length > 0 ? `?docId=${selectedDocs[0]}` : ""}`}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#0058be] hover:bg-[#004ca3] text-white text-[12px] font-semibold shadow-sm transition-colors"
+              >
+                <Sparkles size={14} />
+                Analyze with AI
+              </Link>
+              <div className="px-3 py-1.5 rounded-full bg-[#eff4ff] border border-[#0058be]/20 text-[#0058be] text-[12px] font-semibold">
+                AI-ready
+              </div>
             </div>
           </div>
 
           {/* Table Header */}
-          <div className="grid grid-cols-[auto_minmax(0,1fr)_100px_160px] gap-4 px-6 py-3 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)_100px_160px_40px] gap-4 px-6 py-3 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider">
             <div className="w-[20px] flex items-center justify-center"><input type="checkbox" className="rounded text-[#0058be] focus:ring-[#0058be]" /></div>
             <div>Title & Authors</div>
             <div>Year</div>
             <div>Collection</div>
+            <div></div>
           </div>
 
           {/* Table Body */}
@@ -287,15 +302,15 @@ export default function LibraryPage() {
               <div 
                 key={doc.id}
                 className={cn(
-                  "grid grid-cols-[auto_minmax(0,1fr)_100px_160px] gap-4 px-6 py-4 border-b border-[#c2c6d6]/20 hover:bg-[#f8f9ff] transition-colors items-center group",
-                  doc.selected && "bg-[#eff4ff]/40"
+                  "grid grid-cols-[auto_minmax(0,1fr)_100px_160px_40px] gap-4 px-6 py-4 border-b border-[#c2c6d6]/20 hover:bg-[#f8f9ff] transition-colors items-center group",
+                  selectedDocs.includes(doc.id) && "bg-[#eff4ff]/40"
                 )}
               >
                 <div className="w-[20px] flex items-center justify-center shrink-0">
                   <input 
                     type="checkbox" 
-                    checked={doc.selected || false} 
-                    onChange={()=>{}}
+                    checked={selectedDocs.includes(doc.id)} 
+                    onChange={() => toggleDoc(doc.id)}
                     className="w-4 h-4 rounded border-[#c2c6d6] text-[#0058be] focus:ring-[#0058be]" 
                   />
                 </div>
@@ -315,6 +330,11 @@ export default function LibraryPage() {
                 <div className="flex items-center gap-1.5 text-[12px] text-[#424754] bg-white border border-[#c2c6d6]/40 px-2 py-1 rounded-md shadow-sm w-fit">
                   <FolderOpen size={12} className="text-[#727785]" />
                   <span className="truncate">{doc.collection}</span>
+                </div>
+                <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="p-1.5 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors" title="Download">
+                    <Download size={16} />
+                  </button>
                 </div>
               </div>
             ))}
