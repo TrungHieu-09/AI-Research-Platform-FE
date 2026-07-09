@@ -18,31 +18,31 @@ export function StatCard({ title, value, icon: Icon, description, href, trend }:
   const CardContent = (
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-[14px] font-medium text-on-surface-variant mb-1 group-hover:text-primary transition-colors">
+        <p className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-1.5 group-hover:text-[#0058be] transition-colors">
           {title}
         </p>
-        <h3 className="text-3xl font-bold tracking-tight text-on-surface mb-2">{value}</h3>
+        <h3 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-2">{value}</h3>
         <div className="flex items-center gap-2">
           {trend && (
             <span
               className={cn(
-                "text-[12px] font-bold px-1.5 py-0.5 rounded-md",
-                trend.isUp ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                "text-[11px] font-bold px-2 py-0.5 rounded-md",
+                trend.isUp ? "bg-green-50 text-green-700 border border-green-200/60" : "bg-red-50 text-red-700 border border-red-200/60"
               )}
             >
               {trend.isUp ? "+" : "-"}{trend.value}%
             </span>
           )}
-          <p className="text-[12px] text-on-surface-variant line-clamp-1">{description}</p>
+          <p className="text-[12px] text-[#424754] line-clamp-1 font-medium">{description}</p>
         </div>
       </div>
-      <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all">
-        <Icon size={24} />
+      <div className="p-3.5 rounded-2xl bg-[#eff4ff] text-[#0058be] group-hover:bg-[#0058be] group-hover:text-white transition-all shadow-sm">
+        <Icon size={22} />
       </div>
     </div>
   )
 
-  const className = "glass-panel p-6 border border-outline-variant hover:border-primary/30 transition-all group block"
+  const className = "bg-white p-6 rounded-3xl border border-[#c2c6d6]/40 shadow-sm hover:border-[#0058be]/30 hover:shadow-md transition-all group block"
 
   if (href) {
     return (
@@ -58,3 +58,4 @@ export function StatCard({ title, value, icon: Icon, description, href, trend }:
     </div>
   )
 }
+
