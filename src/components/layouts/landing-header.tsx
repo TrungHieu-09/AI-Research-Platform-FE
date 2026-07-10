@@ -14,6 +14,7 @@ export interface AuthUser {
   name: string
   email: string
   initials: string
+  role?: string
 }
 
 export function setAuthUser(user: AuthUser) {

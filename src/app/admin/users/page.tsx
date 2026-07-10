@@ -70,7 +70,7 @@ export default function UsersPage() {
               {users.map((user) => (
                 <tr
                   key={user.id}
-                  onClick={() => router.push(`/users/${user.id}`)}
+                  onClick={() => router.push(`/admin/users/${user.id}`)}
                   className="hover:bg-primary/5 transition-colors group cursor-pointer"
                 >
                   <td className="px-6 py-5">
@@ -103,7 +103,7 @@ export default function UsersPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        router.push(`/users/${user.id}`);
+                        router.push(`/admin/users/${user.id}`);
                       }}
                       className="p-2 text-on-surface-variant hover:text-primary transition-colors"
                     >

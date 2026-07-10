@@ -23,7 +23,7 @@ export default function DocumentsPage() {
           <p className="text-on-surface-variant font-medium">Moderate academic resources and manage the document lifecycle.</p>
         </div>
         <Link 
-          href="/documents/upload"
+          href="/admin/documents/upload"
           className="bg-primary hover:bg-secondary text-white px-6 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 w-fit"
         >
           <Plus size={18} />
@@ -58,7 +58,7 @@ export default function DocumentsPage() {
         {documents.map((doc) => (
           <div 
             key={doc.id} 
-            onClick={() => router.push(`/documents/${doc.id}`)}
+            onClick={() => router.push(`/admin/documents/${doc.id}`)}
             className="glass-panel p-5 rounded-3xl group border border-outline/5 hover:border-primary/20 transition-all flex flex-col md:flex-row md:items-center gap-6 cursor-pointer"
           >
             <div className="p-4 bg-primary/5 text-primary rounded-2xl self-start md:self-center">

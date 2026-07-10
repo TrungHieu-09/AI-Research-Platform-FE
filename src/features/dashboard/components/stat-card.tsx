@@ -18,10 +18,10 @@ export function StatCard({ title, value, icon: Icon, description, href, trend }:
   const CardContent = (
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-[14px] font-medium text-on-surface-variant mb-1 group-hover:text-primary transition-colors">
+        <p className="text-[14px] font-medium text-[#727785] mb-1 group-hover:text-[#0058be] transition-colors">
           {title}
         </p>
-        <h3 className="text-3xl font-bold tracking-tight text-on-surface mb-2">{value}</h3>
+        <h3 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-2">{value}</h3>
         <div className="flex items-center gap-2">
           {trend && (
             <span
@@ -33,16 +33,16 @@ export function StatCard({ title, value, icon: Icon, description, href, trend }:
               {trend.isUp ? "+" : "-"}{trend.value}%
             </span>
           )}
-          <p className="text-[12px] text-on-surface-variant line-clamp-1">{description}</p>
+          <p className="text-[12px] text-[#424754] line-clamp-1">{description}</p>
         </div>
       </div>
-      <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all">
+      <div className="p-3 rounded-2xl bg-[#eff4ff] text-[#0058be] group-hover:bg-[#0058be] group-hover:text-white transition-all shadow-sm">
         <Icon size={24} />
       </div>
     </div>
   )
 
-  const className = "glass-panel p-6 border border-outline-variant hover:border-primary/30 transition-all group block"
+  const className = "bg-white p-6 rounded-3xl border border-[#c2c6d6]/40 shadow-sm hover:shadow-md hover:border-[#0058be]/30 transition-all group block"
 
   if (href) {
     return (

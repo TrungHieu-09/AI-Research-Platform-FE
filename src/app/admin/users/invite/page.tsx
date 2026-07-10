@@ -5,7 +5,7 @@ export default function InviteUserPage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
-        <Link href="/users" className="p-2 hover:bg-surface-container-highest rounded-full transition-colors">
+        <Link href="/admin/users" className="p-2 hover:bg-surface-container-highest rounded-full transition-colors">
           <ChevronLeft size={24} />
         </Link>
         <div>
@@ -62,7 +62,7 @@ export default function InviteUserPage() {
               <UserPlus size={18} />
               <span>Send Invitation</span>
             </button>
-            <Link href="/users" className="flex-1 bg-surface-container-highest hover:bg-outline-variant text-on-surface py-4 rounded-2xl font-bold text-center transition-all">
+            <Link href="/admin/users" className="flex-1 bg-surface-container-highest hover:bg-outline-variant text-on-surface py-4 rounded-2xl font-bold text-center transition-all">
               Cancel
             </Link>
           </div>

@@ -28,7 +28,7 @@ export default function SubjectsPage() {
           <p className="text-on-surface-variant font-medium">Organize academic subjects and review community-proposed documentation tags.</p>
         </div>
         <Link 
-          href="/subjects/new"
+          href="/admin/subjects/new"
           className="bg-primary hover:bg-secondary text-white px-6 py-2.5 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2 w-fit"
         >
           <Plus size={18} />
@@ -58,7 +58,7 @@ export default function SubjectsPage() {
             {subjects.map((subject) => (
               <div 
                 key={subject.id} 
-                onClick={() => router.push(`/subjects/${subject.id}`)}
+                onClick={() => router.push(`/admin/subjects/${subject.id}`)}
                 className="glass-panel p-6 rounded-3xl group border border-outline/5 hover:border-primary/20 transition-all cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-4">
