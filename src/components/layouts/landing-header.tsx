@@ -33,13 +33,13 @@ function getAuthUser(): AuthUser | null {
 /* ─── Nav items when logged in ──────────────── */
 const appNavLinks = [
   {
-    name: "Library",
+    name: "Thư viện",
     href: "/user/library",
     icon: BookOpen,
     activePrefix: "/user/library",
   },
   {
-    name: "AI Workspace",
+    name: "Không gian AI",
     href: "/user/ai-workspace",
     icon: Brain,
     activePrefix: "/user/ai-workspace",
@@ -147,13 +147,13 @@ export function LandingHeader() {
               href="/#how-it-works"
               className="px-3 py-2 text-[14px] font-semibold text-[#727785] hover:text-[#424754] transition-colors rounded-xl hover:bg-[#f0f4ff]"
             >
-              How it works
+              Cách hoạt động
             </Link>
             <Link
               href="/pricing"
               className="px-3 py-2 text-[14px] font-semibold text-[#727785] hover:text-[#424754] transition-colors rounded-xl hover:bg-[#f0f4ff]"
             >
-              Pricing
+              Bảng giá
             </Link>
           </>
         ) : (
@@ -163,19 +163,19 @@ export function LandingHeader() {
               href="/#features"
               className="px-4 py-2 text-[14px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors rounded-xl hover:bg-[#eff4ff]"
             >
-              Features
+              Tính năng
             </Link>
             <Link
               href="/#how-it-works"
               className="px-4 py-2 text-[14px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors rounded-xl hover:bg-[#eff4ff]"
             >
-              How it works
+              Cách hoạt động
             </Link>
             <Link
               href="/pricing"
               className="px-4 py-2 text-[14px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors rounded-xl hover:bg-[#eff4ff]"
             >
-              Pricing
+              Bảng giá
             </Link>
           </>
         )}
@@ -225,7 +225,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <HardDrive size={14} className="shrink-0 text-[#727785]" />
-                    Storage
+                    Lưu trữ
                   </Link>
                   <Link
                     href="/user/payment"
@@ -233,7 +233,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <Wallet size={14} className="shrink-0 text-[#727785]" />
-                    Payment Management
+                    Quản lý thanh toán
                   </Link>
                   <Link
                     href="/user/settings"
@@ -241,7 +241,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <Settings size={14} className="shrink-0 text-[#727785]" />
-                    Settings
+                    Cài đặt
                   </Link>
                 </div>
 
@@ -251,7 +251,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={14} className="shrink-0" />
-                    Sign out
+                    Đăng xuất
                   </button>
                 </div>
               </div>
@@ -268,13 +268,13 @@ export function LandingHeader() {
               href="/login"
               className="text-[14px] font-semibold text-[#0058be] hover:text-[#2170e4] transition-colors"
             >
-              Log in
+              Đăng nhập
             </Link>
             <Link
               href="/signup"
               className="bg-[#0058be] hover:bg-[#2170e4] text-white text-[14px] font-semibold py-2 px-5 rounded-full shadow-sm transition-all duration-200 hover:shadow-md"
             >
-              Get Started
+              Bắt đầu
             </Link>
           </>
         )}

@@ -19,27 +19,27 @@ export default function Home() {
               <span className="material-symbols-outlined text-[16px]">
                 auto_awesome
               </span>
-              <span>Introducing AI Synthesis 2.0</span>
+              <span>Giới thiệu Tổng hợp AI 2.0</span>
             </div>
 
             <h1 className="text-[48px] font-bold leading-[1.1] tracking-tight text-on-surface">
-              Intelligence for your{" "}
-              <span className="text-[#0058be]">Research</span>.
+              Trợ lý thông minh cho{" "}
+              <span className="text-[#0058be]">Nghiên cứu</span>.
             </h1>
 
             <p className="text-[18px] leading-[1.6] text-[#424754] dark:text-[#c2c6d6] w-full max-w-[576px]">
-              Accelerate your discovery process with an AI-first workspace
-              designed for deep academic and professional research. Organize,
-              analyze, and synthesize knowledge effortlessly.
+              Đẩy nhanh quá trình khám phá với không gian làm việc AI được thiết kế
+              dành riêng cho nghiên cứu học thuật và chuyên sâu. Sắp xếp, phân tích
+              và tổng hợp kiến thức một cách dễ dàng.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-md mt-sm w-full sm:w-auto">
               <GetStartedButton className="bg-gradient-to-r from-[#0058be] to-[#316bf3] hover:from-[#2170e4] hover:to-[#0051d5] text-white text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl shadow-[0_10px_40px_rgba(31,41,55,0.15)] hover:shadow-[0_15px_50px_rgba(31,41,55,0.2)] transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto text-center border-none">
-                Get Started for Free
+                Bắt đầu miễn phí
               </GetStartedButton>
               <button className="glass-panel text-on-surface text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl hover:bg-[#d9e3f6]/50 transition-all duration-300 w-full sm:w-auto text-center flex items-center justify-center gap-sm border border-black/5 dark:border-white/10 dark:text-white">
                 <span className="material-symbols-outlined">play_circle</span>
-                Watch Demo
+                Xem Demo
               </button>
             </div>
           </div>
@@ -85,10 +85,10 @@ export default function Home() {
         <FadeInSection className="py-xl" id="features">
           <div className="text-center mb-xl">
             <h2 className="text-[32px] font-semibold leading-[1.2] tracking-tight text-on-surface mb-md">
-              Built for Deep Work
+              Được thiết kế cho Công việc Chuyên sâu
             </h2>
             <p className="text-[18px] text-on-surface-variant max-w-[672px] mx-auto">
-              Everything you need to move from raw data to synthesized insight.
+              Mọi công cụ bạn cần để chuyển từ dữ liệu thô sang thông tin chi tiết được tổng hợp.
             </p>
           </div>
 
@@ -99,12 +99,12 @@ export default function Home() {
                   psychology
                 </span>
                 <h3 className="text-[24px] font-medium leading-[1.3] text-on-surface mb-sm">
-                  AI-Powered Analysis
+                  Phân tích bằng AI
                 </h3>
                 <p className="text-[16px] text-on-surface-variant max-w-[448px] mt-4">
-                  Instantly summarize papers, extract key methodologies, and
-                  identify contradictions across your entire library with
-                  advanced language models.
+                  Tóm tắt nhanh bài báo, trích xuất phương pháp chính và
+                  nhận diện mâu thuẫn trên toàn bộ thư viện của bạn bằng
+                  các mô hình ngôn ngữ tiên tiến.
                 </p>
               </div>
 
@@ -114,7 +114,7 @@ export default function Home() {
                     auto_awesome
                   </span>
                   <span className="text-[12px] font-medium">
-                    Synthesis Complete
+                    Đã hoàn thành Tổng hợp
                   </span>
                 </div>
                 <div className="h-2 w-full bg-surface-container-highest dark:bg-surface-variant/20 rounded mb-2"></div>
@@ -128,19 +128,19 @@ export default function Home() {
                 travel_explore
               </span>
               <h3 className="text-[24px] font-medium leading-[1.3] text-on-surface mb-sm">
-                Universal Search
+                Tìm kiếm Đa năng
               </h3>
               <p className="text-[16px] text-on-surface-variant mt-4 max-w-[448px]">
-                Find exact citations, figures, or concepts across thousands of
-                PDFs in milliseconds. Semantic search understands what you mean,
-                not just what you type.
+                Tìm trích dẫn chính xác, hình ảnh hoặc khái niệm trên hàng nghìn
+                PDF trong vài mili giây. Tìm kiếm ngữ nghĩa hiểu những gì bạn muốn nói,
+                không chỉ những gì bạn gõ.
               </p>
               <div className="mt-auto w-full bg-surface rounded-xl p-sm shadow-sm flex items-center gap-sm border border-black/5 dark:border-white/10 dark:bg-inverse-surface">
                 <span className="material-symbols-outlined text-outline">
                   search
                 </span>
                 <span className="text-[14px] text-outline-variant">
-                  "neural plasticity mechanisms"
+                  "cơ chế độ mềm dẻo của hệ thần kinh"
                 </span>
               </div>
             </div>
@@ -150,11 +150,11 @@ export default function Home() {
                 group_work
               </span>
               <h3 className="text-[24px] font-medium leading-[1.3] text-on-surface mb-sm">
-                Collaborative Workspaces
+                Không gian làm việc chung
               </h3>
               <p className="text-[16px] text-on-surface-variant mt-4 max-w-[448px]">
-                Share curated libraries, co-author notes, and synthesize
-                findings with your lab or study group in real-time.
+                Chia sẻ thư viện đã chọn lọc, cùng ghi chú và tổng hợp
+                kết quả với nhóm nghiên cứu hoặc phòng thí nghiệm theo thời gian thực.
               </p>
               <div className="mt-auto flex -space-x-3">
                 <div className="w-10 h-10 rounded-full bg-[#2170e4] border-2 border-white flex items-center justify-center text-white text-[12px] font-medium">
@@ -174,10 +174,10 @@ export default function Home() {
                 library_add_check
               </span>
               <h3 className="text-[32px] font-semibold leading-[1.2] text-on-surface mb-md">
-                Ready to organize the chaos?
+                Sẵn sàng sắp xếp mọi thứ ngăn nắp?
               </h3>
               <button className="bg-[#0058be] hover:bg-[#2170e4] text-white text-[14px] font-semibold py-md px-lg rounded-full shadow-sm transition-all duration-200 mt-2 border-none">
-                Start your free workspace
+                Bắt đầu không gian làm việc miễn phí
               </button>
             </div>
           </div>
@@ -187,13 +187,13 @@ export default function Home() {
           {/* Hero for How It Works */}
           <div className="text-center mb-xl">
             <div className="inline-block mb-4 px-3 py-1 bg-[#eff4ff] text-[#0058be] text-[12px] font-bold tracking-wide rounded-full border border-[#0058be]/20 uppercase">
-              Simple. Fast. Intelligent.
+              Đơn giản. Nhanh chóng. Thông minh.
             </div>
             <h2 className="text-[36px] md:text-[48px] font-bold leading-[1.2] tracking-tight text-[#121c2a] mb-md">
-              From raw papers to real <span className="text-[#0058be]">insight</span>
+              Từ bài báo gốc đến <span className="text-[#0058be]">thông tin chi tiết</span> thực tế
             </h2>
             <p className="text-[18px] text-[#424754] max-w-[672px] mx-auto leading-relaxed">
-              Lumis seamlessly ingests your research library, understands the semantic connections, and allows you to chat with your collective knowledge base.
+              Lumis xử lý mượt mà toàn bộ thư viện nghiên cứu của bạn, hiểu các liên kết ngữ nghĩa và cho phép bạn trò chuyện với toàn bộ hệ thống cơ sở kiến thức.
             </p>
           </div>
           
@@ -209,9 +209,9 @@ export default function Home() {
                   <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">01</span>
                   <span className="material-symbols-outlined text-[28px]">upload_file</span>
                 </div>
-                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Upload Your Documents</h3>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Tải lên Tài liệu</h3>
                 <p className="text-[14px] text-[#424754] leading-relaxed">
-                  Ingest PDFs, Word docs, and research papers directly into your secure Library.
+                  Nhập trực tiếp file PDF, Word và các bài báo nghiên cứu vào Thư viện bảo mật của bạn.
                 </p>
               </div>
 
@@ -221,9 +221,9 @@ export default function Home() {
                   <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">02</span>
                   <span className="material-symbols-outlined text-[28px]">auto_awesome</span>
                 </div>
-                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">AI Reads & Organizes</h3>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">AI Đọc & Phân loại</h3>
                 <p className="text-[14px] text-[#424754] leading-relaxed">
-                  Lumis auto-tags metadata and categorizes your documents by topic and field automatically.
+                  Lumis tự động gắn thẻ siêu dữ liệu và phân loại tài liệu của bạn theo chủ đề và lĩnh vực hoàn toàn tự động.
                 </p>
               </div>
 
@@ -233,9 +233,9 @@ export default function Home() {
                   <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">03</span>
                   <span className="material-symbols-outlined text-[28px]">hub</span>
                 </div>
-                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Synthesize Across Papers</h3>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Tổng hợp chéo các bài báo</h3>
                 <p className="text-[14px] text-[#424754] leading-relaxed">
-                  Discover cross-paper correlations, identify research gaps, and build comprehensive reviews.
+                  Khám phá mối tương quan giữa các bài báo, xác định những khoảng trống nghiên cứu và xây dựng các bài tổng quan toàn diện.
                 </p>
               </div>
 
@@ -245,9 +245,9 @@ export default function Home() {
                   <span className="absolute -top-3 -left-3 text-[12px] font-bold text-[#c2c6d6] bg-white px-1">04</span>
                   <span className="material-symbols-outlined text-[28px]">chat</span>
                 </div>
-                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Ask & Explore</h3>
+                <h3 className="text-[18px] font-bold text-[#121c2a] mb-3">Hỏi & Khám phá</h3>
                 <p className="text-[14px] text-[#424754] leading-relaxed">
-                  Query your entire library in natural language. Get instant answers with precise citations.
+                  Truy vấn toàn bộ thư viện bằng ngôn ngữ tự nhiên. Nhận câu trả lời ngay lập tức cùng với trích dẫn chính xác.
                 </p>
               </div>
             </div>
@@ -262,21 +262,21 @@ export default function Home() {
                   <div className="w-3 h-3 rounded-full bg-red-400"></div>
                   <div className="w-3 h-3 rounded-full bg-amber-400"></div>
                   <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  <div className="ml-4 text-[12px] font-semibold text-[#727785]">AI Synthesis Insights</div>
+                  <div className="ml-4 text-[12px] font-semibold text-[#727785]">Thông tin Tổng hợp AI</div>
                 </div>
                 <div className="p-6 md:p-8 flex flex-col gap-6">
                   {/* Mockup Chat / Insight Panel */}
                   <div className="self-end bg-[#eef2fc] rounded-2xl rounded-tr-sm px-5 py-4 max-w-[85%] text-[14px] text-[#121c2a] shadow-sm">
-                    Find the correlation between topological protection and error rates in these 5 papers.
+                    Tìm mối tương quan giữa bảo vệ tô-pô và tỷ lệ lỗi trong 5 bài báo này.
                   </div>
                   
                   <div className="self-start bg-white border border-[#c2c6d6]/40 shadow-sm rounded-2xl rounded-tl-sm px-6 py-5 max-w-[95%]">
                     <div className="flex items-center gap-2 mb-4 text-[#0058be]">
                       <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
-                      <span className="text-[14px] font-bold">Lumis Synthesis</span>
+                      <span className="text-[14px] font-bold">Tổng hợp Lumis</span>
                     </div>
                     <p className="text-[14px] text-[#424754] leading-relaxed mb-4">
-                      Based on your library, 4 out of 5 papers suggest that non-Abelian anyons increase topological protection by approximately 87%, effectively reducing logical error rates below the fault-tolerance threshold.
+                      Dựa trên thư viện của bạn, 4 trên 5 bài báo cho thấy anyon phi-Abel làm tăng khả năng bảo vệ tô-pô lên khoảng 87%, giảm thiểu hiệu quả tỷ lệ lỗi logic xuống dưới ngưỡng chịu lỗi.
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-1 bg-[#f0f2f5] text-[#424754] rounded border border-[#c2c6d6]/30 text-[11px] font-semibold flex items-center gap-1">
@@ -295,17 +295,17 @@ export default function Home() {
         {/* CTA Section */}
         <FadeInSection className="text-center max-w-[600px] mx-auto px-6 mb-32">
           <h2 className="text-[32px] font-bold text-[#121c2a] mb-4">
-              Ready to accelerate your research?
+              Sẵn sàng đẩy nhanh tiến độ nghiên cứu?
             </h2>
             <p className="text-[16px] text-[#727785] mb-8">
-              Join thousands of researchers using Lumis to synthesize knowledge faster and smarter.
+              Gia nhập hàng nghìn nhà nghiên cứu đang sử dụng Lumis để tổng hợp kiến thức nhanh chóng và thông minh hơn.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <GetStartedButton className="w-full sm:w-auto bg-[#0058be] hover:bg-[#2170e4] text-white text-[15px] font-bold py-3 px-8 rounded-full shadow-md shadow-[#0058be]/20 transition-all hover:-translate-y-0.5 border-none">
-                Get Started for Free
+                Bắt đầu miễn phí
               </GetStartedButton>
               <button className="w-full sm:w-auto bg-white border-2 border-[#c2c6d6]/60 text-[#424754] text-[15px] font-bold py-3 px-8 rounded-full hover:bg-gray-50 hover:border-[#424754]/30 transition-all">
-                Watch Demo
+                Xem Demo
               </button>
           </div>
         </FadeInSection>
@@ -316,20 +316,20 @@ export default function Home() {
           Lumis
         </div>
         <div className="text-[14px] text-on-surface-variant">
-          © 2026 Lumis. Precision in Discovery.
+          © 2026 Lumis. Chuẩn xác trong từng khám phá.
         </div>
         <div className="flex gap-md">
           <Link
             href="#"
             className="text-[14px] text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            Privacy Policy
+            Chính sách bảo mật
           </Link>
           <Link
             href="#"
             className="text-[14px] text-on-surface-variant hover:text-on-surface transition-colors"
           >
-            Terms of Service
+            Điều khoản dịch vụ
           </Link>
         </div>
       </footer>
