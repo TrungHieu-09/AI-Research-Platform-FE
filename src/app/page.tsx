@@ -19,7 +19,13 @@ export default function Home() {
   const timelineRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const totalDuration = 32; // 4 steps x 8 seconds
+  const stepStartTimesVi = [0, 20, 39, 56];
+  const stepStartTimesEn = [0, 21, 43, 65];
+  const totalDurationVi = 73;
+  const totalDurationEn = 87;
+
+  const currentStepStartTimes = voiceLang === "vi" ? stepStartTimesVi : stepStartTimesEn;
+  const totalDuration = voiceLang === "vi" ? totalDurationVi : totalDurationEn;
 
   const demoSteps = [
     {
@@ -30,21 +36,21 @@ export default function Home() {
       textVi: "Chào mừng bạn đến với Lumis, nền tảng không gian làm việc thông minh được thiết kế để tăng tốc độ nghiên cứu khoa học và học thuật. Để bắt đầu, bạn chỉ cần kéo và thả các bài báo nghiên cứu, tệp PDF hoặc tài liệu Word vào Thư viện bảo mật. Lumis sẽ ngay lập tức phân tích và lưu trữ an toàn trên đám mây cá nhân của bạn, sẵn sàng cho việc phân tích tức thì.",
     },
     {
-      time: 8,
+      time: 20,
       title: "Step 2: AI Organization",
       titleVi: "Bước 2: AI Đọc & Phân loại Tự động",
       textEn: "Once uploaded, Lumis' advanced AI models immediately read and comprehend your documents. The system automatically extracts key metadata, including author names, journal titles, publication dates, and abstracts. It then organizes and tags them by research fields and topics, turning your messy folder of files into a structured, searchable catalog.",
       textVi: "Ngay sau khi tải lên, các mô hình trí tuệ nhân tạo tiên tiến của Lumis lập tức đọc hiểu tài liệu của bạn. Hệ thống tự động trích xuất các thông tin siêu dữ liệu quan trọng như tên tác giả, tên tạp chí, ngày xuất bản và tóm tắt. Sau đó tự động phân loại theo chủ đề nghiên cứu, biến danh sách tài liệu rời rạc thành một danh mục có cấu trúc khoa học.",
     },
     {
-      time: 16,
+      time: 39,
       title: "Step 3: Synthesize Knowledge",
       titleVi: "Bước 3: Tổng hợp Tri thức Đa tài liệu",
       textEn: "Now, let's unlock the true power of synthesis. Lumis analyzes semantic connections across all papers in your library. It helps you discover hidden patterns, cross-paper correlations, and critical research gaps. You can easily generate structured literature review drafts and compare different methodologies instantly, saving you weeks of manual reading.",
       textVi: "Tiếp theo là sức mạnh tổng hợp tri thức vượt trội. Lumis phân tích mối liên hệ ngữ nghĩa giữa tất cả các bài báo trong thư viện. Hệ thống giúp bạn phát hiện các mẫu ẩn, tương quan giữa các nghiên cứu và khoảng trống khoa học quan trọng, giúp bạn tạo bản thảo tổng quan tài liệu chỉ trong vài giây thay vì hàng tuần đọc thủ công.",
     },
     {
-      time: 24,
+      time: 56,
       title: "Step 4: Ask & Explore",
       titleVi: "Bước 4: Trợ lý AI Q&A Kèm Trích dẫn",
       textEn: "Finally, navigate to the AI Workspace to chat with your collective library in natural language. Ask complex questions like 'What is the consensus on quantum error correction in these papers?', and Lumis will synthesize a comprehensive answer, backed by precise inline citations that link directly to the source documents. Empower your research and start your free workspace today!",
@@ -71,11 +77,15 @@ export default function Home() {
   };
 
   const jumpToStep = (index: number) => {
-    const targetTime = index * 8;
+    const targetTime = currentStepStartTimes[index];
     setCurrentTime(targetTime);
     setProgress((targetTime / totalDuration) * 100);
     setActiveStep(index);
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
   };
 
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -88,31 +98,34 @@ export default function Home() {
     const newTime = (percentage / 100) * totalDuration;
     setCurrentTime(newTime);
     setProgress(percentage);
-    const stepIdx = Math.min(Math.floor(newTime / 8), demoSteps.length - 1);
+
+    // Determine corresponding step from timeline click
+    let stepIdx = 0;
+    for (let i = currentStepStartTimes.length - 1; i >= 0; i--) {
+      if (newTime >= currentStepStartTimes[i]) {
+        stepIdx = i;
+        break;
+      }
+    }
     setActiveStep(stepIdx);
     setIsPlaying(true);
   };
 
-  // Timer loop for video progress
-  useEffect(() => {
-    if (!showDemo || !isPlaying) return;
+  const handleAudioTimeUpdate = () => {
+    if (!audioRef.current) return;
+    const stepOffset = currentStepStartTimes[activeStep] || 0;
+    const totalCurrent = stepOffset + audioRef.current.currentTime;
+    setCurrentTime(Math.min(totalCurrent, totalDuration));
+    setProgress(Math.min((totalCurrent / totalDuration) * 100, 100));
+  };
 
-    const interval = setInterval(() => {
-      setCurrentTime((prev) => {
-        const nextTime = prev + 0.2;
-        if (nextTime >= totalDuration) {
-          setIsPlaying(false);
-          return totalDuration;
-        }
-        setProgress((nextTime / totalDuration) * 100);
-        const nextStep = Math.min(Math.floor(nextTime / 8), demoSteps.length - 1);
-        setActiveStep(nextStep);
-        return nextTime;
-      });
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [showDemo, isPlaying, totalDuration, demoSteps.length]);
+  const handleAudioEnded = () => {
+    if (activeStep < demoSteps.length - 1) {
+      setActiveStep((prev) => prev + 1);
+    } else {
+      setIsPlaying(false);
+    }
+  };
 
   // Handle modal open/close
   useEffect(() => {
@@ -490,6 +503,8 @@ export default function Home() {
             ref={audioRef}
             src={`/audio/${voiceLang}_step${activeStep}.mp3`}
             preload="auto"
+            onTimeUpdate={handleAudioTimeUpdate}
+            onEnded={handleAudioEnded}
           />
 
           <div className="relative w-full max-w-[1200px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-black/10 flex flex-col md:flex-row h-[90vh] max-h-[720px]">
@@ -699,7 +714,7 @@ export default function Home() {
                               }`}
                             >
                               <span className="px-2 py-0.5 bg-blue-100 text-[#0058be] text-[11px] font-bold font-mono rounded shrink-0">
-                                {originalIndex === 0 ? "0:00" : originalIndex === 1 ? "0:08" : originalIndex === 2 ? "0:16" : "0:24"}
+                                {formatTime(currentStepStartTimes[originalIndex])}
                               </span>
                               <div className="flex flex-col gap-0.5">
                                 <h5
