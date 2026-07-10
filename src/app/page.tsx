@@ -18,10 +18,10 @@ export default function Home() {
   const timelineRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const stepStartTimesVi = [0, 20, 39, 56];
-  const stepStartTimesEn = [0, 21, 43, 65];
-  const totalDurationVi = 73;
-  const totalDurationEn = 87;
+  const stepStartTimesVi = [0, 22, 44, 66];
+  const stepStartTimesEn = [0, 22, 44, 66];
+  const totalDurationVi = 88;
+  const totalDurationEn = 88;
 
   const currentStepStartTimes = voiceLang === "vi" ? stepStartTimesVi : stepStartTimesEn;
   const totalDuration = voiceLang === "vi" ? totalDurationVi : totalDurationEn;
@@ -35,21 +35,21 @@ export default function Home() {
       textVi: "Chào mừng bạn đến với Lumis, nền tảng không gian làm việc thông minh được thiết kế để tăng tốc độ nghiên cứu khoa học và học thuật. Để bắt đầu, bạn chỉ cần kéo và thả các bài báo nghiên cứu, tệp PDF hoặc tài liệu Word vào Thư viện bảo mật. Lumis sẽ ngay lập tức phân tích và lưu trữ an toàn trên đám mây cá nhân của bạn, sẵn sàng cho việc phân tích tức thì.",
     },
     {
-      time: 20,
+      time: 22,
       title: "Step 2: AI Organization",
       titleVi: "Bước 2: AI Đọc & Phân loại Tự động",
       textEn: "Once uploaded, Lumis' advanced AI models immediately read and comprehend your documents. The system automatically extracts key metadata, including author names, journal titles, publication dates, and abstracts. It then organizes and tags them by research fields and topics, turning your messy folder of files into a structured, searchable catalog.",
       textVi: "Ngay sau khi tải lên, các mô hình trí tuệ nhân tạo tiên tiến của Lumis lập tức đọc hiểu tài liệu của bạn. Hệ thống tự động trích xuất các thông tin siêu dữ liệu quan trọng như tên tác giả, tên tạp chí, ngày xuất bản và tóm tắt. Sau đó tự động phân loại theo chủ đề nghiên cứu, biến danh sách tài liệu rời rạc thành một danh mục có cấu trúc khoa học.",
     },
     {
-      time: 39,
+      time: 44,
       title: "Step 3: Synthesize Knowledge",
       titleVi: "Bước 3: Tổng hợp Tri thức Đa tài liệu",
       textEn: "Now, let's unlock the true power of synthesis. Lumis analyzes semantic connections across all papers in your library. It helps you discover hidden patterns, cross-paper correlations, and critical research gaps. You can easily generate structured literature review drafts and compare different methodologies instantly, saving you weeks of manual reading.",
       textVi: "Tiếp theo là sức mạnh tổng hợp tri thức vượt trội. Lumis phân tích mối liên hệ ngữ nghĩa giữa tất cả các bài báo trong thư viện. Hệ thống giúp bạn phát hiện các mẫu ẩn, tương quan giữa các nghiên cứu và khoảng trống khoa học quan trọng, giúp bạn tạo bản thảo tổng quan tài liệu chỉ trong vài giây thay vì hàng tuần đọc thủ công.",
     },
     {
-      time: 56,
+      time: 66,
       title: "Step 4: Ask & Explore",
       titleVi: "Bước 4: Trợ lý AI Q&A Kèm Trích dẫn",
       textEn: "Finally, navigate to the AI Workspace to chat with your collective library in natural language. Ask complex questions like 'What is the consensus on quantum error correction in these papers?', and Lumis will synthesize a comprehensive answer, backed by precise inline citations that link directly to the source documents. Empower your research and start your free workspace today!",
