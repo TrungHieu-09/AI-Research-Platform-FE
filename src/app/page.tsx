@@ -570,12 +570,14 @@ export default function Home() {
                 />
 
                 {/* Subtitle text overlay directly in the video frame */}
-                <div className="absolute bottom-6 left-4 right-4 text-center z-10">
-                  <div className="inline-block bg-black/85 text-white text-[13px] md:text-[14px] font-medium py-2.5 px-5 rounded-2xl backdrop-blur-sm max-w-[90%] border border-white/15 shadow-xl">
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#316bf3] mb-0.5">
+                <div className="absolute bottom-6 left-4 right-4 text-center z-10 select-none pointer-events-none">
+                  <div className="inline-block bg-black/85 text-white text-[12px] md:text-[13px] font-medium py-1.5 px-4 rounded-xl backdrop-blur-sm max-w-[90%] border border-white/10 shadow-xl select-none">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#316bf3] mb-0.5 select-none">
                       {voiceLang === "vi" ? demoSteps[activeStep]?.titleVi : demoSteps[activeStep]?.title}
                     </div>
-                    {voiceLang === "vi" ? demoSteps[activeStep]?.textVi : demoSteps[activeStep]?.textEn}
+                    <span className="select-none">
+                      {voiceLang === "vi" ? demoSteps[activeStep]?.textVi : demoSteps[activeStep]?.textEn}
+                    </span>
                   </div>
                 </div>
               </div>
