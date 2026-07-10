@@ -1,8 +1,146 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { LandingHeader } from "@/components/layouts/landing-header";
 import { FadeInSection } from "@/components/animations/fade-in-section";
 
 export default function Home() {
+  const [showDemo, setShowDemo] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [videoKey, setVideoKey] = useState<number>(Date.now());
+  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [activeTab, setActiveTab] = useState<"transcript" | "summary">("transcript");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<"vi" | "en">("vi");
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const totalDuration = 32; // 4 steps x 8 seconds
+
+  const demoSteps = [
+    {
+      time: 0,
+      title: "Step 1: Upload Documents",
+      titleVi: "Bước 1: Tải lên Tài liệu Nghiên cứu",
+      textEn: "Welcome to Lumis, the intelligent workspace designed to accelerate your scientific and academic research. To begin, simply drag and drop your research articles, PDFs, or Word documents into the secure Library. Lumis instantly parses your uploaded files and stores them safely in your personal cloud repository, ready for instant analysis.",
+      textVi: "Chào mừng bạn đến với Lumis, nền tảng không gian làm việc thông minh được thiết kế để tăng tốc độ nghiên cứu khoa học và học thuật. Để bắt đầu, bạn chỉ cần kéo và thả các bài báo nghiên cứu, tệp PDF hoặc tài liệu Word vào Thư viện bảo mật. Lumis sẽ ngay lập tức phân tích và lưu trữ an toàn trên đám mây cá nhân của bạn, sẵn sàng cho việc phân tích tức thì.",
+    },
+    {
+      time: 8,
+      title: "Step 2: AI Organization",
+      titleVi: "Bước 2: AI Đọc & Phân loại Tự động",
+      textEn: "Once uploaded, Lumis' advanced AI models immediately read and comprehend your documents. The system automatically extracts key metadata, including author names, journal titles, publication dates, and abstracts. It then organizes and tags them by research fields and topics, turning your messy folder of files into a structured, searchable catalog.",
+      textVi: "Ngay sau khi tải lên, các mô hình trí tuệ nhân tạo tiên tiến của Lumis lập tức đọc hiểu tài liệu của bạn. Hệ thống tự động trích xuất các thông tin siêu dữ liệu quan trọng như tên tác giả, tên tạp chí, ngày xuất bản và tóm tắt. Sau đó tự động phân loại theo chủ đề nghiên cứu, biến danh sách tài liệu rời rạc thành một danh mục có cấu trúc khoa học.",
+    },
+    {
+      time: 16,
+      title: "Step 3: Synthesize Knowledge",
+      titleVi: "Bước 3: Tổng hợp Tri thức Đa tài liệu",
+      textEn: "Now, let's unlock the true power of synthesis. Lumis analyzes semantic connections across all papers in your library. It helps you discover hidden patterns, cross-paper correlations, and critical research gaps. You can easily generate structured literature review drafts and compare different methodologies instantly, saving you weeks of manual reading.",
+      textVi: "Tiếp theo là sức mạnh tổng hợp tri thức vượt trội. Lumis phân tích mối liên hệ ngữ nghĩa giữa tất cả các bài báo trong thư viện. Hệ thống giúp bạn phát hiện các mẫu ẩn, tương quan giữa các nghiên cứu và khoảng trống khoa học quan trọng, giúp bạn tạo bản thảo tổng quan tài liệu chỉ trong vài giây thay vì hàng tuần đọc thủ công.",
+    },
+    {
+      time: 24,
+      title: "Step 4: Ask & Explore",
+      titleVi: "Bước 4: Trợ lý AI Q&A Kèm Trích dẫn",
+      textEn: "Finally, navigate to the AI Workspace to chat with your collective library in natural language. Ask complex questions like 'What is the consensus on quantum error correction in these papers?', and Lumis will synthesize a comprehensive answer, backed by precise inline citations that link directly to the source documents. Empower your research and start your free workspace today!",
+      textVi: "Cuối cùng, hãy vào Không gian làm việc AI để trò chuyện trực tiếp với toàn bộ thư viện bằng ngôn ngữ tự nhiên. Hãy đặt các câu hỏi chuyên sâu và Lumis sẽ tổng hợp câu trả lời toàn diện kèm trích dẫn chính xác liên kết trực tiếp đến từng tài liệu gốc. Hãy nâng tầm nghiên cứu và trải nghiệm Lumis ngay hôm nay!",
+    },
+  ];
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  const restartDemo = () => {
+    setVideoKey(Date.now());
+    setCurrentTime(0);
+    setProgress(0);
+    setActiveStep(0);
+    setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+  };
+
+  const jumpToStep = (index: number) => {
+    const targetTime = index * 8;
+    setCurrentTime(targetTime);
+    setProgress((targetTime / totalDuration) * 100);
+    setActiveStep(index);
+    setIsPlaying(true);
+  };
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!timelineRef.current) return;
+    const rect = timelineRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const percentage = Math.min(Math.max((clickX / width) * 100, 0), 100);
+    
+    const newTime = (percentage / 100) * totalDuration;
+    setCurrentTime(newTime);
+    setProgress(percentage);
+    const stepIdx = Math.min(Math.floor(newTime / 8), demoSteps.length - 1);
+    setActiveStep(stepIdx);
+    setIsPlaying(true);
+  };
+
+  // Timer loop for video progress
+  useEffect(() => {
+    if (!showDemo || !isPlaying) return;
+
+    const interval = setInterval(() => {
+      setCurrentTime((prev) => {
+        const nextTime = prev + 0.2;
+        if (nextTime >= totalDuration) {
+          setIsPlaying(false);
+          return totalDuration;
+        }
+        setProgress((nextTime / totalDuration) * 100);
+        const nextStep = Math.min(Math.floor(nextTime / 8), demoSteps.length - 1);
+        setActiveStep(nextStep);
+        return nextTime;
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [showDemo, isPlaying, totalDuration, demoSteps.length]);
+
+  // Handle modal open/close
+  useEffect(() => {
+    if (showDemo) {
+      setIsPlaying(true);
+      setCurrentTime(0);
+      setProgress(0);
+      setActiveStep(0);
+      setVideoKey(Date.now());
+    } else {
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    }
+  }, [showDemo]);
+
+  // Handle audio step / play / mute synchronization
+  useEffect(() => {
+    if (!audioRef.current || !showDemo) return;
+    if (isPlaying && !isMuted) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    } else {
+      audioRef.current.pause();
+    }
+  }, [activeStep, isPlaying, isMuted, voiceLang, showDemo]);
+
   return (
     <>
       <div className="ambient-blob bg-primary-fixed w-[600px] h-[600px] top-[-200px] left-[-200px]"></div>
@@ -33,10 +171,15 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-md mt-sm w-full sm:w-auto">
-              <button className="bg-gradient-to-r from-[#0058be] to-[#316bf3] hover:from-[#2170e4] hover:to-[#0051d5] text-white text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl shadow-[0_10px_40px_rgba(31,41,55,0.15)] hover:shadow-[0_15px_50px_rgba(31,41,55,0.2)] transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto text-center border-none">
-                Get Started for Free
-              </button>
-              <button className="glass-panel text-on-surface text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl hover:bg-[#d9e3f6]/50 transition-all duration-300 w-full sm:w-auto text-center flex items-center justify-center gap-sm border border-black/5 dark:border-white/10 dark:text-white">
+              <Link href="/signup" className="w-full sm:w-auto">
+                <button className="bg-gradient-to-r from-[#0058be] to-[#316bf3] hover:from-[#2170e4] hover:to-[#0051d5] text-white text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl shadow-[0_10px_40px_rgba(31,41,55,0.15)] hover:shadow-[0_15px_50px_rgba(31,41,55,0.2)] transition-all duration-300 transform hover:-translate-y-1 w-full text-center border-none cursor-pointer">
+                  Get Started for Free
+                </button>
+              </Link>
+              <button 
+                onClick={() => setShowDemo(true)}
+                className="glass-panel text-on-surface text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl hover:bg-[#d9e3f6]/50 transition-all duration-300 w-full sm:w-auto text-center flex items-center justify-center gap-sm border border-black/5 dark:border-white/10 dark:text-white"
+              >
                 <span className="material-symbols-outlined">play_circle</span>
                 Watch Demo
               </button>
@@ -175,9 +318,11 @@ export default function Home() {
               <h3 className="text-[32px] font-semibold leading-[1.2] text-on-surface mb-md">
                 Ready to organize the chaos?
               </h3>
-              <button className="bg-[#0058be] hover:bg-[#2170e4] text-white text-[14px] font-semibold py-md px-lg rounded-full shadow-sm transition-all duration-200 mt-2 border-none">
-                Start your free workspace
-              </button>
+              <Link href="/signup">
+                <button className="bg-[#0058be] hover:bg-[#2170e4] text-white text-[14px] font-semibold py-md px-lg rounded-full shadow-sm transition-all duration-200 mt-2 border-none cursor-pointer">
+                  Start your free workspace
+                </button>
+              </Link>
             </div>
           </div>
         </FadeInSection>
@@ -300,10 +445,15 @@ export default function Home() {
               Join thousands of researchers using Lumis to synthesize knowledge faster and smarter.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="w-full sm:w-auto bg-[#0058be] hover:bg-[#2170e4] text-white text-[15px] font-bold py-3 px-8 rounded-full shadow-md shadow-[#0058be]/20 transition-all hover:-translate-y-0.5 border-none">
-                Get Started for Free
-              </button>
-              <button className="w-full sm:w-auto bg-white border-2 border-[#c2c6d6]/60 text-[#424754] text-[15px] font-bold py-3 px-8 rounded-full hover:bg-gray-50 hover:border-[#424754]/30 transition-all">
+              <Link href="/signup" className="w-full sm:w-auto">
+                <button className="w-full bg-[#0058be] hover:bg-[#2170e4] text-white text-[15px] font-bold py-3 px-8 rounded-full shadow-md shadow-[#0058be]/20 transition-all hover:-translate-y-0.5 border-none cursor-pointer">
+                  Get Started for Free
+                </button>
+              </Link>
+              <button 
+                onClick={() => setShowDemo(true)}
+                className="w-full sm:w-auto bg-white border-2 border-[#c2c6d6]/60 text-[#424754] text-[15px] font-bold py-3 px-8 rounded-full hover:bg-gray-50 hover:border-[#424754]/30 transition-all cursor-pointer"
+              >
                 Watch Demo
               </button>
           </div>
@@ -332,6 +482,313 @@ export default function Home() {
           </Link>
         </div>
       </footer>
+
+      {showDemo && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-md p-4 md:p-6 animate-fade-in">
+          {/* Audio element for real studio AI voiceover */}
+          <audio
+            ref={audioRef}
+            src={`/audio/${voiceLang}_step${activeStep}.mp3`}
+            preload="auto"
+          />
+
+          <div className="relative w-full max-w-[1200px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-black/10 flex flex-col md:flex-row h-[90vh] max-h-[720px]">
+            
+            {/* Left Side: Video Player Area */}
+            <div className="flex-1 flex flex-col bg-[#0b0f17] relative h-full">
+              {/* Video Player Header Overlay */}
+              <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4 flex justify-between items-center text-white">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#316bf3] text-[22px]">play_circle</span>
+                  <div>
+                    <h4 className="text-[14px] font-bold tracking-tight">Lumis AI Product Tour</h4>
+                    <p className="text-[10px] text-gray-300">Synchronized AI Voice & Video Walkthrough</p>
+                  </div>
+                </div>
+
+                {/* Voice Language Selector & Mute Toggle */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setVoiceLang(voiceLang === "vi" ? "en" : "vi")}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold border border-white/20 transition-all cursor-pointer"
+                    title="Chuyển đổi ngôn ngữ thuyết minh AI"
+                  >
+                    <span className="material-symbols-outlined text-[15px]">translate</span>
+                    <span>{voiceLang === "vi" ? "🇻🇳 Giọng AI Việt Nam" : "🇺🇸 English AI Voice"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-white/15 hover:bg-white/25 text-white border-none transition-all cursor-pointer"
+                    title={isMuted ? "Unmute Voice" : "Mute Voice"}
+                  >
+                    <span className="material-symbols-outlined text-[17px]">
+                      {isMuted ? "volume_off" : "volume_up"}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowDemo(false)}
+                    className="md:hidden w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors border-none cursor-pointer text-white"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">close</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Video frame/container */}
+              <div className="flex-1 w-full relative flex items-center justify-center overflow-hidden">
+                <img
+                  key={videoKey}
+                  src={`/videos/demo.webp?t=${videoKey}`}
+                  alt="Lumis Product Demo"
+                  className="w-full h-full object-contain"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                />
+
+                {/* Subtitle text overlay directly in the video frame */}
+                <div className="absolute bottom-6 left-4 right-4 text-center z-10">
+                  <div className="inline-block bg-black/85 text-white text-[13px] md:text-[14px] font-medium py-2.5 px-5 rounded-2xl backdrop-blur-sm max-w-[90%] border border-white/15 shadow-xl">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#316bf3] mb-0.5">
+                      {voiceLang === "vi" ? demoSteps[activeStep]?.titleVi : demoSteps[activeStep]?.title}
+                    </div>
+                    {voiceLang === "vi" ? demoSteps[activeStep]?.textVi : demoSteps[activeStep]?.textEn}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress and Video Controls bar */}
+              <div className="bg-black/95 border-t border-white/10 p-3 flex flex-col gap-2.5">
+                {/* Single Clean Timeline Bar */}
+                <div 
+                  ref={timelineRef}
+                  onClick={handleTimelineClick}
+                  className="relative w-full h-2 bg-white/20 rounded-full overflow-hidden cursor-pointer hover:h-2.5 transition-all"
+                  title="Click to seek"
+                >
+                  <div
+                    className="h-full bg-gradient-to-r from-[#0058be] to-[#316bf3]"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+
+                {/* Control buttons */}
+                <div className="flex items-center justify-between text-white text-[13px] px-1">
+                  <div className="flex items-center gap-4">
+                    {/* Play/Pause Button */}
+                    <button
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className="text-white hover:text-[#316bf3] bg-transparent border-none cursor-pointer flex items-center gap-1.5 font-bold"
+                      title={isPlaying ? "Pause walkthrough" : "Play walkthrough"}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">
+                        {isPlaying ? "pause" : "play_arrow"}
+                      </span>
+                      <span>{isPlaying ? "Pause" : "Play"}</span>
+                    </button>
+
+                    {/* Restart Button */}
+                    <button
+                      onClick={restartDemo}
+                      className="text-white hover:text-[#316bf3] bg-transparent border-none cursor-pointer flex items-center gap-1.5 font-bold"
+                      title="Restart walkthrough from 0:00"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">replay</span>
+                      <span>Restart</span>
+                    </button>
+
+                    {/* Time Counter */}
+                    <span className="text-[12px] text-gray-400 font-mono">
+                      {formatTime(Math.round(currentTime))} / {formatTime(totalDuration)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="px-2.5 py-0.5 bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded text-[11px] font-mono uppercase tracking-wider">
+                      STUDIO AI VOICE
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side: Transcript & Summary Panel */}
+            <div className="w-full md:w-[380px] border-t md:border-t-0 md:border-l border-gray-100 flex flex-col bg-white h-[40vh] md:h-full">
+              {/* Sidebar Header & Tab Switcher */}
+              <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/60 shrink-0">
+                <div className="flex gap-1 bg-gray-200/60 p-0.5 rounded-xl">
+                  <button
+                    onClick={() => setActiveTab("transcript")}
+                    className={`px-3 py-1.5 rounded-lg text-[12px] font-bold border-none transition-all cursor-pointer ${
+                      activeTab === "transcript"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900 bg-transparent"
+                    }`}
+                  >
+                    {voiceLang === "vi" ? "Lời thoại" : "Transcript"}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("summary")}
+                    className={`px-3 py-1.5 rounded-lg text-[12px] font-bold border-none transition-all cursor-pointer ${
+                      activeTab === "summary"
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900 bg-transparent"
+                    }`}
+                  >
+                    {voiceLang === "vi" ? "Tóm tắt AI" : "Summary"}
+                  </button>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={restartDemo}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all cursor-pointer border border-gray-200"
+                    title="Phát lại từ đầu"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">replay</span>
+                    Replay
+                  </button>
+
+                  <button
+                    onClick={() => setShowDemo(false)}
+                    className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors border-none cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[20px] text-gray-700">close</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+                {activeTab === "transcript" ? (
+                  <>
+                    {/* Search box */}
+                    <div className="relative shrink-0">
+                      <span className="material-symbols-outlined absolute left-3 top-2.5 text-gray-400 text-[18px]">
+                        search
+                      </span>
+                      <input
+                        type="text"
+                        placeholder={voiceLang === "vi" ? "Tìm kiếm lời thoại..." : "Search transcript..."}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 bg-gray-100/80 border border-gray-200/80 rounded-xl text-[13px] outline-none focus:border-[#316bf3]/50 focus:bg-white transition-all text-gray-800"
+                      />
+                    </div>
+
+                    {/* Transcript Items */}
+                    <div className="flex flex-col gap-2">
+                      {demoSteps
+                        .filter(
+                          (step) =>
+                            step.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            step.titleVi.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            step.textEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            step.textVi.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .map((step) => {
+                          const originalIndex = demoSteps.indexOf(step);
+                          const isActive = activeStep === originalIndex;
+                          return (
+                            <div
+                              key={originalIndex}
+                              onClick={() => jumpToStep(originalIndex)}
+                              className={`flex items-start gap-3 p-3 rounded-2xl cursor-pointer transition-all border ${
+                                isActive
+                                  ? "bg-blue-50/50 border-[#316bf3]/20 shadow-sm"
+                                  : "border-transparent hover:bg-gray-50"
+                              }`}
+                            >
+                              <span className="px-2 py-0.5 bg-blue-100 text-[#0058be] text-[11px] font-bold font-mono rounded shrink-0">
+                                {originalIndex === 0 ? "0:00" : originalIndex === 1 ? "0:08" : originalIndex === 2 ? "0:16" : "0:24"}
+                              </span>
+                              <div className="flex flex-col gap-0.5">
+                                <h5
+                                  className={`text-[12px] font-bold ${
+                                    isActive ? "text-[#0058be]" : "text-gray-900"
+                                  }`}
+                                >
+                                  {voiceLang === "vi" ? step.titleVi : step.title}
+                                </h5>
+                                <p className="text-[12px] text-gray-600 leading-relaxed font-medium">
+                                  {voiceLang === "vi" ? step.textVi : step.textEn}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </>
+                ) : (
+                  /* Summary tab content */
+                  <div className="flex flex-col gap-4">
+                    <div className="bg-gradient-to-br from-blue-50/30 to-[#316bf3]/5 border border-[#316bf3]/10 p-4 rounded-2xl">
+                      <h4 className="text-[13px] font-bold text-gray-900 flex items-center gap-1.5 mb-2">
+                        <span className="material-symbols-outlined text-[#0058be] text-[16px]">
+                          auto_awesome
+                        </span>
+                        {voiceLang === "vi" ? "Tóm tắt Giá trị Cốt lõi" : "AI Key Insights & Summary"}
+                      </h4>
+                      <p className="text-[12px] text-gray-600 leading-relaxed font-medium">
+                        {voiceLang === "vi"
+                          ? "Lumis là không gian làm việc AI giúp tối ưu hóa quy trình nghiên cứu khoa học:"
+                          : "Lumis is an AI-first workspace that simplifies the workflow for academic and professional researchers:"}
+                      </p>
+                    </div>
+
+                    <ul className="flex flex-col gap-3 pl-1 text-[12px] text-gray-600 font-medium">
+                      <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-green-500 text-[16px] shrink-0 mt-0.5">
+                          check_circle
+                        </span>
+                        <span>
+                          <strong>{voiceLang === "vi" ? "Quản lý Thư viện:" : "Document Library:"}</strong>{" "}
+                          {voiceLang === "vi"
+                            ? "Tải lên nhanh chóng PDF, Word và lưu trữ bảo mật trên cloud."
+                            : "Seamless ingestion of PDFs, Word files, and papers."}
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-green-500 text-[16px] shrink-0 mt-0.5">
+                          check_circle
+                        </span>
+                        <span>
+                          <strong>{voiceLang === "vi" ? "AI Phân loại Tự động:" : "AI Categorization:"}</strong>{" "}
+                          {voiceLang === "vi"
+                            ? "Tự động trích xuất siêu dữ liệu và phân loại theo chủ đề."
+                            : "Automatic topic modeling and extraction of core metadata fields."}
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-green-500 text-[16px] shrink-0 mt-0.5">
+                          check_circle
+                        </span>
+                        <span>
+                          <strong>{voiceLang === "vi" ? "Tổng hợp Đa tài liệu:" : "Cross-Paper Synthesis:"}</strong>{" "}
+                          {voiceLang === "vi"
+                            ? "Phát hiện mối liên hệ và khoảng trống nghiên cứu giữa các bài báo."
+                            : "Discover links and correlation metrics between discrete research papers."}
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="material-symbols-outlined text-green-500 text-[16px] shrink-0 mt-0.5">
+                          check_circle
+                        </span>
+                        <span>
+                          <strong>{voiceLang === "vi" ? "Hỏi đáp Kèm Trích dẫn:" : "Academic Citations:"}</strong>{" "}
+                          {voiceLang === "vi"
+                            ? "Trợ lý AI trả lời chuyên sâu kèm trích dẫn chuẩn xác đến từng tài liệu gốc."
+                            : "Q&A with real-time academic citation backtracking and verification."}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </>
   );
 }
