@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LandingHeader } from "@/components/layouts/landing-header";
+import { GetStartedButton } from "@/components/ui/get-started-button";
 
 export default function PricingPage() {
   return (
@@ -30,9 +31,9 @@ export default function PricingPage() {
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
               Perfect for students and casual researchers getting started.
             </p>
-            <button className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
+            <GetStartedButton className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
               Get Started for Free
-            </button>
+            </GetStartedButton>
             <ul className="flex flex-col gap-4">
               {["Up to 50 documents", "Basic AI synthesis", "Standard search", "1 Collection"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LandingHeader } from "@/components/layouts/landing-header";
 import { FadeInSection } from "@/components/animations/fade-in-section";
+import { GetStartedButton } from "@/components/ui/get-started-button";
 
 export default function Home() {
   return (
@@ -33,9 +34,9 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-md mt-sm w-full sm:w-auto">
-              <button className="bg-gradient-to-r from-[#0058be] to-[#316bf3] hover:from-[#2170e4] hover:to-[#0051d5] text-white text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl shadow-[0_10px_40px_rgba(31,41,55,0.15)] hover:shadow-[0_15px_50px_rgba(31,41,55,0.2)] transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto text-center border-none">
+              <GetStartedButton className="bg-gradient-to-r from-[#0058be] to-[#316bf3] hover:from-[#2170e4] hover:to-[#0051d5] text-white text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl shadow-[0_10px_40px_rgba(31,41,55,0.15)] hover:shadow-[0_15px_50px_rgba(31,41,55,0.2)] transition-all duration-300 transform hover:-translate-y-1 w-full sm:w-auto text-center border-none">
                 Get Started for Free
-              </button>
+              </GetStartedButton>
               <button className="glass-panel text-on-surface text-[14px] font-semibold py-[16px] px-[32px] rounded-2xl hover:bg-[#d9e3f6]/50 transition-all duration-300 w-full sm:w-auto text-center flex items-center justify-center gap-sm border border-black/5 dark:border-white/10 dark:text-white">
                 <span className="material-symbols-outlined">play_circle</span>
                 Watch Demo
@@ -300,9 +301,9 @@ export default function Home() {
               Join thousands of researchers using Lumis to synthesize knowledge faster and smarter.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="w-full sm:w-auto bg-[#0058be] hover:bg-[#2170e4] text-white text-[15px] font-bold py-3 px-8 rounded-full shadow-md shadow-[#0058be]/20 transition-all hover:-translate-y-0.5 border-none">
+              <GetStartedButton className="w-full sm:w-auto bg-[#0058be] hover:bg-[#2170e4] text-white text-[15px] font-bold py-3 px-8 rounded-full shadow-md shadow-[#0058be]/20 transition-all hover:-translate-y-0.5 border-none">
                 Get Started for Free
-              </button>
+              </GetStartedButton>
               <button className="w-full sm:w-auto bg-white border-2 border-[#c2c6d6]/60 text-[#424754] text-[15px] font-bold py-3 px-8 rounded-full hover:bg-gray-50 hover:border-[#424754]/30 transition-all">
                 Watch Demo
               </button>
