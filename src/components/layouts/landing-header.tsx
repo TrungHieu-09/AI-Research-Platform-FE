@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown,
+  Wallet, Settings, LogOut, Search, ChevronDown, Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -209,7 +209,8 @@ export function LandingHeader() {
       <div className="flex items-center gap-3">
         {user ? (
           /* ── Authenticated: name + avatar + dropdown ── */
-          <div className="relative" ref={profileRef}>
+          <>
+            <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-[#eff4ff] transition-all group"
@@ -280,6 +281,7 @@ export function LandingHeader() {
               </div>
             )}
           </div>
+          </>
         ) : (
           /* ── Guest: search + login + get started ── */
           <>
