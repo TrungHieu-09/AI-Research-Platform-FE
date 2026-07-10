@@ -29,11 +29,19 @@ export default function AuthView({ initialMode }: AuthViewProps) {
     window.history.pushState(null, "", newPath);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Mock: save user to localStorage then go back to landing
-    setAuthUser({ name: "Dr. Jane Doe", email: "jane.doe@university.edu", initials: "JD" });
-    router.push("/");
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    
+    // Mock: save user to localStorage then redirect based on role
+    if (email && email.toLowerCase().includes("admin")) {
+      setAuthUser({ name: "System Admin", email: email, initials: "SA", role: "admin" });
+      router.push("/admin/dashboard");
+    } else {
+      setAuthUser({ name: "Dr. Jane Doe", email: email || "jane.doe@university.edu", initials: "JD", role: "user" });
+      router.push("/");
+    }
   };
 
   const handleSignup = (e: React.FormEvent) => {
@@ -130,7 +138,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   mode === "login" ? "text-white" : "text-[#121c2a]"
                 }`}
               >
-                Khám phá tri thức chính xác.
+                Chuẩn xác trong từng khám phá.
               </h2>
               <p
                 className={`text-[18px] leading-[1.6] transition-colors duration-500 ${
@@ -138,8 +146,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                 }`}
               >
                 {mode === "login"
-                  ? "Tối ưu hóa quy trình nghiên cứu của bạn với các thông tin chi tiết và công cụ tổng hợp tài liệu tự động bằng AI."
-                  : "Trải nghiệm không gian làm việc tối giản công nghệ cao dành riêng cho cộng đồng nghiên cứu học thuật và AI. Tăng cường khả năng tập trung của bạn với các công cụ quản lý tài liệu chặt chẽ và tổng hợp thông tin sâu sắc."}
+                  ? "Nâng tầm quy trình nghiên cứu của bạn với thông tin chi tiết theo ngữ cảnh và tổng hợp tài liệu bằng AI."
+                  : "Trải nghiệm không gian làm việc tối giản, hiện đại dành riêng cho cộng đồng học thuật và nghiên cứu AI. Nâng cao sự tập trung với các công cụ được thiết kế để quản lý tài liệu và tổng hợp kiến thức một cách chặt chẽ."}
               </p>
             </motion.div>
           </AnimatePresence>
@@ -226,7 +234,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   <div className="flex items-center gap-[12px] mb-[24px]">
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                     <span className="font-semibold text-[12px] text-[#424754] uppercase tracking-wider">
-                      Hoặc tiếp tục với email
+                      Hoặc tiếp tục bằng email
                     </span>
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                   </div>
@@ -237,11 +245,12 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
                         htmlFor="email-login"
                       >
-                        Email học thuật / tổ chức
+                        Email Tổ chức
                       </label>
                       <input
                         className="w-full h-[48px] px-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785] dark:placeholder:text-outline"
                         id="email-login"
+                        name="email"
                         placeholder="researcher@university.edu"
                         type="email"
                         required
@@ -286,7 +295,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                       className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[48px]"
                       type="submit"
                     >
-                      Đăng nhập vào không gian làm việc
+                      Đăng nhập vào Workspace
                       <span className="material-symbols-outlined text-[18px]">
                         arrow_forward
                       </span>
@@ -304,10 +313,10 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   {/* Heading */}
                   <div className="mb-[48px] text-center md:text-left">
                     <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] dark:text-on-surface mb-[4px]">
-                      Tạo tài khoản mới
+                      Tạo tài khoản của bạn
                     </h2>
                     <p className="text-[16px] text-[#424754] dark:text-on-surface-variant">
-                      Tham gia cùng hàng ngàn nhà nghiên cứu đang dùng AI để tăng tốc khám phá tri thức.
+                      Gia nhập cùng hàng ngàn nhà nghiên cứu sử dụng AI để đẩy nhanh khám phá.
                     </p>
                   </div>
 
@@ -336,7 +345,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   <div className="flex items-center gap-[12px] mb-[24px]">
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                     <span className="font-semibold text-[12px] text-[#424754] uppercase tracking-wider">
-                      Hoặc tiếp tục với email
+                      Hoặc tiếp tục bằng email
                     </span>
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                   </div>
@@ -356,7 +365,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         <input
                           className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="name"
-                          placeholder="Nguyễn Văn A"
+                          placeholder="Dr. Jane Doe"
                           type="text"
                           required
                         />
@@ -368,7 +377,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
                         htmlFor="email-signup"
                       >
-                        Email học thuật / tổ chức
+                        Email Tổ chức
                       </label>
                       <div className="relative">
                         <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">
@@ -377,7 +386,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         <input
                           className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="email-signup"
-                          placeholder="email@tochuc.edu.vn"
+                          placeholder="jane.doe@university.edu"
                           type="email"
                           required
                         />
@@ -409,7 +418,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                       className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[32px] !mt-[32px]"
                       type="submit"
                     >
-                      Tạo tài khoản mới
+                      Tạo tài khoản
                       <span className="material-symbols-outlined text-[18px]">
                         arrow_forward
                       </span>

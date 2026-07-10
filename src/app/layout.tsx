@@ -18,9 +18,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Lumis - Intelligence for your Research",
+  title: "Lumis - Trợ lý thông minh cho Nghiên cứu",
   description:
-    "Accelerate your discovery process with an AI-first workspace designed for deep academic and professional research.",
+    "Đẩy nhanh quá trình khám phá của bạn với không gian làm việc AI được thiết kế dành riêng cho nghiên cứu học thuật và chuyên sâu.",
 };
 
 export default function RootLayout({

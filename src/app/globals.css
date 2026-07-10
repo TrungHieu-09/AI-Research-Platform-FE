@@ -229,3 +229,6 @@
 .ai-border-glow {
     animation: pulse-glow 3s infinite;
 }
+
+/* Hide Next.js Dev Indicator */
+nextjs-portal { display: none !important; }

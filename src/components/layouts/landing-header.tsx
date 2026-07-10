@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown,
+  Wallet, Settings, LogOut, Search, ChevronDown, Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -14,6 +14,7 @@ export interface AuthUser {
   name: string
   email: string
   initials: string
+  role?: string
 }
 
 export function setAuthUser(user: AuthUser) {
@@ -32,13 +33,13 @@ function getAuthUser(): AuthUser | null {
 /* ─── Nav items when logged in ──────────────── */
 const appNavLinks = [
   {
-    name: "Library",
+    name: "Thư viện",
     href: "/user/library",
     icon: BookOpen,
     activePrefix: "/user/library",
   },
   {
-    name: "AI Workspace",
+    name: "Không gian AI",
     href: "/user/ai-workspace",
     icon: Brain,
     activePrefix: "/user/ai-workspace",
@@ -53,7 +54,6 @@ export function LandingHeader() {
   const [user, setUser] = React.useState<AuthUser | null>(null)
   const [profileOpen, setProfileOpen] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
-  const [isVisible, setIsVisible] = React.useState(true)
 
   const profileRef = React.useRef<HTMLDivElement>(null)
 
@@ -62,45 +62,23 @@ export function LandingHeader() {
     setUser(getAuthUser())
   }, [])
 
-  /* Scroll handler for show/hide header and scroll shadow */
+  /* Scroll handler for show/hide scroll shadow */
   React.useEffect(() => {
-    let lastY = window.scrollY
-
     const onScroll = () => {
       const currentY = window.scrollY
       
       // Update background shadow
       setScrolled(currentY > 8)
 
-      // Always show at the top of the page
-      if (currentY <= 10) {
-        setIsVisible(true)
-        lastY = currentY
-        return
-      }
-
-      // Check diff to filter small movements
-      const diff = currentY - lastY
-      if (Math.abs(diff) < 15) {
-        return
-      }
-
-      if (diff > 0) {
-        // Scrolling down -> Hide header
-        setIsVisible(false)
-        // Also close profile dropdown when header hides to avoid floating menu
+      // Close profile dropdown when scrolling to avoid floating menu
+      if (profileOpen) {
         setProfileOpen(false)
-      } else {
-        // Scrolling up -> Show header
-        setIsVisible(true)
       }
-
-      lastY = currentY
     }
 
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }, [profileOpen])
 
   /* Close profile dropdown on outside click */
   React.useEffect(() => {
@@ -126,9 +104,8 @@ export function LandingHeader() {
       id="main-nav"
       className={cn(
         "fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 md:px-16 h-16",
-        "bg-[#f8f9ff]/80 backdrop-blur-xl border-b border-black/5 transition-all duration-300 ease-in-out transform",
-        scrolled && "shadow-sm bg-white/90",
-        isVisible ? "translate-y-0" : "-translate-y-full"
+        "bg-[#f8f9ff]/80 backdrop-blur-xl border-b border-black/5 transition-all duration-300 ease-in-out",
+        scrolled && "shadow-sm bg-white/90"
       )}
     >
       {/* ── Logo ── */}
@@ -170,13 +147,13 @@ export function LandingHeader() {
               href="/#how-it-works"
               className="px-3 py-2 text-[14px] font-semibold text-[#727785] hover:text-[#424754] transition-colors rounded-xl hover:bg-[#f0f4ff]"
             >
-              How it works
+              Cách hoạt động
             </Link>
             <Link
               href="/pricing"
               className="px-3 py-2 text-[14px] font-semibold text-[#727785] hover:text-[#424754] transition-colors rounded-xl hover:bg-[#f0f4ff]"
             >
-              Pricing
+              Bảng giá
             </Link>
           </>
         ) : (
@@ -208,7 +185,8 @@ export function LandingHeader() {
       <div className="flex items-center gap-3">
         {user ? (
           /* ── Authenticated: name + avatar + dropdown ── */
-          <div className="relative" ref={profileRef}>
+          <>
+            <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-[#eff4ff] transition-all group"
@@ -247,7 +225,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <HardDrive size={14} className="shrink-0 text-[#727785]" />
-                    Storage
+                    Lưu trữ
                   </Link>
                   <Link
                     href="/user/payment"
@@ -255,7 +233,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <Wallet size={14} className="shrink-0 text-[#727785]" />
-                    Payment Management
+                    Quản lý thanh toán
                   </Link>
                   <Link
                     href="/user/settings"
@@ -263,7 +241,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <Settings size={14} className="shrink-0 text-[#727785]" />
-                    Settings
+                    Cài đặt
                   </Link>
                 </div>
 
@@ -273,12 +251,13 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={14} className="shrink-0" />
-                    Sign out
+                    Đăng xuất
                   </button>
                 </div>
               </div>
             )}
           </div>
+          </>
         ) : (
           /* ── Guest: search + login + get started ── */
           <>
@@ -295,7 +274,7 @@ export function LandingHeader() {
               href="/signup"
               className="bg-[#0058be] hover:bg-[#2170e4] text-white text-[14px] font-semibold py-2 px-5 rounded-full shadow-sm transition-all duration-200 hover:shadow-md"
             >
-              Bắt đầu ngay
+              Bắt đầu
             </Link>
           </>
         )}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LandingHeader } from "@/components/layouts/landing-header";
+import { GetStartedButton } from "@/components/ui/get-started-button";
 
 export default function PricingPage() {
   return (
@@ -15,26 +16,26 @@ export default function PricingPage() {
             Bảng giá đơn giản, <span className="text-[#0058be]">minh bạch</span>
           </h1>
           <p className="text-[18px] text-[#424754] max-w-[672px] mx-auto leading-relaxed">
-            Chọn gói phù hợp với nhu cầu nghiên cứu của bạn. Nâng cấp, hạ cấp hoặc hủy bất kỳ lúc nào.
+            Chọn gói phù hợp với nhu cầu nghiên cứu của bạn. Nâng cấp, hạ cấp hoặc hủy bất cứ lúc nào.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-[1200px] mx-auto">
           {/* Free Plan */}
           <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 hover:border-[#0058be]/30 transition-all hover:shadow-lg hover:-translate-y-1">
-            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Explorer (Miễn phí)</h3>
+            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Explorer</h3>
             <div className="flex items-baseline gap-1 mb-6">
               <span className="text-[48px] font-bold text-[#121c2a]">$0</span>
-              <span className="text-[#727785] font-medium">/ trọn đời</span>
+              <span className="text-[#727785] font-medium">/ mãi mãi</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
-              Hoàn hảo cho sinh viên và nhà nghiên cứu cá nhân mới bắt đầu.
+              Hoàn hảo cho sinh viên và các nhà nghiên cứu muốn bắt đầu.
             </p>
-            <button className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
+            <GetStartedButton className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
               Bắt đầu miễn phí
-            </button>
+            </GetStartedButton>
             <ul className="flex flex-col gap-4">
-              {["Tối đa 50 tài liệu", "AI tổng hợp cơ bản", "Tìm kiếm tiêu chuẩn", "1 Bộ sưu tập"].map(feature => (
+              {["Tối đa 50 tài liệu", "Tổng hợp AI cơ bản", "Tìm kiếm tiêu chuẩn", "1 Bộ sưu tập"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
                   <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
                   {feature}
@@ -54,13 +55,13 @@ export default function PricingPage() {
               <span className="text-[#727785] font-medium">/ tháng</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
-              Dành cho giới học thuật và chuyên gia cần phân tích chuyên sâu.
+              Dành cho học giả và chuyên gia cần phân tích chuyên sâu.
             </p>
             <button className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#2170e4] transition-colors mb-8 shadow-md">
-              Dùng thử miễn phí 14 ngày
+              Dùng thử 14 ngày
             </button>
             <ul className="flex flex-col gap-4">
-              {["Không giới hạn tài liệu", "AI tổng hợp nâng cao", "Tìm kiếm vector ngữ nghĩa", "Không giới hạn bộ sưu tập", "Hỗ trợ ưu tiên"].map(feature => (
+              {["Không giới hạn tài liệu", "Tổng hợp LLM nâng cao", "Tìm kiếm vector ngữ nghĩa", "Không giới hạn bộ sưu tập", "Hỗ trợ ưu tiên"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
                   <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
                   {feature}
@@ -71,19 +72,19 @@ export default function PricingPage() {
 
           {/* Team Plan */}
           <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 hover:border-[#0058be]/30 transition-all hover:shadow-lg hover:-translate-y-1">
-            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Lab & Nhóm</h3>
+            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Lab & Team</h3>
             <div className="flex items-baseline gap-1 mb-6">
               <span className="text-[48px] font-bold text-[#121c2a]">$29</span>
-              <span className="text-[#727785] font-medium">/ thành viên / tháng</span>
+              <span className="text-[#727785] font-medium">/ người dùng / tháng</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
-              Thiết kế riêng cho các phòng thí nghiệm và nhóm nghiên cứu cộng tác.
+              Được thiết kế cho các nhóm nghiên cứu và phòng thí nghiệm.
             </p>
             <button className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
-              Liên hệ bộ phận bán hàng
+              Liên hệ Sale
             </button>
             <ul className="flex flex-col gap-4">
-              {["Bao gồm tất cả tính năng gói Pro", "Không gian làm việc chung", "Đồng tác giả & ghi chú chung", "Trang quản trị (Admin Dashboard)", "Tích hợp đăng nhập một lần (SSO)"].map(feature => (
+              {["Tất cả tính năng của Pro", "Không gian làm việc chung", "Đồng tác giả & ghi chú", "Trang quản trị", "Tích hợp SSO"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
                   <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
                   {feature}
@@ -98,16 +99,16 @@ export default function PricingPage() {
           <h2 className="text-[28px] font-bold text-center text-[#121c2a] mb-12">Câu hỏi thường gặp</h2>
           <div className="flex flex-col gap-6">
             <div className="bg-white p-6 rounded-2xl border border-[#c2c6d6]/40 shadow-sm">
-              <h4 className="text-[16px] font-bold text-[#121c2a] mb-2">Tôi có thể hủy gói đăng ký bất kỳ lúc nào không?</h4>
-              <p className="text-[15px] text-[#424754] leading-relaxed">Có, bạn có thể hủy gói đăng ký bất cứ lúc nào trong phần cài đặt tài khoản. Bạn vẫn giữ quyền truy cập các tính năng Pro cho đến hết chu kỳ thanh toán hiện tại.</p>
+              <h4 className="text-[16px] font-bold text-[#121c2a] mb-2">Tôi có thể hủy đăng ký bất cứ lúc nào không?</h4>
+              <p className="text-[15px] text-[#424754] leading-relaxed">Có, bạn có thể hủy đăng ký bất cứ lúc nào từ cài đặt tài khoản của mình. Bạn vẫn có quyền sử dụng các tính năng Pro cho đến cuối chu kỳ thanh toán hiện tại.</p>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-[#c2c6d6]/40 shadow-sm">
-              <h4 className="text-[16px] font-bold text-[#121c2a] mb-2">Điều gì xảy ra với tài liệu nếu tôi hạ cấp xuống gói Explorer (Miễn phí)?</h4>
-              <p className="text-[15px] text-[#424754] leading-relaxed">Tài liệu của bạn vẫn được lưu trữ an toàn. Tuy nhiên, nếu thư viện của bạn vượt quá giới hạn 50 tài liệu của gói Explorer, bạn sẽ không thể tải thêm tài liệu mới cho đến khi xóa bớt tài liệu cũ hoặc nâng cấp lại.</p>
+              <h4 className="text-[16px] font-bold text-[#121c2a] mb-2">Điều gì xảy ra với tài liệu của tôi nếu tôi hạ cấp xuống gói Miễn phí?</h4>
+              <p className="text-[15px] text-[#424754] leading-relaxed">Tài liệu của bạn vẫn được lưu trữ an toàn. Tuy nhiên, nếu thư viện vượt quá giới hạn 50 tài liệu, bạn sẽ không thể tải thêm cho đến khi xóa bớt hoặc nâng cấp lại.</p>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-[#c2c6d6]/40 shadow-sm">
-              <h4 className="text-[16px] font-bold text-[#121c2a] mb-2">Nền tảng có chính sách ưu đãi cho các cơ sở giáo dục không?</h4>
-              <p className="text-[15px] text-[#424754] leading-relaxed">Có! Chúng tôi hỗ trợ giảm giá 50% cho sinh viên, giảng viên và nghiên cứu sinh có email học thuật hợp lệ. Vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi để nhận ưu đãi.</p>
+              <h4 className="text-[16px] font-bold text-[#121c2a] mb-2">Có chiết khấu cho các cơ sở giáo dục không?</h4>
+              <p className="text-[15px] text-[#424754] leading-relaxed">Có! Chúng tôi giảm 50% cho sinh viên và giảng viên có email .edu. Vui lòng liên hệ đội ngũ hỗ trợ để nhận ưu đãi.</p>
             </div>
           </div>
         </div>
@@ -118,7 +119,7 @@ export default function PricingPage() {
           Lumis
         </div>
         <div className="text-[14px] text-[#727785]">
-          © 2026 Lumis. Khám phá tri thức chính xác.
+          © 2026 Lumis. Chuẩn xác trong từng khám phá.
         </div>
         <div className="flex gap-md">
           <Link
