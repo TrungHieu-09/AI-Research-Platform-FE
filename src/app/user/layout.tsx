@@ -19,12 +19,12 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           <span className="font-bold text-[#424754]">Lumis</span>
         </div>
         <div className="flex-1 flex justify-center">
-          <span>© 2026 Lumis AI Research Platform</span>
+          <span>© 2026 Nền tảng Nghiên cứu AI Lumis</span>
         </div>
         <div className="flex-1 flex justify-end gap-6">
-          <Link href="#" className="hover:text-[#0058be] transition-colors">Privacy Policy</Link>
-          <Link href="#" className="hover:text-[#0058be] transition-colors">Terms of Service</Link>
-          <Link href="#" className="hover:text-[#0058be] transition-colors">Documentation</Link>
+          <Link href="#" className="hover:text-[#0058be] transition-colors">Chính sách bảo mật</Link>
+          <Link href="#" className="hover:text-[#0058be] transition-colors">Điều khoản dịch vụ</Link>
+          <Link href="#" className="hover:text-[#0058be] transition-colors">Tài liệu hướng dẫn</Link>
         </div>
       </footer>
     </div>
