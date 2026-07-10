@@ -307,13 +307,15 @@ export default function UserDetailPage() {
 
           {/* Danger Zone */}
           <div className="flex justify-end pt-2">
-            <button
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-2 px-6 py-2.5 text-red-600 font-bold hover:bg-red-50 rounded-2xl transition-all text-[13px] border border-red-200/60"
-            >
-              <Trash2 size={16} />
-              <span>Xóa tài khoản này</span>
-            </button>
+            {user.role !== "Admin" && (
+              <button
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="flex items-center gap-2 px-6 py-2.5 text-red-600 font-bold hover:bg-red-50 rounded-2xl transition-all text-[13px] border border-red-200/60"
+              >
+                <Trash2 size={16} />
+                <span>Xóa tài khoản này</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -347,27 +349,14 @@ export default function UserDetailPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[13px] font-bold text-[#424754] mb-1.5">Số điện thoại</label>
-                  <input
-                    type="text"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-2xl px-4 py-2.5 text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[13px] font-bold text-[#424754] mb-1.5">Vai trò</label>
-                  <select
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value as any)}
-                    className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-2xl px-4 py-2.5 text-[14px] font-bold text-[#121c2a] focus:border-[#0058be] outline-none"
-                  >
-                    <option value="Student">Sinh viên (Student)</option>
-                    <option value="Admin">Quản trị viên (Admin)</option>
-                  </select>
-                </div>
+              <div className="space-y-2">
+                <label className="block text-[13px] font-bold text-[#424754] mb-1.5">Số điện thoại</label>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-2xl px-4 py-2.5 text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none"
+                />
               </div>
 
               <div>

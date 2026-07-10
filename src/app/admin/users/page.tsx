@@ -327,27 +327,31 @@ export default function UsersPage() {
                           <Eye size={16} />
                         </button>
 
-                        {/* Quick Action: Suspend/Activate */}
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          title={user.status === "Active" ? "Trạng thái: Hoạt động (Nhấn để khóa)" : "Trạng thái: Tạm khóa (Nhấn để mở khóa)"}
-                          className={`p-2 rounded-xl transition-colors ${
-                            user.status === "Active"
-                              ? "text-green-600 hover:bg-green-50"
-                              : "text-red-500 hover:bg-red-50"
-                          }`}
-                        >
-                          {user.status === "Active" ? <CheckCircle2 size={16} /> : <Ban size={16} />}
-                        </button>
+                        {/* Quick Action: Suspend/Activate — ẩn với Admin */}
+                        {user.role !== "Admin" && (
+                          <button
+                            onClick={() => handleToggleStatus(user)}
+                            title={user.status === "Active" ? "Trạng thái: Hoạt động (Nhấn để khóa)" : "Trạng thái: Tạm khóa (Nhấn để mở khóa)"}
+                            className={`p-2 rounded-xl transition-colors ${
+                              user.status === "Active"
+                                ? "text-green-600 hover:bg-green-50"
+                                : "text-red-500 hover:bg-red-50"
+                            }`}
+                          >
+                            {user.status === "Active" ? <CheckCircle2 size={16} /> : <Ban size={16} />}
+                          </button>
+                        )}
 
-                        {/* Quick Action: Delete */}
-                        <button
-                          onClick={() => setDeletingUser(user)}
-                          title="Xóa tài khoản"
-                          className="p-2 text-[#727785] hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {/* Quick Action: Delete — ẩn với Admin */}
+                        {user.role !== "Admin" && (
+                          <button
+                            onClick={() => setDeletingUser(user)}
+                            title="Xóa tài khoản"
+                            className="p-2 text-[#727785] hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
