@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { motion, AnimatePresence, useMotionValue, useSpring, useInView } from "framer-motion"
+import { motion, AnimatePresence, useMotionValue, useSpring, useInView, Variants } from "framer-motion"
 import {
   Search, HardDrive, FileText, FileType2, AlignLeft,
   MoreVertical, Trash2, Download, Share2, Sparkles,
@@ -12,11 +12,11 @@ import {
 import { cn } from "@/lib/utils"
 
 /* ─── Animation Variants ─────────────────────── */
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] } }),
 }
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0 },
   visible: (i = 0) => ({ opacity: 1, transition: { delay: i * 0.08, duration: 0.4 } }),
 }
