@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { motion, AnimatePresence, useMotionValue, useSpring, useInView } from "framer-motion"
 import {
   Search, HardDrive, FileText, FileType2, AlignLeft,
   MoreVertical, Trash2, Download, Share2, Sparkles,
@@ -9,6 +10,28 @@ import {
   AlertCircle, CheckCircle2, Zap, ArrowUpRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+/* ─── Animation Variants ─────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] } }),
+}
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: (i = 0) => ({ opacity: 1, transition: { delay: i * 0.08, duration: 0.4 } }),
+}
+
+/* ─── Animated Number ────────────────────────── */
+function AnimatedNumber({ value, decimals = 0 }: { value: number; decimals?: number }) {
+  const ref = React.useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true })
+  const motionVal = useMotionValue(0)
+  const spring = useSpring(motionVal, { damping: 30, stiffness: 80 })
+  const [display, setDisplay] = React.useState("0")
+  React.useEffect(() => { if (inView) motionVal.set(value) }, [inView, value, motionVal])
+  React.useEffect(() => spring.on("change", v => setDisplay(v.toFixed(decimals))), [spring, decimals])
+  return <span ref={ref}>{display}</span>
+}
 
 /* ─── Mock Data ─────────────────────────────── */
 const storageBreakdown = [
@@ -140,25 +163,35 @@ export default function StoragePage() {
       <div className="max-w-[1200px] mx-auto px-6 md:px-8 py-8 pb-20">
 
         {/* ── Page Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+        <motion.div
+          className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8"
+          initial="hidden" animate="visible" variants={fadeUp}
+        >
           <div>
-            <div className="flex items-center gap-1.5 text-[#0058be] text-[11px] font-bold uppercase tracking-wider mb-1.5">
+            <motion.div
+              className="flex items-center gap-1.5 text-[#0058be] text-[11px] font-bold uppercase tracking-wider mb-1.5"
+              variants={fadeUp} custom={0}
+            >
               <HardDrive size={12} />
               CLOUD STORAGE
-            </div>
-            <h1
+            </motion.div>
+            <motion.h1
               className="text-[28px] font-bold text-[#121c2a] tracking-tight leading-none mb-2"
               style={{ fontFamily: "Geist, sans-serif" }}
+              variants={fadeUp} custom={1}
             >
               Storage
-            </h1>
-            <p className="text-[14px] text-[#424754]">
+            </motion.h1>
+            <motion.p className="text-[14px] text-[#424754]" variants={fadeUp} custom={2}>
               Manage your research files, monitor usage, and optimise storage space.
-            </p>
+            </motion.p>
           </div>
 
           {/* Search */}
-          <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-[#c2c6d6]/50 bg-white shadow-sm w-full sm:w-[300px] focus-within:border-[#0058be]/40 focus-within:shadow-[0_0_0_3px_rgba(0,88,190,0.08)] transition-all">
+          <motion.div
+            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-[#c2c6d6]/50 bg-white shadow-sm w-full sm:w-[300px] focus-within:border-[#0058be]/40 focus-within:shadow-[0_0_0_3px_rgba(0,88,190,0.08)] transition-all"
+            variants={fadeUp} custom={3}
+          >
             <Search size={15} className="text-[#727785] shrink-0" />
             <input
               type="text"
@@ -167,11 +200,15 @@ export default function StoragePage() {
               placeholder="Search research files..."
               className="flex-1 bg-transparent text-[14px] text-[#121c2a] placeholder:text-[#727785] outline-none"
             />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* ── Storage Usage Card ── */}
-        <div className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-6 shadow-sm mb-6">
+        <motion.div
+          className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-6 shadow-sm mb-6"
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5 }}
+          whileHover={{ boxShadow: "0 8px 32px rgba(0,88,190,0.10)" }}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
             <div>
               <p className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-1">
@@ -182,7 +219,7 @@ export default function StoragePage() {
                   className="text-[36px] font-bold text-[#0058be] leading-none"
                   style={{ fontFamily: "Geist, sans-serif" }}
                 >
-                  {totalUsed} GB
+                  <AnimatedNumber value={totalUsed} decimals={1} /> GB
                 </span>
                 <span className="text-[16px] text-[#424754] font-medium">
                   of {totalCap} GB
@@ -192,55 +229,75 @@ export default function StoragePage() {
 
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-[12px] text-[#727785]">{usedPct}% used</p>
+                <p className="text-[12px] text-[#727785]"><AnimatedNumber value={usedPct} />% used</p>
                 <p className="text-[12px] text-[#424754] font-medium">{totalCap - totalUsed} GB free</p>
               </div>
-              <Link
-                href="/user/payment"
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[13px] font-semibold transition-all shadow-md shadow-[#0058be]/20 whitespace-nowrap"
-              >
-                <ArrowUpRight size={15} />
-                Upgrade Plan
-              </Link>
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  href="/user/payment"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[13px] font-semibold transition-all shadow-md shadow-[#0058be]/20 whitespace-nowrap"
+                >
+                  <ArrowUpRight size={15} />
+                  Upgrade Plan
+                </Link>
+              </motion.div>
             </div>
           </div>
 
           {/* Multi-segment progress bar */}
           <div className="w-full h-3 bg-[#f0f4ff] rounded-full overflow-hidden flex mb-3.5">
-            {storageBreakdown.map((seg) => (
-              <div
+            {storageBreakdown.map((seg, i) => (
+              <motion.div
                 key={seg.label}
-                className="h-full transition-all duration-700"
-                style={{ width: `${seg.pct}%`, backgroundColor: seg.color }}
+                className="h-full"
+                style={{ backgroundColor: seg.color }}
+                initial={{ width: 0 }}
+                animate={{ width: `${seg.pct}%` }}
+                transition={{ delay: 0.4 + i * 0.12, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               />
             ))}
           </div>
 
           {/* Legend */}
           <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-            {storageBreakdown.map((seg) => (
-              <div key={seg.label} className="flex items-center gap-1.5">
+            {storageBreakdown.map((seg, i) => (
+              <motion.div
+                key={seg.label}
+                className="flex items-center gap-1.5"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 + i * 0.1 }}
+              >
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
                 <span className="text-[12px] text-[#424754] font-medium">
                   {seg.label} ({seg.gb} GB)
                 </span>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* ── File Type Cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {fileTypeCards.map((card) => {
+          {fileTypeCards.map((card, i) => {
             const Icon = card.icon
             return (
-              <div
+              <motion.div
                 key={card.id}
-                className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-5 shadow-sm hover:shadow-md hover:border-[#0058be]/20 transition-all cursor-pointer"
+                className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-5 shadow-sm cursor-pointer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + i * 0.1, duration: 0.45 }}
+                whileHover={{ y: -4, boxShadow: "0 12px 36px rgba(0,88,190,0.12)", borderColor: "rgba(0,88,190,0.25)" }}
+                whileTap={{ scale: 0.98 }}
               >
-                <div className={cn("w-11 h-11 rounded-2xl flex items-center justify-center mb-4", card.iconBg)}>
+                <motion.div
+                  className={cn("w-11 h-11 rounded-2xl flex items-center justify-center mb-4", card.iconBg)}
+                  whileHover={{ scale: 1.12, rotate: 6 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
                   <Icon size={22} className={card.iconColor} />
-                </div>
+                </motion.div>
                 <h3
                   className="text-[17px] font-bold text-[#121c2a] mb-0.5"
                   style={{ fontFamily: "Geist, sans-serif" }}
@@ -254,15 +311,29 @@ export default function StoragePage() {
                     {card.trend}
                   </span>
                 </div>
-              </div>
+              </motion.div>
             )
           })}
         </div>
 
         {/* ── Optimization Banner ── */}
-        <div className="bg-gradient-to-r from-[#0058be] to-[#316bf3] rounded-3xl p-6 mb-8 relative overflow-hidden">
-          <div className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute right-24 bottom-0 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none" />
+        <motion.div
+          className="bg-gradient-to-r from-[#0058be] to-[#316bf3] rounded-3xl p-6 mb-8 relative overflow-hidden"
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
+          whileHover={{ scale: 1.005 }}
+        >
+          <motion.div
+            className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"
+            animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute right-24 bottom-0 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none"
+            animate={{ scale: [1, 1.25, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          />
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 relative z-10">
             <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
@@ -301,7 +372,7 @@ export default function StoragePage() {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* ── Main Grid: Files + Sidebar ── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
@@ -345,12 +416,18 @@ export default function StoragePage() {
             </div>
 
             <div className="divide-y divide-[#c2c6d6]/20">
-              {filtered.map((file) => {
+              <AnimatePresence mode="popLayout">
+              {filtered.map((file, i) => {
                 const { icon: Icon, color, bg } = fileTypeIcon(file.type)
                 return (
-                  <div
+                  <motion.div
                     key={file.name}
                     className="grid grid-cols-[minmax(0,1fr)_80px_100px_40px] gap-4 px-6 py-4 hover:bg-[#f8f9ff] transition-colors items-center"
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 16 }}
+                    transition={{ delay: i * 0.05, duration: 0.3 }}
+                    whileHover={{ backgroundColor: "#f8f9ff" }}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", bg)}>
@@ -366,9 +443,10 @@ export default function StoragePage() {
                     </span>
                     <span className="text-[13px] font-semibold text-[#424754]">{file.size}</span>
                     <FileRowMenu />
-                  </div>
+                  </motion.div>
                 )
               })}
+              </AnimatePresence>
 
               {filtered.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -395,11 +473,17 @@ export default function StoragePage() {
                 </Link>
               </div>
               <div className="divide-y divide-[#c2c6d6]/20">
-                {recentUploads.map((f) => {
+                {recentUploads.map((f, i) => {
                   const ext = f.name.endsWith(".pdf") ? "PDF" : f.name.endsWith(".docx") ? "DOCX" : "TXT"
                   const { icon: Icon, color, bg } = fileTypeIcon(ext)
                   return (
-                    <div key={f.name} className="flex items-center gap-3 px-5 py-4 hover:bg-[#f8f9ff] transition-colors">
+                    <motion.div
+                      key={f.name}
+                      className="flex items-center gap-3 px-5 py-4 hover:bg-[#f8f9ff] transition-colors"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + i * 0.08 }}
+                    >
                       <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", bg)}>
                         <Icon size={16} className={color} />
                       </div>
@@ -411,7 +495,7 @@ export default function StoragePage() {
                           <span className="text-[11px] text-[#727785]">• {f.size}</span>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
               </div>
