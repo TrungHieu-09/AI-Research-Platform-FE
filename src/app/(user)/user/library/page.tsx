@@ -11,18 +11,18 @@ import { cn } from "@/lib/utils"
 
 /* --- Mock Data --- */
 const collections = [
-  { name: "All Documents", count: 142, active: true },
-  { name: "Thesis Research", count: 45 },
-  { name: "Literature Reviews", count: 23 },
-  { name: "Data Sets", count: 12 },
-  { name: "Machine Learning", count: 89 },
-  { name: "Neuroscience", count: 12 },
+  { name: "Tất cả tài liệu", count: 142, active: true },
+  { name: "Nghiên cứu luận văn", count: 45 },
+  { name: "Tổng quan tài liệu", count: 23 },
+  { name: "Tập dữ liệu", count: 12 },
+  { name: "Học máy", count: 89 },
+  { name: "Khoa học thần kinh", count: 12 },
 ]
 
 const tags = [
   { name: "#neural-networks", color: "bg-[#eff4ff] text-[#0058be]" },
-  { name: "#important", color: "bg-orange-50 text-orange-600" },
-  { name: "#to-read", color: "bg-red-50 text-red-600" },
+  { name: "#quan-trọng", color: "bg-orange-50 text-orange-600" },
+  { name: "#cần-đọc", color: "bg-red-50 text-red-600" },
   { name: "#cvpr-2023", color: "bg-[#eff4ff] text-[#0058be]" },
   { name: "#nlp", color: "bg-gray-100 text-gray-600" },
 ]
@@ -36,7 +36,7 @@ const documents = [
     iconBg: "bg-red-50",
     authors: "Ashish Vaswani, Noam Shazeer, Niki Parmar",
     year: 2017,
-    collection: "Machine Learning",
+    collection: "Học máy",
     selected: true,
   },
   {
@@ -47,7 +47,7 @@ const documents = [
     iconBg: "bg-blue-50",
     authors: "Tom B. Brown, Benjamin Mann, Nick Ryder",
     year: 2020,
-    collection: "Machine Learning",
+    collection: "Học máy",
   },
   {
     id: 3,
@@ -57,7 +57,7 @@ const documents = [
     iconBg: "bg-orange-50",
     authors: "Kaiming He, Xiangyu Zhang, Shaoqing Ren",
     year: 2016,
-    collection: "Machine Learning",
+    collection: "Học máy",
   },
   {
     id: 4,
@@ -67,7 +67,7 @@ const documents = [
     iconBg: "bg-gray-100",
     authors: "Jacob Devlin, Ming-Wei Chang, Kenton Lee",
     year: 2019,
-    collection: "Thesis Research",
+    collection: "Nghiên cứu luận văn",
   },
   {
     id: 5,
@@ -77,7 +77,7 @@ const documents = [
     iconBg: "bg-red-50",
     authors: "Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza",
     year: 2014,
-    collection: "Literature Reviews",
+    collection: "Tổng quan tài liệu",
   },
 ]
 
@@ -97,13 +97,13 @@ export default function LibraryPage() {
           <div>
             <div className="flex items-center gap-1.5 text-[#0058be] text-[11px] font-bold uppercase tracking-wider mb-1.5">
               <Sparkles size={12} />
-              AI RESEARCH LIBRARY
+              THƯ VIỆN NGHIÊN CỨU AI
             </div>
             <h1 className="text-[28px] font-bold text-[#121c2a] tracking-tight leading-none mb-2" style={{ fontFamily: "Geist, sans-serif" }}>
-              Library
+              Thư viện
             </h1>
             <p className="text-[14px] text-[#424754]">
-              Browse, organize, and query your research documents with Lumis AI context.
+              Duyệt, sắp xếp và truy vấn tài liệu nghiên cứu của bạn với ngữ cảnh AI từ Lumis.
             </p>
           </div>
 
@@ -111,15 +111,15 @@ export default function LibraryPage() {
           <div className="flex gap-4">
             <div className="flex flex-col items-center justify-center bg-white border border-[#c2c6d6]/40 rounded-2xl w-[88px] py-2.5 shadow-sm">
               <span className="text-[20px] font-bold text-[#121c2a] leading-none mb-1">142</span>
-              <span className="text-[10px] font-semibold text-[#727785] tracking-wider uppercase">DOCS</span>
+              <span className="text-[10px] font-semibold text-[#727785] tracking-wider uppercase">TÀI LIỆU</span>
             </div>
             <div className="flex flex-col items-center justify-center bg-white border border-[#c2c6d6]/40 rounded-2xl w-[88px] py-2.5 shadow-sm">
               <span className="text-[20px] font-bold text-[#121c2a] leading-none mb-1">14</span>
-              <span className="text-[10px] font-semibold text-[#727785] tracking-wider uppercase">COLLECTIONS</span>
+              <span className="text-[10px] font-semibold text-[#727785] tracking-wider uppercase">BỘ SƯU TẬP</span>
             </div>
             <div className="flex flex-col items-center justify-center bg-white border border-[#c2c6d6]/40 rounded-2xl w-[88px] py-2.5 shadow-sm">
               <span className="text-[20px] font-bold text-[#121c2a] leading-none mb-1">62</span>
-              <span className="text-[10px] font-semibold text-[#727785] tracking-wider uppercase">TAGS</span>
+              <span className="text-[10px] font-semibold text-[#727785] tracking-wider uppercase">NHÃN</span>
             </div>
           </div>
         </div>
@@ -132,14 +132,14 @@ export default function LibraryPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search documents..."
+              placeholder="Tìm kiếm tài liệu..."
               className="flex-1 bg-transparent text-[14px] text-[#121c2a] placeholder:text-[#727785] outline-none"
             />
           </div>
 
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#c2c6d6]/50 rounded-2xl text-[13px] font-semibold text-[#424754] hover:bg-gray-50 shadow-sm transition-all">
-              Sort: Date Added
+              Sắp xếp: Ngày thêm
               <ChevronDown size={14} className="text-[#727785]" />
             </button>
             <div className="flex items-center bg-white border border-[#c2c6d6]/50 rounded-2xl p-1 shadow-sm">
@@ -152,21 +152,21 @@ export default function LibraryPage() {
             </div>
             <Link href="/user/upload" className="flex items-center gap-2 px-6 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[14px] font-semibold transition-all shadow-md shadow-[#0058be]/20">
               <Upload size={16} />
-              Upload
+              Tải lên
             </Link>
           </div>
         </div>
       </div>
 
       {/* Main Layout Area */}
-      <div className="flex-1 overflow-hidden px-6 pb-6 flex gap-6">
+      <div className="flex-grow overflow-hidden px-6 pb-6 flex gap-6">
         
         {/* Left Sidebar - Collections & Tags */}
         <div className="w-[240px] shrink-0 flex flex-col gap-8 overflow-y-auto pr-2 pb-10">
           {/* Collections */}
           <div>
             <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider">Collections</h3>
+              <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider">Bộ sưu tập</h3>
               <button className="text-[#727785] hover:text-[#121c2a] transition-colors"><Plus size={14} /></button>
             </div>
             <div className="flex flex-col gap-0.5">
@@ -202,7 +202,7 @@ export default function LibraryPage() {
           {/* Tags */}
           <div>
             <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider">Tags</h3>
+              <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider">Nhãn</h3>
               <button className="text-[#727785] hover:text-[#121c2a] transition-colors"><Plus size={14} /></button>
             </div>
             <div className="flex flex-wrap gap-2 px-1">
@@ -219,15 +219,15 @@ export default function LibraryPage() {
 
           {/* ── Mini Workspace Overview (Dashboard merged) ── */}
           <div className="mt-2 space-y-3">
-            <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider px-1">Workspace</h3>
+            <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider px-1">Không gian làm việc</h3>
 
             {/* 2x2 stat grid */}
             <div className="grid grid-cols-2 gap-1.5">
               {[
-                { label: "Docs", value: "248", icon: "description" },
-                { label: "AI Chats", value: "105", icon: "forum" },
-                { label: "Collections", value: "14", icon: "folder" },
-                { label: "Tags", value: "62", icon: "label" },
+                { label: "Tài liệu", value: "248", icon: "description" },
+                { label: "Trò chuyện AI", value: "105", icon: "forum" },
+                { label: "Bộ sưu tập", value: "14", icon: "folder" },
+                { label: "Nhãn", value: "62", icon: "label" },
               ].map(({ label, value, icon }) => (
                 <div key={label} className="bg-white border border-[#c2c6d6]/40 rounded-xl p-2.5 shadow-sm hover:border-[#0058be]/30 transition-colors">
                   <span className="material-symbols-outlined text-[13px] text-[#727785] block mb-1">{icon}</span>
@@ -240,23 +240,23 @@ export default function LibraryPage() {
             {/* Storage mini bar */}
             <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-bold text-[#424754] uppercase tracking-wide">Storage</span>
+                <span className="text-[11px] font-bold text-[#424754] uppercase tracking-wide">Dung lượng</span>
                 <span className="text-[11px] font-semibold text-[#0058be]">2.1 / 5 GB</span>
               </div>
               <div className="w-full h-1.5 bg-[#e6eeff] rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-[#0058be] to-[#316bf3] rounded-full" style={{ width: "42%" }} />
               </div>
-              <p className="text-[10px] text-[#727785] mt-1.5 font-medium">42% used · Free plan</p>
+              <p className="text-[10px] text-[#727785] mt-1.5 font-medium">Đã dùng 42% · Gói Miễn phí</p>
             </div>
 
             {/* AI Insight snippet */}
             <div className="bg-gradient-to-br from-[#eff4ff] to-[#f8f9ff] border border-[#0058be]/15 rounded-xl p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="material-symbols-outlined text-[14px] text-[#0058be]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-                <span className="text-[10px] font-bold text-[#0058be] uppercase tracking-wide">AI Insight</span>
+                <span className="text-[10px] font-bold text-[#0058be] uppercase tracking-wide">Thông tin AI</span>
               </div>
               <p className="text-[11px] text-[#424754] leading-relaxed line-clamp-3">
-                87% methodological overlap across Neural Plasticity papers. 2 research gaps identified.
+                Mức độ trùng lặp phương pháp 87% giữa các tài liệu Neural Plasticity. Phát hiện 2 khoảng trống nghiên cứu.
               </p>
             </div>
           </div>
@@ -267,10 +267,10 @@ export default function LibraryPage() {
           <div className="flex items-center justify-between px-6 py-5 border-b border-[#c2c6d6]/30">
             <div>
               <h2 className="text-[16px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-                Document Index
+                Danh mục tài liệu
               </h2>
               <p className="text-[13px] text-[#727785] mt-0.5">
-                8 matching documents in the current workspace.
+                Có 8 tài liệu phù hợp trong không gian làm việc này.
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -279,10 +279,10 @@ export default function LibraryPage() {
                 className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#0058be] hover:bg-[#004ca3] text-white text-[12px] font-semibold shadow-sm transition-colors"
               >
                 <Sparkles size={14} />
-                Analyze with AI
+                Phân tích bằng AI
               </Link>
               <div className="px-3 py-1.5 rounded-full bg-[#eff4ff] border border-[#0058be]/20 text-[#0058be] text-[12px] font-semibold">
-                AI-ready
+                AI sẵn sàng
               </div>
             </div>
           </div>
@@ -290,9 +290,9 @@ export default function LibraryPage() {
           {/* Table Header */}
           <div className="grid grid-cols-[auto_minmax(0,1fr)_100px_160px_40px] gap-4 px-6 py-3 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider">
             <div className="w-[20px] flex items-center justify-center"><input type="checkbox" className="rounded text-[#0058be] focus:ring-[#0058be]" /></div>
-            <div>Title & Authors</div>
-            <div>Year</div>
-            <div>Collection</div>
+            <div>Tiêu đề & Tác giả</div>
+            <div>Năm</div>
+            <div>Bộ sưu tập</div>
             <div></div>
           </div>
 
@@ -345,8 +345,8 @@ export default function LibraryPage() {
         <div className="w-[320px] shrink-0 bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-3xl p-5 shadow-sm overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-[10px] font-bold text-[#727785] uppercase tracking-wider mb-0.5">Inspector</p>
-              <h3 className="text-[15px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Document Details</h3>
+              <p className="text-[10px] font-bold text-[#727785] uppercase tracking-wider mb-0.5">Trình kiểm tra</p>
+              <h3 className="text-[15px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Chi tiết tài liệu</h3>
             </div>
             <button className="p-1.5 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-xl transition-colors">
               <X size={16} />
@@ -364,26 +364,26 @@ export default function LibraryPage() {
 
           {/* Metadata Grid */}
           <div className="mb-6">
-            <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">Metadata</h4>
+            <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">Siêu dữ liệu</h4>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
                 <Calendar size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Year</p>
+                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Năm</p>
                 <p className="text-[13px] font-bold text-[#121c2a]">2017</p>
               </div>
               <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
                 <Hash size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Status</p>
-                <p className="text-[13px] font-bold text-[#121c2a]">Published</p>
+                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Trạng thái</p>
+                <p className="text-[13px] font-bold text-[#121c2a]">Đã xuất bản</p>
               </div>
               <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
                 <FolderOpen size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Collection</p>
-                <p className="text-[13px] font-bold text-[#121c2a]">Machine Learning</p>
+                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Bộ sưu tập</p>
+                <p className="text-[13px] font-bold text-[#121c2a]">Học máy</p>
               </div>
               <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
                 <Users size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Authors</p>
+                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Tác giả</p>
                 <p className="text-[13px] font-bold text-[#121c2a]">3</p>
               </div>
             </div>
@@ -391,7 +391,7 @@ export default function LibraryPage() {
 
           {/* Tags */}
           <div>
-            <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">Tags</h4>
+            <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">Nhãn</h4>
             <div className="flex flex-wrap gap-2">
               <span className="px-2.5 py-1 bg-[#eff4ff] text-[#0058be] rounded-md text-[11px] font-semibold">#neural-networks</span>
               <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-[11px] font-semibold">#nlp</span>
