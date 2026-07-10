@@ -8,6 +8,7 @@ import {
   Layers, Share2, X
 } from "lucide-react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
+import { getAiLimit, getAiSessions, sendChatMessage } from "@/features/ai/api/ai-api"
 
 /* ─── Data ───────────────────────────────────── */
 const mockDocs = [
@@ -79,27 +80,58 @@ function WorkspaceContent() {
   const [messages, setMessages] = React.useState<{ role: string; content: string }[]>([])
   const [isTyping, setIsTyping] = React.useState(false)
   const [isDocAttached, setIsDocAttached] = React.useState(!!attachedDoc)
+  const [sessionId, setSessionId] = React.useState<string | undefined>()
+  const [apiError, setApiError] = React.useState("")
+  const [limitLabel, setLimitLabel] = React.useState("AI limit: loading...")
   const bottomRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    async function loadAiMeta() {
+      try {
+        const [limit] = await Promise.all([
+          getAiLimit(),
+          getAiSessions().catch(() => []),
+        ])
+        setLimitLabel(`AI limit: ${limit.queriesToday}/${limit.limit} (${limit.tier})`)
+      } catch {
+        setLimitLabel("AI limit unavailable")
+      }
+    }
+
+    void loadAiMeta()
+  }, [])
 
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isTyping])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return
     const userMsg = input
     setMessages(prev => [...prev, { role: "user", content: userMsg }])
     setInput("")
     setIsTyping(true)
-    setTimeout(() => {
+
+    try {
+      setApiError("")
+      const response = await sendChatMessage({
+        message: userMsg,
+        sessionId,
+        documentId: isDocAttached && attachedDoc ? String(attachedDoc.id) : undefined,
+        scope: isDocAttached && attachedDoc ? "SINGLE_DOCUMENT" : "GLOBAL",
+      })
+
+      if (response.sessionId) setSessionId(response.sessionId)
+
       setIsTyping(false)
       setMessages(prev => [...prev, {
         role: "ai",
-        content: (isDocAttached && attachedDoc)
-          ? `Based on the document "${attachedDoc.title}", here is an analysis...\n\n(This is a mock response demonstrating the flow.)`
-          : `Here is an analysis based on the entire collection...\n\n(This is a mock response demonstrating the flow without a specific document.)`,
+        content: response.answer ?? response.message ?? "BE đã trả response nhưng chưa có field answer/message.",
       }])
-    }, 1500)
+    } catch (error) {
+      setIsTyping(false)
+      setApiError(error instanceof Error ? error.message : "Không thể gửi AI chat.")
+    }
   }
 
   return (
@@ -134,6 +166,7 @@ function WorkspaceContent() {
               <Icon size={17} />
             </motion.button>
           ))}
+          <span className="text-[12px] font-bold text-[#727785]">{limitLabel}</span>
         </div>
       </motion.div>
 
@@ -169,6 +202,11 @@ function WorkspaceContent() {
 
           {/* Chat History */}
           <div className="flex flex-col gap-5 flex-1 mb-6 overflow-y-auto">
+            {apiError ? (
+              <div className="self-stretch rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-700">
+                {apiError}
+              </div>
+            ) : null}
             <AnimatePresence initial={false}>
               {messages.length === 0 && !isTyping && (
                 <motion.div
@@ -275,7 +313,7 @@ function WorkspaceContent() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() }
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSend() }
                 }}
                 className="w-full bg-transparent border-none outline-none resize-none text-[14px] text-[#121c2a] placeholder:text-[#727785] min-h-[44px] max-h-[120px]"
                 placeholder={
@@ -306,7 +344,7 @@ function WorkspaceContent() {
                   </motion.button>
                 </div>
                 <motion.button
-                  onClick={handleSend}
+                  onClick={() => void handleSend()}
                   disabled={!input.trim() || isTyping}
                   className="flex items-center gap-2 px-5 py-2 bg-[#0058be] disabled:opacity-40 text-white rounded-xl text-[14px] font-semibold shadow-md shadow-[#0058be]/20"
                   whileHover={{ scale: 1.04, backgroundColor: "#2170e4" }}

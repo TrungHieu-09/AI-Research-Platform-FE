@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { AuthMode } from "../types";
 import { setAuthUser } from "@/components/layouts/landing-header";
+import { getDefaultRouteByRole } from "@/lib/api/client";
+import { login, register } from "../api/auth-api";
 
 interface AuthViewProps {
   initialMode: AuthMode;
@@ -15,11 +17,18 @@ export default function AuthView({ initialMode }: AuthViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync mode with URL if user navigates via browser history
   useEffect(() => {
-    if (pathname === "/login") setMode("login");
-    else if (pathname === "/signup") setMode("register");
+    const timeoutId = window.setTimeout(() => {
+      if (pathname === "/login") setMode("login");
+      else if (pathname === "/signup") setMode("register");
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [pathname]);
 
   const switchMode = (newMode: AuthMode) => {
@@ -29,26 +38,60 @@ export default function AuthView({ initialMode }: AuthViewProps) {
     window.history.pushState(null, "", newPath);
   };
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    
-    // Mock: save user to localStorage then redirect based on role
-    if (email && email.toLowerCase().includes("admin")) {
-      setAuthUser({ name: "System Admin", email: email, initials: "SA", role: "admin" });
-      router.push("/admin/dashboard");
-    } else {
-      setAuthUser({ name: "Dr. Jane Doe", email: email || "jane.doe@university.edu", initials: "JD", role: "user" });
-      router.push("/");
+    const password = formData.get("password") as string;
+
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      const response = await login({ email, password });
+      const initials = response.user.name
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
+      setAuthUser({
+        name: response.user.name,
+        email: response.user.email,
+        initials,
+        role: response.user.role === "ADMIN" ? "admin" : "user",
+      });
+      router.push(getDefaultRouteByRole(response.user.role));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Đăng nhập thất bại.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Mock: save user to localStorage then go back to landing
-    setAuthUser({ name: "Dr. Jane Doe", email: "jane.doe@university.edu", initials: "JD" });
-    router.push("/");
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      await register({ name, email, password });
+      setSuccessMessage("Đăng ký thành công. Vui lòng nhập OTP được gửi qua email.");
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Đăng ký thất bại.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -65,7 +108,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
         }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {mode === "login" ? (
             <motion.div
               key="login-bg"
@@ -190,6 +233,16 @@ export default function AuthView({ initialMode }: AuthViewProps) {
 
           {/* Form Content */}
           <div className="relative">
+            {errorMessage ? (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-700">
+                {errorMessage}
+              </div>
+            ) : null}
+            {successMessage ? (
+              <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-[13px] font-semibold text-green-700">
+                {successMessage}
+              </div>
+            ) : null}
             <AnimatePresence mode="wait">
               {mode === "login" ? (
                 <motion.div
@@ -251,6 +304,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="w-full h-[48px] px-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785] dark:placeholder:text-outline"
                         id="email-login"
                         name="email"
+                        autoComplete="email"
                         placeholder="researcher@university.edu"
                         type="email"
                         required
@@ -276,6 +330,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         <input
                           className="w-full h-[48px] px-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="password-login"
+                          name="password"
+                          autoComplete="current-password"
                           placeholder="••••••••"
                           type="password"
                           required
@@ -294,8 +350,9 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                     <button
                       className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[48px]"
                       type="submit"
+                      disabled={isSubmitting}
                     >
-                      Sign In to Workspace
+                      {isSubmitting ? "Signing in..." : "Sign In to Workspace"}
                       <span className="material-symbols-outlined text-[18px]">
                         arrow_forward
                       </span>
@@ -365,6 +422,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         <input
                           className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="name"
+                          name="name"
+                          autoComplete="name"
                           placeholder="Dr. Jane Doe"
                           type="text"
                           required
@@ -386,6 +445,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         <input
                           className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="email-signup"
+                          name="email"
+                          autoComplete="email"
                           placeholder="jane.doe@university.edu"
                           type="email"
                           required
@@ -407,6 +468,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         <input
                           className="w-full h-[48px] pl-[40px] pr-[40px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="password-signup"
+                          name="password"
+                          autoComplete="new-password"
                           placeholder="••••••••"
                           type="password"
                           required
@@ -417,8 +480,9 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                     <button
                       className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[32px] !mt-[32px]"
                       type="submit"
+                      disabled={isSubmitting}
                     >
-                      Create Account
+                      {isSubmitting ? "Creating account..." : "Create Account"}
                       <span className="material-symbols-outlined text-[18px]">
                         arrow_forward
                       </span>

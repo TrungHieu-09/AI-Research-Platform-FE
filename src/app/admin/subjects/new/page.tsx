@@ -1,7 +1,33 @@
-import { BookOpen, Plus, Save, ChevronLeft, Layout, FileText, Settings, Sparkles, Target, Hash } from "lucide-react"
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { BookOpen, Save, ChevronLeft, Layout, FileText, Settings, Sparkles, Target, Hash } from "lucide-react"
 import Link from "next/link"
+import { createSubject } from "@/features/subjects/api/subjects-api"
 
 export default function NewSubjectPage() {
+  const router = useRouter()
+  const [name, setName] = useState("")
+  const [code, setCode] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    try {
+      setIsSubmitting(true)
+      setErrorMessage("")
+      await createSubject({ name, code })
+      router.push("/admin/subjects")
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Không thể tạo subject.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="min-h-[calc(100vh-120px)] flex items-center justify-center py-12 px-4 animate-in fade-in zoom-in-95 duration-700">
       <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-5 gap-0 rounded-[32px] overflow-hidden border border-outline-variant shadow-2xl shadow-primary/5 bg-white">
@@ -53,7 +79,12 @@ export default function NewSubjectPage() {
 
         {/* Right Form Area */}
         <div className="lg:col-span-3 p-12 bg-white">
-          <form className="space-y-8">
+          <form className="space-y-8" onSubmit={handleSubmit}>
+            {errorMessage ? (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-700">
+                {errorMessage}
+              </div>
+            ) : null}
             <div className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[13px] font-bold text-on-surface-variant uppercase tracking-widest px-1">Basic Details</label>
@@ -64,7 +95,10 @@ export default function NewSubjectPage() {
                     </div>
                     <input 
                       type="text" 
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
                       placeholder="Subject Name (e.g. Distributed Systems)" 
+                      required
                       className="w-full bg-surface-container-low/50 border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all font-bold"
                     />
                   </div>
@@ -74,7 +108,10 @@ export default function NewSubjectPage() {
                     </div>
                     <input 
                       type="text" 
+                      value={code}
+                      onChange={(event) => setCode(event.target.value)}
                       placeholder="Course Code (e.g. PRN231)" 
+                      required
                       className="w-full bg-surface-container-low/50 border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-[15px] focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-white transition-all font-mono font-bold"
                     />
                   </div>
@@ -101,9 +138,13 @@ export default function NewSubjectPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-outline-variant">
-              <button className="flex-[2] bg-primary hover:bg-secondary text-white py-4 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-[2] bg-primary hover:bg-secondary text-white py-4 rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 disabled:opacity-60"
+              >
                 <Save size={18} />
-                <span>Save New Subject</span>
+                <span>{isSubmitting ? "Saving..." : "Save New Subject"}</span>
               </button>
               <Link href="/admin/subjects" className="flex-1 bg-surface-container-highest hover:bg-outline-variant text-on-surface py-4 rounded-2xl font-bold text-center transition-all">
                 Discard

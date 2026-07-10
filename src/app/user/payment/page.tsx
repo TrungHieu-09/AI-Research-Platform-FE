@@ -4,6 +4,11 @@ import * as React from "react"
 import Link from "next/link"
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
 import { cn } from "@/lib/utils"
+import {
+  getPaymentReceipts,
+  getReceiptItems,
+} from "@/features/payments/api/payments-api"
+import type { PaymentReceipt } from "@/features/payments/types"
 
 /* ─── Animated Number ─────────────────────── */
 function AnimatedNumber({ value, decimals = 0 }: { value: number; decimals?: number }) {
@@ -68,6 +73,23 @@ function PlanCard({
 }
 
 export default function PaymentManagementPage() {
+  const [receipts, setReceipts] = React.useState<PaymentReceipt[]>([])
+  const [receiptError, setReceiptError] = React.useState("")
+
+  React.useEffect(() => {
+    async function loadReceipts() {
+      try {
+        setReceiptError("")
+        const response = await getPaymentReceipts()
+        setReceipts(getReceiptItems(response))
+      } catch (error) {
+        setReceiptError(error instanceof Error ? error.message : "Không thể tải lịch sử thanh toán.")
+      }
+    }
+
+    void loadReceipts()
+  }, [])
+
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-20">
       {/* Page Header */}
@@ -96,6 +118,41 @@ export default function PaymentManagementPage() {
           </motion.p>
         </div>
       </motion.div>
+
+      <div className="mb-10 bg-white rounded-xl border border-[#c2c6d6]/30 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#c2c6d6]/30">
+          <h3 className="font-medium text-[18px] text-[#121c2a]">Payment Receipts</h3>
+          <p className="text-[13px] text-[#727785] mt-1">Review your recent payment history and subscription receipts.</p>
+        </div>
+        {receiptError ? (
+          <div className="p-5 text-[14px] font-semibold text-red-700 bg-red-50">{receiptError}</div>
+        ) : receipts.length === 0 ? (
+          <div className="p-5 text-[14px] text-[#424753]">Chưa có hóa đơn thanh toán.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-[#f8f9ff]">
+                <tr>
+                  <th className="px-5 py-3 text-[12px] uppercase text-[#727785]">Plan</th>
+                  <th className="px-5 py-3 text-[12px] uppercase text-[#727785]">Amount</th>
+                  <th className="px-5 py-3 text-[12px] uppercase text-[#727785]">Content</th>
+                  <th className="px-5 py-3 text-[12px] uppercase text-[#727785]">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#c2c6d6]/20">
+                {receipts.map((receipt) => (
+                  <tr key={receipt.id}>
+                    <td className="px-5 py-3 text-[13px] font-bold text-[#121c2a]">{receipt.planId}</td>
+                    <td className="px-5 py-3 text-[13px] text-[#424753]">{receipt.amount}₫</td>
+                    <td className="px-5 py-3 text-[13px] font-mono text-[#0058be]">{receipt.transferContent}</td>
+                    <td className="px-5 py-3 text-[12px] font-bold text-[#424753]">{receipt.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Current Plans Overview */}
       <div className="mb-10">

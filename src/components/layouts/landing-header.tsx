@@ -5,9 +5,10 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown, Bell
+  Wallet, Settings, LogOut, Search, ChevronDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { clearAuthSession, getAuthUser as getApiAuthUser } from "@/lib/api/client"
 
 /* ─── Auth helpers (localStorage mock) ─────── */
 export interface AuthUser {
@@ -27,7 +28,26 @@ export function clearAuthUser() {
 
 function getAuthUser(): AuthUser | null {
   if (typeof window === "undefined") return null
-  try { return JSON.parse(localStorage.getItem("lumis_auth") ?? "null") } catch { return null }
+  try {
+    const legacyUser = JSON.parse(localStorage.getItem("lumis_auth") ?? "null") as AuthUser | null
+    if (legacyUser) return legacyUser
+
+    const apiUser = getApiAuthUser()
+    if (!apiUser) return null
+
+    return {
+      name: apiUser.name,
+      email: apiUser.email,
+      initials: apiUser.name
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase(),
+      role: apiUser.role === "ADMIN" ? "admin" : "user",
+    }
+  } catch { return null }
 }
 
 /* ─── Nav items when logged in ──────────────── */
@@ -59,7 +79,11 @@ export function LandingHeader() {
 
   /* Read auth on mount */
   React.useEffect(() => {
-    setUser(getAuthUser())
+    const timeoutId = window.setTimeout(() => {
+      setUser(getAuthUser())
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   /* Scroll handler for show/hide scroll shadow */
@@ -91,13 +115,12 @@ export function LandingHeader() {
   }, [])
 
   const handleLogout = () => {
+    clearAuthSession()
     clearAuthUser()
     setUser(null)
     setProfileOpen(false)
     router.push("/")
   }
-
-  const isOnUserPage = pathname.startsWith("/user")
 
   return (
     <header

@@ -1,21 +1,140 @@
-import { FileText, Eye, Clock, CheckCircle, XCircle, ChevronLeft, Download, Share2, MoreVertical, BookOpen, User, Info } from "lucide-react"
-import Link from "next/link"
-import { cn } from "@/lib/utils"
+"use client"
 
-export default function DocumentDetailPage({ params }: { params: { id: string } }) {
-  // Mock document data
-  const doc = {
-    id: params.id,
-    title: "Operating Systems Lecture Notes",
-    subject: "Comp Science",
-    subjectCode: "CS301",
-    owner: "Nguyen Van A",
-    status: "Pending",
-    size: "2.4 MB",
-    date: "2024-06-05",
-    pages: 42,
-    description: "A comprehensive set of lecture notes covering process management, memory allocation, and file systems. Includes diagrams and exercise solutions.",
-    tags: ["OS", "Kernel", "Notes", "FPTU"],
+import { use, useCallback, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle,
+  ChevronLeft,
+  Download,
+  FileText,
+  Info,
+  RotateCcw,
+  Trash2,
+  User,
+  XCircle,
+} from "lucide-react"
+
+import {
+  deleteDocument,
+  getDocument,
+  getDocumentAuditLogs,
+  hardDeleteDocument,
+  moderateDocument,
+  restoreDocument,
+} from "@/features/documents/api/documents-api"
+import type { AuditLog, DocumentRecord } from "@/features/documents/types"
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+function formatStatus(status: DocumentRecord["status"]) {
+  if (status === "APPROVED") return "Approved"
+  if (status === "REJECTED") return "Rejected"
+  return "Pending"
+}
+
+export default function DocumentDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = use(params)
+  const router = useRouter()
+  const [document, setDocument] = useState<DocumentRecord | null>(null)
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+
+  const loadDocument = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setErrorMessage("")
+
+      const [documentResponse, auditResponse] = await Promise.allSettled([
+        getDocument(id),
+        getDocumentAuditLogs(id),
+      ])
+
+      if (documentResponse.status === "rejected") throw documentResponse.reason
+
+      setDocument(documentResponse.value)
+      setAuditLogs(auditResponse.status === "fulfilled" ? auditResponse.value : [])
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Không thể tải document.")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadDocument()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [loadDocument])
+
+  async function handleModerate(action: "APPROVED" | "REJECTED") {
+    try {
+      setIsSubmitting(true)
+      setErrorMessage("")
+      await moderateDocument(id, {
+        action,
+        rejectionReason: action === "REJECTED" ? rejectionReason.trim() || undefined : undefined,
+      })
+      await loadDocument()
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Không thể duyệt document.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleSoftDelete() {
+    if (!document) return
+    try {
+      setIsSubmitting(true)
+      await deleteDocument(document.id)
+      await loadDocument()
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Không thể xóa document.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleRestore() {
+    if (!document) return
+    try {
+      setIsSubmitting(true)
+      setDocument(await restoreDocument(document.id))
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Không thể khôi phục document.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleHardDelete() {
+    if (!document) return
+    if (!window.confirm("Xóa vĩnh viễn document này?")) return
+
+    try {
+      setIsSubmitting(true)
+      await hardDeleteDocument(document.id)
+      router.push("/admin/documents")
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Không thể xóa vĩnh viễn document.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -27,132 +146,169 @@ export default function DocumentDetailPage({ params }: { params: { id: string } 
           </Link>
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-on-surface">Review Document</h1>
-            <p className="text-on-surface-variant font-medium">Moderate and verify the quality of academic resources.</p>
+            <p className="text-on-surface-variant font-medium">Moderate and verify academic resources.</p>
           </div>
         </div>
-        <div className="flex gap-3">
-          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 hover:bg-green-700 transition-all">
+        <div className="flex flex-wrap gap-3">
+          {document?.deletedAt ? (
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => void handleRestore()}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-surface border border-primary/20 text-primary rounded-2xl font-bold hover:bg-primary/5 disabled:opacity-60"
+            >
+              <RotateCcw size={18} />
+              Restore
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={isSubmitting || !document}
+              onClick={() => void handleSoftDelete()}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-surface border border-red-200 text-red-600 rounded-2xl font-bold hover:bg-red-50 disabled:opacity-60"
+            >
+              <Trash2 size={18} />
+              Soft Delete
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={isSubmitting || !document}
+            onClick={() => void handleModerate("APPROVED")}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 hover:bg-green-700 disabled:opacity-60"
+          >
             <CheckCircle size={18} />
-            <span>Approve</span>
+            Approve
           </button>
-          <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-surface border border-red-200 text-red-600 rounded-2xl font-bold hover:bg-red-50 transition-all">
+          <button
+            type="button"
+            disabled={isSubmitting || !document}
+            onClick={() => void handleModerate("REJECTED")}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-surface border border-red-200 text-red-600 rounded-2xl font-bold hover:bg-red-50 disabled:opacity-60"
+          >
             <XCircle size={18} />
-            <span>Reject</span>
+            Reject
+          </button>
+          <button
+            type="button"
+            disabled={isSubmitting || !document}
+            onClick={() => void handleHardDelete()}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700 disabled:opacity-60"
+          >
+            <Trash2 size={18} />
+            Hard Delete
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Main Preview Area */}
-        <div className="lg:col-span-3 space-y-6">
-          <div className="glass-panel min-h-[800px] flex flex-col items-center justify-start p-10 bg-surface-container-low border-dashed border-2 border-outline-variant relative overflow-hidden">
-             {/* Simulated PDF Header */}
-             <div className="w-full h-12 bg-surface-container-highest rounded-t-xl border border-outline-variant flex items-center px-4 justify-between">
-                <div className="flex items-center gap-4">
-                    <span className="text-[12px] font-bold text-on-surface-variant">Page 1 / {doc.pages}</span>
-                    <div className="h-4 w-[1px] bg-outline-variant" />
-                    <div className="flex items-center gap-2">
-                        <button className="p-1 hover:bg-surface-container-high rounded">-</button>
-                        <span className="text-[12px] font-bold">100%</span>
-                        <button className="p-1 hover:bg-surface-container-high rounded">+</button>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-1.5 hover:bg-surface-container-high rounded">
-                        <Download size={14} />
-                    </button>
-                    <button className="p-1.5 hover:bg-surface-container-high rounded">
-                        <Share2 size={14} />
-                    </button>
-                </div>
-             </div>
-
-             {/* Simulated Page Content */}
-             <div className="w-full max-w-[600px] bg-white shadow-2xl mt-12 p-16 space-y-8 aspect-[1/1.414]">
-                <div className="space-y-4">
-                    <div className="h-8 w-3/4 bg-surface-container-highest rounded-md" />
-                    <div className="h-4 w-1/2 bg-surface-container-low rounded-md" />
-                </div>
-                <div className="space-y-4 pt-8">
-                    <div className="h-3 w-full bg-surface-container-low rounded-sm" />
-                    <div className="h-3 w-full bg-surface-container-low rounded-sm" />
-                    <div className="h-3 w-5/6 bg-surface-container-low rounded-sm" />
-                    <div className="h-3 w-full bg-surface-container-low rounded-sm" />
-                </div>
-                <div className="grid grid-cols-2 gap-8 pt-8">
-                    <div className="h-32 bg-surface-container-low rounded-xl" />
-                    <div className="h-32 bg-surface-container-low rounded-xl" />
-                </div>
-                <div className="space-y-4 pt-8">
-                    <div className="h-3 w-full bg-surface-container-low rounded-sm" />
-                    <div className="h-3 w-full bg-surface-container-low rounded-sm" />
-                    <div className="h-3 w-4/6 bg-surface-container-low rounded-sm" />
-                </div>
-             </div>
-
-             <div className="absolute inset-0 bg-gradient-to-t from-surface-container-low via-transparent to-transparent pointer-events-none" />
-          </div>
+      {errorMessage ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-[14px] font-medium text-red-700">
+          {errorMessage}
         </div>
+      ) : null}
 
-        {/* Sidebar Info Area */}
-        <div className="space-y-6">
-          <div className="glass-panel p-6 space-y-6">
-            <div className="flex items-center gap-3 mb-2">
+      {isLoading ? (
+        <div className="glass-panel p-8 text-[14px] font-medium text-on-surface-variant">
+          Loading document...
+        </div>
+      ) : document ? (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-3 space-y-6">
+            <div className="glass-panel min-h-[600px] flex flex-col items-center justify-start p-10 bg-surface-container-low border-dashed border-2 border-outline-variant relative overflow-hidden">
+              <div className="w-full h-12 bg-surface-container-highest rounded-t-xl border border-outline-variant flex items-center px-4 justify-between">
+                <span className="text-[12px] font-bold text-on-surface-variant">Page 1 / {document.pageCount}</span>
+                <a className="p-1.5 hover:bg-surface-container-high rounded" href={document.fileUrl} target="_blank" rel="noreferrer">
+                  <Download size={14} />
+                </a>
+              </div>
+              <div className="w-full max-w-[600px] bg-white shadow-2xl mt-12 p-16 space-y-8 aspect-[1/1.414]">
+                <div className="flex flex-col items-center justify-center h-full text-center gap-4">
+                  <FileText size={56} className="text-primary" />
+                  <h2 className="text-xl font-bold text-on-surface">{document.title}</h2>
+                  <p className="text-sm text-on-surface-variant">Open original file to preview full content.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="glass-panel p-6 space-y-6">
+              <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                    <Info size={18} />
+                  <Info size={18} />
                 </div>
                 <h3 className="font-bold text-on-surface">Document Info</h3>
-            </div>
-            
-            <div className="space-y-4">
+              </div>
+              <div className="space-y-4">
                 <div>
-                    <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Title</p>
-                    <p className="text-[14px] font-bold text-on-surface">{doc.title}</p>
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Title</p>
+                  <p className="text-[14px] font-bold text-on-surface">{document.title}</p>
                 </div>
                 <div>
-                    <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Subject</p>
-                    <div className="flex items-center gap-2">
-                        <BookOpen size={14} className="text-primary" />
-                        <p className="text-[14px] font-bold text-on-surface">{doc.subject} ({doc.subjectCode})</p>
-                    </div>
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Subject</p>
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={14} className="text-primary" />
+                    <p className="text-[14px] font-bold text-on-surface">{document.subject?.name ?? "Uncategorized"}</p>
+                  </div>
                 </div>
                 <div>
-                    <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Uploaded By</p>
-                    <div className="flex items-center gap-2">
-                        <User size={14} className="text-secondary" />
-                        <p className="text-[14px] font-bold text-on-surface">{doc.owner}</p>
-                    </div>
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Uploaded By</p>
+                  <div className="flex items-center gap-2">
+                    <User size={14} className="text-secondary" />
+                    <p className="text-[14px] font-bold text-on-surface">{document.owner?.name ?? "Unknown"}</p>
+                  </div>
                 </div>
                 <div>
-                    <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Size & Pages</p>
-                    <p className="text-[14px] font-bold text-on-surface">{doc.size} • {doc.pages} Pages</p>
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Size & Pages</p>
+                  <p className="text-[14px] font-bold text-on-surface">{formatFileSize(document.fileSize)} • {document.pageCount} Pages</p>
                 </div>
+                <div>
+                  <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Status</p>
+                  <p className="text-[14px] font-bold text-on-surface">{formatStatus(document.status)}</p>
+                </div>
+              </div>
             </div>
 
-            <div className="pt-6 border-t border-outline-variant">
-                <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Tags</p>
-                <div className="flex flex-wrap gap-2">
-                    {doc.tags.map(tag => (
-                        <span key={tag} className="px-2.5 py-1 bg-surface-container-highest text-on-surface-variant rounded-lg text-[12px] font-bold">
-                            #{tag}
-                        </span>
-                    ))}
-                </div>
-            </div>
-          </div>
-
-          <div className="glass-panel p-6 bg-primary/5 border-primary/10">
-            <h4 className="font-bold text-on-surface mb-2">Moderator Note</h4>
-            <p className="text-[13px] text-on-surface-variant leading-relaxed mb-4">
-                Please ensure this document does not contain sensitive personal information or copyrighted exam papers before approving.
-            </p>
-            <textarea 
-                placeholder="Add a review comment..." 
+            <div className="glass-panel p-6 bg-primary/5 border-primary/10">
+              <h4 className="font-bold text-on-surface mb-2">Moderator Note</h4>
+              <p className="text-[13px] text-on-surface-variant leading-relaxed mb-4">
+                Fill this before rejecting.
+              </p>
+              <textarea
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="Add a review comment..."
                 className="w-full h-24 bg-white border border-outline-variant rounded-xl p-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
-            />
+              />
+            </div>
+
+            <div className="glass-panel p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <AlertCircle size={20} className="text-primary" />
+                <h4 className="font-bold text-on-surface">Audit Logs</h4>
+              </div>
+              {auditLogs.length === 0 ? (
+                <p className="text-[13px] text-on-surface-variant">No audit logs returned.</p>
+              ) : (
+                <div className="space-y-3">
+                  {auditLogs.slice(0, 6).map((log) => (
+                    <div key={log.id} className="rounded-xl border border-outline-variant p-3">
+                      <p className="text-[13px] font-bold text-on-surface">{log.action}</p>
+                      <p className="text-[12px] text-on-surface-variant">
+                        {log.user?.name ?? "System"} • {new Date(log.createdAt).toLocaleString("vi-VN")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="glass-panel p-8 text-[14px] font-medium text-on-surface-variant">
+          Document not found.
+        </div>
+      )}
     </div>
   )
 }
