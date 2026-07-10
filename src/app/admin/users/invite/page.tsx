@@ -16,7 +16,7 @@ export default function InviteUserPage() {
     if (!email) return
     setSubmitted(true)
     setTimeout(() => {
-      router.push("/users")
+      router.push("/admin/users")
     }, 1500)
   }
 
@@ -24,7 +24,7 @@ export default function InviteUserPage() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
         <Link
-          href="/users"
+          href="/admin/users"
           className="p-2.5 bg-white border border-[#c2c6d6]/40 hover:bg-[#eff4ff] hover:text-[#0058be] rounded-2xl transition-all shadow-sm"
         >
           <ChevronLeft size={22} />
@@ -126,7 +126,7 @@ export default function InviteUserPage() {
                   <span>Gửi lời mời ngay</span>
                 </button>
                 <Link
-                  href="/users"
+                  href="/admin/users"
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-[#424754] py-3.5 rounded-2xl font-bold text-center transition-all text-[14px] flex items-center justify-center"
                 >
                   Hủy bỏ

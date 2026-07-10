@@ -35,7 +35,7 @@ export default function SubjectsPage() {
           </p>
         </div>
         <Link 
-          href="/subjects/new"
+          href="/admin/subjects/new"
           className="bg-[#0058be] hover:bg-[#2170e4] text-white px-6 py-2.5 rounded-2xl font-bold shadow-md shadow-[#0058be]/20 transition-all flex items-center gap-2 w-fit text-[14px]"
         >
           <Plus size={18} />
@@ -65,7 +65,7 @@ export default function SubjectsPage() {
             {subjects.map((subject) => (
               <div 
                 key={subject.id} 
-                onClick={() => router.push(`/subjects/${subject.id}`)}
+                onClick={() => router.push(`/admin/subjects/${subject.id}`)}
                 className="bg-white p-6 rounded-3xl border border-[#c2c6d6]/40 hover:border-[#0058be]/40 transition-all shadow-sm hover:shadow-md cursor-pointer group flex flex-col justify-between"
               >
                 <div>

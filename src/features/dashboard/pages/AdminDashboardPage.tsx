@@ -81,7 +81,7 @@ export function AdminDashboardPage() {
           value={currentData.stats[0].value}
           icon={Users}
           description={currentData.stats[0].description}
-          href="/users"
+          href="/admin/users"
           trend={currentData.stats[0].trend}
         />
         <StatCard
@@ -89,7 +89,7 @@ export function AdminDashboardPage() {
           value={currentData.stats[1].value}
           icon={FileText}
           description={currentData.stats[1].description}
-          href="/documents"
+          href="/admin/documents"
           trend={currentData.stats[1].trend}
         />
         <StatCard
@@ -97,14 +97,14 @@ export function AdminDashboardPage() {
           value={currentData.stats[2].value}
           icon={Clock}
           description={currentData.stats[2].description}
-          href="/documents?status=pending"
+          href="/admin/documents?status=pending"
         />
         <StatCard
           title={currentData.stats[3].title}
           value={currentData.stats[3].value}
           icon={AlertCircle}
           description={currentData.stats[3].description}
-          href="/settings"
+          href="/admin/settings"
         />
       </div>
 

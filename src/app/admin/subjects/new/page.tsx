@@ -9,7 +9,7 @@ export default function NewSubjectPage() {
         {/* Left Informational Sidebar */}
         <div className="lg:col-span-2 bg-surface-container-low p-10 flex flex-col justify-between border-r border-outline-variant">
           <div className="space-y-8">
-            <Link href="/subjects" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary font-bold transition-colors group">
+            <Link href="/admin/subjects" className="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary font-bold transition-colors group">
               <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
               <span>Back to Subjects</span>
             </Link>
@@ -105,7 +105,7 @@ export default function NewSubjectPage() {
                 <Save size={18} />
                 <span>Save New Subject</span>
               </button>
-              <Link href="/subjects" className="flex-1 bg-surface-container-highest hover:bg-outline-variant text-on-surface py-4 rounded-2xl font-bold text-center transition-all">
+              <Link href="/admin/subjects" className="flex-1 bg-surface-container-highest hover:bg-outline-variant text-on-surface py-4 rounded-2xl font-bold text-center transition-all">
                 Discard
               </Link>
             </div>

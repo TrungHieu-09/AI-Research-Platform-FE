@@ -264,7 +264,7 @@ export default function UsersPage() {
                 paginatedUsers.map((user) => (
                   <tr
                     key={user.id}
-                    onClick={() => router.push(`/users/${user.id}`)}
+                    onClick={() => router.push(`/admin/users/${user.id}`)}
                     className="hover:bg-[#f8f9ff] transition-colors group cursor-pointer"
                   >
                     <td className="px-6 py-4">
@@ -320,7 +320,7 @@ export default function UsersPage() {
                       <div className="flex items-center justify-end gap-1">
                         {/* Quick Action: View User Info */}
                         <button
-                          onClick={() => router.push(`/users/${user.id}`)}
+                          onClick={() => router.push(`/admin/users/${user.id}`)}
                           title="Xem thông tin người dùng"
                           className="p-2 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-xl transition-colors"
                         >

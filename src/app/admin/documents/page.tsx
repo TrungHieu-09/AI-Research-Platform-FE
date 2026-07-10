@@ -1,7 +1,8 @@
 "use client"
 
-import { FileText, Eye, MoreHorizontal, Download, Trash2, Clock, CheckCircle, XCircle, Search } from "lucide-react"
+import { FileText, Eye, MoreHorizontal, Download, Trash2, Clock, CheckCircle, XCircle, Search, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 const documents = [
   { id: 1, title: "Operating Systems Lecture Notes", subject: "Comp Science", owner: "Nguyen Van A", status: "Approved", size: "2.4 MB", date: "2024-06-05" },
@@ -28,6 +29,13 @@ export default function DocumentsPage() {
             Moderate academic resources and manage the document lifecycle across all collections.
           </p>
         </div>
+        <Link 
+          href="/admin/documents/upload"
+          className="bg-[#0058be] hover:bg-[#2170e4] text-white px-6 py-2.5 rounded-2xl font-bold shadow-md shadow-[#0058be]/20 transition-all flex items-center gap-2 w-fit text-[14px]"
+        >
+          <Plus size={18} />
+          <span>Upload Document</span>
+        </Link>
       </div>
 
 
@@ -62,7 +70,7 @@ export default function DocumentsPage() {
         {documents.map((doc) => (
           <div 
             key={doc.id} 
-            onClick={() => router.push(`/documents/${doc.id}`)}
+            onClick={() => router.push(`/admin/documents/${doc.id}`)}
             className="bg-white p-5 rounded-3xl border border-[#c2c6d6]/40 hover:border-[#0058be]/40 transition-all shadow-sm hover:shadow-md flex flex-col md:flex-row md:items-center gap-6 cursor-pointer group"
           >
             <div className="p-4 bg-[#eff4ff] text-[#0058be] rounded-2xl self-start md:self-center shrink-0">

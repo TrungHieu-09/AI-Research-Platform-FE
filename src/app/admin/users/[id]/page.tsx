@@ -82,7 +82,7 @@ export default function UserDetailPage() {
   const handleDeleteAccount = () => {
     showToast(`Đã xóa tài khoản ${user.name}`)
     setTimeout(() => {
-      router.push("/users")
+      router.push("/admin/users")
     }, 1000)
   }
 
@@ -103,7 +103,7 @@ export default function UserDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
-            href="/users"
+            href="/admin/users"
             className="p-2.5 bg-white border border-[#c2c6d6]/40 hover:bg-[#eff4ff] hover:text-[#0058be] rounded-2xl transition-all shadow-sm"
           >
             <ChevronLeft size={22} />

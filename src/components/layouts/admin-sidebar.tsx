@@ -19,11 +19,11 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "User Management", href: "/users", icon: Users },
-  { name: "Subject Management", href: "/subjects", icon: BookOpen },
-  { name: "Document Management", href: "/documents", icon: FileText },
-  { name: "System Settings", href: "/settings", icon: Settings },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "User Management", href: "/admin/users", icon: Users },
+  { name: "Subject Management", href: "/admin/subjects", icon: BookOpen },
+  { name: "Document Management", href: "/admin/documents", icon: FileText },
+  { name: "System Settings", href: "/admin/settings", icon: Settings },
 ]
 
 export function AdminSidebar() {
