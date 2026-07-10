@@ -23,27 +23,27 @@ const sourceReferences = [
     id: 1, citationNumber: 1, author: "Fowler et al. (2023)",
     title: "High-threshold surface codes and fast classical decoding algorithms",
     excerpt: "We present a detailed analysis of planar surface code thresholds, confirming a practical limit near 1%...",
-    tags: ["p. 42", "Methodology"],
+    tags: ["Tr. 42", "Phương pháp"],
   },
   {
     id: 2, citationNumber: 2, author: "Zhang & Liu (2024)",
     title: "Decoherence constraints in Majorana-based topological qubits",
     excerpt: "While non-Abelian statistics offer inherent protection, our simulations indicate that dynamic environmental...",
-    tags: ["p. 15", "Results"],
+    tags: ["Tr. 15", "Kết quả"],
   },
   {
     id: 3, citationNumber: 3, author: "Chen (2023)",
     title: "Neural network decoders for scalable topological error...",
     excerpt: "By utilizing a convolutional neural network architecture, we achieve a decoding speedup of 40% over...",
-    tags: ["p. 8", "Abstract"],
+    tags: ["Tr. 8", "Tóm tắt"],
   },
 ]
 
 const quickActions = [
-  { Icon: FileText, label: "Summarize\nCollection", color: "text-[#0058be]", bg: "bg-[#eff4ff]", hoverBg: "hover:bg-[#dbeafe]" },
-  { Icon: FlaskConical, label: "Explain\nMethodology", color: "text-[#7c3aed]", bg: "bg-[#f5f3ff]", hoverBg: "hover:bg-[#ede9fe]" },
-  { Icon: AlertTriangle, label: "Find\nLimitations", color: "text-[#d93025]", bg: "bg-[#fff1f1]", hoverBg: "hover:bg-[#fee2e2]" },
-  { Icon: ArrowRightLeft, label: "Compare\nPapers", color: "text-[#a16207]", bg: "bg-[#fefce8]", hoverBg: "hover:bg-[#fef9c3]" },
+  { Icon: FileText, label: "Tóm tắt\nBộ sưu tập", color: "text-[#0058be]", bg: "bg-[#eff4ff]", hoverBg: "hover:bg-[#dbeafe]" },
+  { Icon: FlaskConical, label: "Giải thích\nPhương pháp", color: "text-[#7c3aed]", bg: "bg-[#f5f3ff]", hoverBg: "hover:bg-[#ede9fe]" },
+  { Icon: AlertTriangle, label: "Tìm kiếm\nHạn chế", color: "text-[#d93025]", bg: "bg-[#fff1f1]", hoverBg: "hover:bg-[#fee2e2]" },
+  { Icon: ArrowRightLeft, label: "So sánh\nBài báo", color: "text-[#a16207]", bg: "bg-[#fefce8]", hoverBg: "hover:bg-[#fef9c3]" },
 ]
 
 /* ─── Typing Dots ────────────────────────────── */
@@ -96,8 +96,8 @@ function WorkspaceContent() {
       setMessages(prev => [...prev, {
         role: "ai",
         content: (isDocAttached && attachedDoc)
-          ? `Based on the document "${attachedDoc.title}", here is an analysis...\n\n(This is a mock response demonstrating the flow.)`
-          : `Here is an analysis based on the entire collection...\n\n(This is a mock response demonstrating the flow without a specific document.)`,
+          ? `Dựa trên tài liệu "${attachedDoc.title}", đây là phân tích...\n\n(Đây là phản hồi mẫu để minh họa.)`
+          : `Đây là phân tích dựa trên toàn bộ bộ sưu tập...\n\n(Đây là phản hồi mẫu để minh họa.)`,
       }])
     }, 1500)
   }
@@ -119,7 +119,7 @@ function WorkspaceContent() {
           transition={{ type: "spring", stiffness: 300 }}
         >
           <Layers size={14} className="text-[#727785]" />
-          Collection: Quantum Computing Literature
+          Bộ sưu tập: Tài liệu điện toán lượng tử
           <ChevronDown size={14} className="text-[#727785] ml-1" />
         </motion.button>
 
@@ -188,8 +188,8 @@ function WorkspaceContent() {
                     </motion.div>
                     <p className="text-[#727785] text-[14px] font-medium">
                       {isDocAttached && attachedDoc
-                        ? `Ask something about "${attachedDoc.title}"...`
-                        : "Start a new conversation..."}
+                        ? `Hỏi điều gì đó về "${attachedDoc.title}"...`
+                        : "Bắt đầu một cuộc trò chuyện mới..."}
                     </p>
                   </div>
                 </motion.div>
@@ -221,7 +221,7 @@ function WorkspaceContent() {
                       >
                         <Sparkles size={16} />
                       </motion.span>
-                      <span className="text-[13px] font-bold">Lumis Synthesis</span>
+                      <span className="text-[13px] font-bold">Lumis AI</span>
                     </div>
                     <div className="text-[14px] text-[#424754] leading-relaxed whitespace-pre-wrap">
                       {msg.content}
@@ -241,7 +241,7 @@ function WorkspaceContent() {
                 >
                   <div className="flex items-center gap-2 text-[#0058be] mb-1">
                     <Sparkles size={15} />
-                    <span className="text-[12px] font-bold">Lumis is thinking...</span>
+                    <span className="text-[12px] font-bold">Lumis đang suy nghĩ...</span>
                   </div>
                   <TypingDots />
                 </motion.div>
@@ -280,8 +280,8 @@ function WorkspaceContent() {
                 className="w-full bg-transparent border-none outline-none resize-none text-[14px] text-[#121c2a] placeholder:text-[#727785] min-h-[44px] max-h-[120px]"
                 placeholder={
                   isDocAttached && attachedDoc
-                    ? `Ask Lumis to analyze ${attachedDoc.title}...`
-                    : "Ask Lumis to synthesize, analyze, or compare documents..."
+                    ? `Yêu cầu Lumis phân tích ${attachedDoc.title}...`
+                    : "Yêu cầu Lumis tổng hợp, phân tích hoặc so sánh các tài liệu..."
                 }
                 rows={2}
               />
@@ -291,7 +291,7 @@ function WorkspaceContent() {
                     className="p-2 text-[#727785] rounded-lg"
                     whileHover={{ scale: 1.1, color: "#121c2a", backgroundColor: "#f3f4f6" }}
                     whileTap={{ scale: 0.9 }}
-                    title="Attach file"
+                    title="Đính kèm tệp"
                   >
                     <Paperclip size={17} />
                   </motion.button>
@@ -299,10 +299,10 @@ function WorkspaceContent() {
                     className="flex items-center gap-1.5 px-3 py-1.5 text-[#727785] rounded-lg text-[12px] font-semibold"
                     whileHover={{ scale: 1.04, color: "#0058be", backgroundColor: "#eff4ff" }}
                     whileTap={{ scale: 0.96 }}
-                    title="Share this session"
+                    title="Chia sẻ phiên này"
                   >
                     <Share2 size={14} />
-                    Share session
+                    Chia sẻ phiên
                   </motion.button>
                 </div>
                 <motion.button
@@ -314,7 +314,7 @@ function WorkspaceContent() {
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   <Send size={15} />
-                  Send
+                  Gửi
                 </motion.button>
               </div>
             </div>
@@ -330,7 +330,7 @@ function WorkspaceContent() {
         >
           <div className="px-6 py-5 border-b border-[#c2c6d6]/30 bg-white/60">
             <h2 className="text-[17px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-              Source References
+              Nguồn tham khảo
             </h2>
           </div>
 
