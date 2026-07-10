@@ -15,7 +15,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
-  const [voiceLang, setVoiceLang] = useState<"vi" | "en">("vi");
+  const [voiceLang, setVoiceLang] = useState<"vi" | "en">("en");
   const timelineRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
