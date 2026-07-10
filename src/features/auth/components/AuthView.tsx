@@ -138,7 +138,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   mode === "login" ? "text-white" : "text-[#121c2a]"
                 }`}
               >
-                Precision in Discovery.
+                Chuẩn xác trong từng khám phá.
               </h2>
               <p
                 className={`text-[18px] leading-[1.6] transition-colors duration-500 ${
@@ -146,8 +146,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                 }`}
               >
                 {mode === "login"
-                  ? "Elevate your research workflow with AI-driven contextual insights and document synthesis."
-                  : "Experience a high-tech minimalist workspace tailored for the academic and AI research community. Elevate your cognitive focus with tools designed for rigorous document management and synthesized insights."}
+                  ? "Nâng tầm quy trình nghiên cứu của bạn với thông tin chi tiết theo ngữ cảnh và tổng hợp tài liệu bằng AI."
+                  : "Trải nghiệm không gian làm việc tối giản, hiện đại dành riêng cho cộng đồng học thuật và nghiên cứu AI. Nâng cao sự tập trung với các công cụ được thiết kế để quản lý tài liệu và tổng hợp kiến thức một cách chặt chẽ."}
               </p>
             </motion.div>
           </AnimatePresence>
@@ -167,7 +167,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   : "text-[#424754] dark:text-on-surface-variant hover:text-[#121c2a]"
               }`}
             >
-              Login
+              Đăng nhập
             </button>
             <button
               onClick={() => switchMode("register")}
@@ -177,7 +177,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   : "text-[#424754] dark:text-on-surface-variant hover:text-[#121c2a]"
               }`}
             >
-              Register
+              Đăng ký
             </button>
             {/* Sliding Pill Indicator */}
             <motion.div
@@ -202,10 +202,10 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   {/* Heading */}
                   <div className="mb-[48px] text-center md:text-left">
                     <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] dark:text-on-surface mb-[4px]">
-                      Welcome back
+                      Chào mừng trở lại
                     </h2>
                     <p className="text-[16px] text-[#424754] dark:text-on-surface-variant">
-                      Access your intelligent workspace.
+                      Truy cập không gian làm việc thông minh của bạn.
                     </p>
                   </div>
 
@@ -217,7 +217,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="w-5 h-5"
                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPeIEbAZsWW4q5svAcXAyDsyZ5pyeFAKa-zGIFarjXQ5smpYkm6YHYz59IfrsE5-SDTkN1D8OuFF7EGH5d4fF9OwO68NCPa9g2wp5dYmLWqa7lHyp0fNI_Zo1MFOcU8mlFxX1HSleSvF-xWk5k-ne3HMKt60phBjNY8F7zO6Z96nNlRClTTEqw60oHb6fMzW2mdcQqRi1EV3yNJlXiPUM9-8mw8Mpvgj02NDLO5sLOxtxMBEUcOjHTrJJrjqhokRm3zh3ZLbY-MYR0"
                       />
-                      Continue with Google
+                      Tiếp tục với Google
                     </button>
                     <button className="w-full h-[48px] flex items-center justify-center gap-[12px] bg-white border border-[#c2c6d6] hover:bg-[#eff4ff] hover:border-[#727785] text-[#121c2a] font-semibold text-[14px] rounded-xl transition-all shadow-[0px_2px_4px_rgba(31,41,55,0.02)]">
                       <svg
@@ -227,14 +227,14 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                       >
                         <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
                       </svg>
-                      Continue with GitHub
+                      Tiếp tục với GitHub
                     </button>
                   </div>
 
                   <div className="flex items-center gap-[12px] mb-[24px]">
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                     <span className="font-semibold text-[12px] text-[#424754] uppercase tracking-wider">
-                      Or continue with email
+                      Hoặc tiếp tục bằng email
                     </span>
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                   </div>
@@ -245,7 +245,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
                         htmlFor="email-login"
                       >
-                        Institutional Email
+                        Email Tổ chức
                       </label>
                       <input
                         className="w-full h-[48px] px-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785] dark:placeholder:text-outline"
@@ -263,13 +263,13 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                           className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface"
                           htmlFor="password-login"
                         >
-                          Password
+                          Mật khẩu
                         </label>
                         <a
                           className="text-[14px] text-[#0058be] dark:text-primary hover:text-[#2170e4] dark:hover:text-primary-container transition-colors cursor-pointer"
                           href="#"
                         >
-                          Forgot password?
+                          Quên mật khẩu?
                         </a>
                       </div>
                       <div className="relative">
@@ -295,7 +295,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                       className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[48px]"
                       type="submit"
                     >
-                      Sign In to Workspace
+                      Đăng nhập vào Workspace
                       <span className="material-symbols-outlined text-[18px]">
                         arrow_forward
                       </span>
@@ -313,10 +313,10 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   {/* Heading */}
                   <div className="mb-[48px] text-center md:text-left">
                     <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] dark:text-on-surface mb-[4px]">
-                      Create your account
+                      Tạo tài khoản của bạn
                     </h2>
                     <p className="text-[16px] text-[#424754] dark:text-on-surface-variant">
-                      Join thousands of researchers using AI to accelerate discovery.
+                      Gia nhập cùng hàng ngàn nhà nghiên cứu sử dụng AI để đẩy nhanh khám phá.
                     </p>
                   </div>
 
@@ -328,7 +328,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="w-5 h-5"
                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPeIEbAZsWW4q5svAcXAyDsyZ5pyeFAKa-zGIFarjXQ5smpYkm6YHYz59IfrsE5-SDTkN1D8OuFF7EGH5d4fF9OwO68NCPa9g2wp5dYmLWqa7lHyp0fNI_Zo1MFOcU8mlFxX1HSleSvF-xWk5k-ne3HMKt60phBjNY8F7zO6Z96nNlRClTTEqw60oHb6fMzW2mdcQqRi1EV3yNJlXiPUM9-8mw8Mpvgj02NDLO5sLOxtxMBEUcOjHTrJJrjqhokRm3zh3ZLbY-MYR0"
                       />
-                      Sign up with Google
+                      Đăng ký với Google
                     </button>
                     <button className="w-full h-[48px] flex items-center justify-center gap-[12px] bg-white border border-[#c2c6d6] hover:bg-[#eff4ff] hover:border-[#727785] text-[#121c2a] font-semibold text-[14px] rounded-xl transition-all shadow-[0px_2px_4px_rgba(31,41,55,0.02)]">
                       <svg
@@ -338,14 +338,14 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                       >
                         <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
                       </svg>
-                      Sign up with GitHub
+                      Đăng ký với GitHub
                     </button>
                   </div>
 
                   <div className="flex items-center gap-[12px] mb-[24px]">
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                     <span className="font-semibold text-[12px] text-[#424754] uppercase tracking-wider">
-                      Or continue with email
+                      Hoặc tiếp tục bằng email
                     </span>
                     <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
                   </div>
@@ -356,7 +356,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
                         htmlFor="name"
                       >
-                        Full Name
+                        Họ và tên
                       </label>
                       <div className="relative">
                         <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">
@@ -377,7 +377,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
                         htmlFor="email-signup"
                       >
-                        Institutional Email
+                        Email Tổ chức
                       </label>
                       <div className="relative">
                         <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">
@@ -398,7 +398,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
                         htmlFor="password-signup"
                       >
-                        Password
+                        Mật khẩu
                       </label>
                       <div className="relative">
                         <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">
@@ -418,7 +418,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                       className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[32px] !mt-[32px]"
                       type="submit"
                     >
-                      Create Account
+                      Tạo tài khoản
                       <span className="material-symbols-outlined text-[18px]">
                         arrow_forward
                       </span>

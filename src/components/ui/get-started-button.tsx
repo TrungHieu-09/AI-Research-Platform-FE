@@ -7,7 +7,7 @@ interface GetStartedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
   children?: React.ReactNode;
 }
 
-export function GetStartedButton({ children = "Get Started for Free", ...props }: GetStartedButtonProps) {
+export function GetStartedButton({ children = "Bắt đầu miễn phí", ...props }: GetStartedButtonProps) {
   const router = useRouter()
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
