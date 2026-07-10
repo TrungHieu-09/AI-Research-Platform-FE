@@ -19,8 +19,7 @@ Hệ thống Quản lý Tài liệu học thuật dành cho sinh viên, giảng 
 | Role | Mô tả | Đặc quyền chính |
 |---|---|---|
 | **Student** | Sinh viên đã đăng ký tài khoản | Upload, xem, tìm kiếm tài liệu |
-| **Moderator** | Kiểm duyệt viên do Admin chỉ định | Duyệt/từ chối tài liệu công khai |
-| **Admin** | Quản trị hệ thống | Toàn quyền: cấu hình, quản lý user, môn học |
+| **Admin** | Quản trị hệ thống | Toàn quyền: cấu hình, quản lý user, môn học, duyệt tài liệu |
 | **Guest** | Người dùng chưa đăng nhập | Chỉ xem title + thumbnail |
 
 ### 1.3 Kiến Trúc Module
@@ -42,17 +41,17 @@ Hệ thống Quản lý Tài liệu học thuật dành cho sinh viên, giảng 
 
 #### Ma trận quyền hạn
 
-| Chức năng | Guest | Student | Moderator | Admin |
-|---|:---:|:---:|:---:|:---:|
-| Xem title + thumbnail | ✅ | ✅ | ✅ | ✅ |
-| Xem nội dung tài liệu | ❌ | ✅ | ✅ | ✅ |
-| Upload tài liệu | ❌ | ✅ | ✅ | ✅ |
-| Duyệt tài liệu công khai | ❌ | ❌ | ✅ | ✅ |
-| Xóa tài liệu của người khác | ❌ | ❌ | ✅ | ✅ |
-| Quản lý môn học (tag) | ❌ | ❌ | ❌ | ✅ |
-| Cấu hình giới hạn upload | ❌ | ❌ | ❌ | ✅ |
-| Quản lý user | ❌ | ❌ | ❌ | ✅ |
-| Xem báo cáo/thống kê | ❌ | ❌ | ✅ | ✅ |
+| Chức năng | Guest | Student | Admin |
+|---|:---:|:---:|:---:|
+| Xem title + thumbnail | ✅ | ✅ | ✅ |
+| Xem nội dung tài liệu | ❌ | ✅ | ✅ |
+| Upload tài liệu | ❌ | ✅ | ✅ |
+| Duyệt tài liệu công khai | ❌ | ❌ | ✅ |
+| Xóa tài liệu của người khác | ❌ | ❌ | ✅ |
+| Quản lý môn học (tag) | ❌ | ❌ | ✅ |
+| Cấu hình giới hạn upload | ❌ | ❌ | ✅ |
+| Quản lý user | ❌ | ❌ | ✅ |
+| Xem báo cáo/thống kê | ❌ | ❌ | ✅ |
 
 ### 2.2 Phương Thức Đăng Ký & Đăng Nhập
 
@@ -101,22 +100,22 @@ Tài liệu có **2 trạng thái hiển thị:**
 | Trạng thái | Ai thấy? | Quy trình duyệt |
 |---|---|---|
 | **Private** (Cá nhân) | Chỉ người upload | Không cần duyệt |
-| **Public** (Công khai) | Toàn bộ user đã login | Cần Moderator duyệt |
+| **Public** (Công khai) | Toàn bộ user đã login | Cần Admin duyệt |
 
 #### Quy trình chuyển từ Private → Public
 
 ```
 [Student Upload] --> Chọn "Công khai"
                 --> Trạng thái: "Chờ duyệt (Pending)"
-                --> Moderator nhận thông báo
-                --> Moderator review
+                --> Admin nhận thông báo
+                --> Admin review
                     ├── Duyệt → Trạng thái: "Public" (hiển thị)
                     └── Từ chối → Trạng thái: "Rejected" + gửi lý do về Student
 ```
 
 ### 3.2 Quy Trình Phê Duyệt (Approval Workflow)
 
-#### Vai trò Moderator
+#### Vai trò Admin (Kiểm duyệt)
 - Xem danh sách tài liệu đang chờ duyệt (Pending Queue).
 - Xem preview nội dung tài liệu trước khi duyệt.
 - Hành động: **Approve** / **Reject** (kèm lý do từ chối).
@@ -169,7 +168,7 @@ Tài liệu có **2 trạng thái hiển thị:**
   "thumbnail_url": "gs://bucket/path/thumbnail.jpg",
   "created_at": "ISO8601",
   "approved_at": "ISO8601",
-  "approved_by": "moderator_uuid"
+  "approved_by": "admin_uuid"
 }
 ```
 
@@ -204,13 +203,13 @@ Tài liệu có **2 trạng thái hiển thị:**
 
 #### Chính sách Preview theo Role
 
-| Hành động trong Preview | Guest | Student | Moderator | Admin |
-|---|:---:|:---:|:---:|:---:|
-| Xem thumbnail/trang bìa | ✅ | ✅ | ✅ | ✅ |
-| Đọc toàn bộ nội dung | ❌ | ✅ | ✅ | ✅ |
-| Copy text | ❌ | ⚙️ (cấu hình) | ✅ | ✅ |
-| Download file gốc | ❌ | ✅ | ✅ | ✅ |
-| In tài liệu | ❌ | ⚙️ (cấu hình) | ✅ | ✅ |
+| Hành động trong Preview | Guest | Student | Admin |
+|---|:---:|:---:|:---:|
+| Xem thumbnail/trang bìa | ✅ | ✅ | ✅ |
+| Đọc toàn bộ nội dung | ❌ | ✅ | ✅ |
+| Copy text | ❌ | ⚙️ (cấu hình) | ✅ |
+| Download file gốc | ❌ | ✅ | ✅ |
+| In tài liệu | ❌ | ⚙️ (cấu hình) | ✅ |
 
 > **Lưu ý kỹ thuật:** PDF.js chỉ áp dụng cho file PDF. Với file `.docx`, cần convert sang PDF trên server trước khi render preview, hoặc dùng Google Docs Viewer làm fallback.
 
@@ -292,7 +291,6 @@ DELETE /api/admin/documents/{id}/hard → Hard delete (Admin only)
 |---|---|---|
 | **Free** | 10 lượt/ngày | Mặc định cho tất cả Student |
 | **Premium** | 50 lượt/ngày | Tài khoản trả phí hoặc được Admin cấp |
-| **Moderator** | Không giới hạn | Cần dùng để kiểm tra tài liệu |
 | **Admin** | Không giới hạn | Toàn quyền |
 
 > **Lưu ý:** Giới hạn này có thể được Admin cấu hình động, không hardcode trong code.
@@ -331,7 +329,7 @@ Câu trả lời: [Nội dung trả lời của AI]
 | 1 | Xác thực tài khoản | Email OTP + Google SSO | Phù hợp môi trường FPT (email @fpt.edu.vn) |
 | 2 | Guest access | Title + thumbnail only | Khuyến khích đăng ký, bảo vệ nội dung |
 | 3 | Ownership tài liệu | Dual (Private/Public) | Linh hoạt cho cá nhân lẫn cộng đồng |
-| 4 | Approval workflow | Có role Moderator | Kiểm soát chất lượng nội dung |
+| 4 | Approval workflow | Admin duyệt tài liệu | Kiểm soát chất lượng nội dung |
 | 5 | Tag môn học | Admin-managed static list | Tránh tag rác, đảm bảo nhất quán |
 | 6 | File limits | Admin-configurable | Linh hoạt, không cần redeploy |
 | 7 | Preview engine | PDF.js (self-hosted) | Bảo mật, kiểm soát tốt hơn |
@@ -349,7 +347,6 @@ Những điểm này cần thảo luận thêm với team trước khi bước v
 - [ ] **AI Scope MVP:** Chỉ Cấp 1 (file đang mở) hay cũng hỗ trợ Cấp 2 (môn học)?
 - [ ] **OCR:** Có hỗ trợ PDF scan ngay từ đầu hay để backlog?
 - [ ] **Premium tier:** Ai được nâng lên Premium? Trả phí hay Admin cấp thủ công?
-- [ ] **Moderator assignment:** Admin tự chỉ định Moderator hay có quy trình apply?
 - [ ] **Notification:** Kênh thông báo (email / in-app) khi tài liệu được duyệt/từ chối?
 
 ---

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { AuthMode } from "../types";
+import { setAuthUser } from "@/components/layouts/landing-header";
 
 interface AuthViewProps {
   initialMode: AuthMode;
@@ -28,14 +29,26 @@ export default function AuthView({ initialMode }: AuthViewProps) {
     window.history.pushState(null, "", newPath);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    router.push("/hub/dashboard");
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    
+    // Mock: save user to localStorage then redirect based on role
+    if (email && email.toLowerCase().includes("admin")) {
+      setAuthUser({ name: "System Admin", email: email, initials: "SA", role: "admin" });
+      router.push("/admin/dashboard");
+    } else {
+      setAuthUser({ name: "Dr. Jane Doe", email: email || "jane.doe@university.edu", initials: "JD", role: "user" });
+      router.push("/");
+    }
   };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/hub/dashboard");
+    // Mock: save user to localStorage then go back to landing
+    setAuthUser({ name: "Dr. Jane Doe", email: "jane.doe@university.edu", initials: "JD" });
+    router.push("/");
   };
 
   return (
@@ -237,6 +250,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                       <input
                         className="w-full h-[48px] px-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785] dark:placeholder:text-outline"
                         id="email-login"
+                        name="email"
                         placeholder="researcher@university.edu"
                         type="email"
                         required

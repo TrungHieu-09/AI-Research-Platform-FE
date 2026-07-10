@@ -35,17 +35,17 @@ export function AdminDashboardPage() {
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-on-surface mb-3">Admin Overview</h1>
-          <p className="text-[17px] text-on-surface-variant max-w-2xl font-medium">
+          <h1 className="text-4xl font-bold tracking-tight text-[#121c2a] mb-3">Admin Overview</h1>
+          <p className="text-[17px] text-[#424754] max-w-2xl font-medium">
             Monitor and manage the FPT Documentation system's core metrics and user activity.
           </p>
         </div>
-        <div className="hidden md:flex items-center gap-3 p-1.5 bg-surface-container-highest rounded-2xl border border-outline-variant/30">
+        <div className="hidden md:flex items-center gap-3 p-1.5 bg-[#f0f4ff] rounded-2xl border border-[#c2c6d6]/40 shadow-sm">
           <button 
             onClick={() => setTimeRange('7d')}
             className={cn(
               "px-5 py-2 rounded-xl text-[14px] font-bold transition-all",
-              timeRange === '7d' ? "bg-white shadow-sm text-on-surface" : "hover:bg-white/50 text-on-surface-variant"
+              timeRange === '7d' ? "bg-white shadow-sm text-[#0058be]" : "hover:bg-white/50 text-[#727785]"
             )}
           >
             Past 7 days
@@ -54,7 +54,7 @@ export function AdminDashboardPage() {
             onClick={() => setTimeRange('30d')}
             className={cn(
               "px-5 py-2 rounded-xl text-[14px] font-bold transition-all",
-              timeRange === '30d' ? "bg-white shadow-sm text-on-surface" : "hover:bg-white/50 text-on-surface-variant"
+              timeRange === '30d' ? "bg-white shadow-sm text-[#0058be]" : "hover:bg-white/50 text-[#727785]"
             )}
           >
             Past 30 days
@@ -68,7 +68,7 @@ export function AdminDashboardPage() {
           value={currentData.stats[0].value}
           icon={Users}
           description={currentData.stats[0].description}
-          href="/users"
+          href="/admin/users"
           trend={currentData.stats[0].trend}
         />
         <StatCard
@@ -76,7 +76,7 @@ export function AdminDashboardPage() {
           value={currentData.stats[1].value}
           icon={FileText}
           description={currentData.stats[1].description}
-          href="/documents"
+          href="/admin/documents"
           trend={currentData.stats[1].trend}
         />
         <StatCard
@@ -84,22 +84,22 @@ export function AdminDashboardPage() {
           value={currentData.stats[2].value}
           icon={Clock}
           description={currentData.stats[2].description}
-          href="/documents?status=pending"
+          href="/admin/documents?status=pending"
         />
         <StatCard
           title={currentData.stats[3].title}
           value={currentData.stats[3].value}
           icon={AlertCircle}
           description={currentData.stats[3].description}
-          href="/settings"
+          href="/admin/settings"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 glass-panel p-8 rounded-3xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        <div className="lg:col-span-2 bg-white border border-[#c2c6d6]/40 shadow-sm p-8 rounded-3xl">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-semibold text-on-surface">System Performance</h2>
-            <div className="flex items-center gap-2 text-primary font-medium text-[14px]">
+            <h2 className="text-xl font-semibold text-[#121c2a]">System Performance</h2>
+            <div className="flex items-center gap-2 text-[#0058be] font-medium text-[14px]">
               <TrendingUp size={16} />
               <span>{timeRange === '7d' ? 'Weekly' : 'Monthly'} growth trend</span>
             </div>
@@ -108,26 +108,26 @@ export function AdminDashboardPage() {
             {currentData.chart.map((h, i) => (
               <div
                 key={i}
-                className="flex-1 bg-primary/20 rounded-t-lg hover:bg-primary transition-all cursor-pointer relative group"
+                className="flex-1 bg-[#0058be]/20 rounded-t-lg hover:bg-[#0058be] transition-all cursor-pointer relative group"
                 style={{ height: `${h}%` }}
               >
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-inverse-surface text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#121c2a] text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   {currentData.labels[i]}: {h}%
                 </div>
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-4 text-[12px] text-on-surface-variant px-2 font-bold">
+          <div className="flex justify-between mt-4 text-[12px] text-[#727785] px-2 font-bold">
             <span>{currentData.labels[0]}</span>
             <span>{currentData.labels[Math.floor(currentData.labels.length / 2)]}</span>
             <span>{currentData.labels[currentData.labels.length - 1]}</span>
           </div>
         </div>
 
-        <div className="glass-panel p-8 space-y-6">
+        <div className="bg-white border border-[#c2c6d6]/40 shadow-sm p-8 rounded-3xl space-y-6">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-bold text-on-surface">Recent Activity</h2>
-            <button className="text-[12px] font-bold text-primary hover:underline">View All</button>
+            <h2 className="text-xl font-bold text-[#121c2a]">Recent Activity</h2>
+            <button className="text-[12px] font-bold text-[#0058be] hover:underline">View All</button>
           </div>
           <div className="space-y-6">
             {[
@@ -141,8 +141,8 @@ export function AdminDashboardPage() {
                   <activity.icon size={16} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[14px] font-bold text-on-surface leading-snug group-hover:text-primary transition-colors">{activity.text}</p>
-                  <span className="text-[12px] text-on-surface-variant font-medium">{activity.time}</span>
+                  <p className="text-[14px] font-bold text-[#121c2a] leading-snug group-hover:text-[#0058be] transition-colors">{activity.text}</p>
+                  <span className="text-[12px] text-[#727785] font-medium">{activity.time}</span>
                 </div>
               </div>
             ))}

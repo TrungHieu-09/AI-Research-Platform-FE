@@ -18,11 +18,11 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "User Management", href: "/users", icon: Users },
-  { name: "Subject Management", href: "/subjects", icon: BookOpen },
-  { name: "Document Management", href: "/documents", icon: FileText },
-  { name: "System Settings", href: "/settings", icon: Settings },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+  { name: "User Management", href: "/admin/users", icon: Users },
+  { name: "Subject Management", href: "/admin/subjects", icon: BookOpen },
+  { name: "Document Management", href: "/admin/documents", icon: FileText },
+  { name: "System Settings", href: "/admin/settings", icon: Settings },
 ]
 
 export function AdminSidebar() {
@@ -34,24 +34,24 @@ export function AdminSidebar() {
       {/* Mobile Toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-primary text-white rounded-md lg:hidden"
+        className="fixed top-4 left-4 z-50 p-2 bg-[#0058be] text-white rounded-md lg:hidden"
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen transition-all bg-secondary-container border-r border-outline-variant",
+          "fixed top-0 left-0 z-40 h-screen transition-all bg-white border-r border-[#c2c6d6]/40 shadow-sm",
           isOpen ? "translate-x-0 w-72" : "-translate-x-full w-0 lg:translate-x-0 lg:w-24"
         )}
       >
         <div className="flex flex-col h-full px-4 py-8">
           <div className="flex items-center gap-3 px-4 mb-12">
-            <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0058be] to-[#316bf3] flex items-center justify-center shadow-lg shadow-[#0058be]/20">
               <ShieldCheck className="text-white" size={24} />
             </div>
             {isOpen && (
-              <span className="text-2xl font-bold tracking-tight text-on-surface">Lumis</span>
+              <span className="text-[24px] font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-[#0058be] to-[#316bf3]">Lumis</span>
             )}
           </div>
 
@@ -65,30 +65,30 @@ export function AdminSidebar() {
                   className={cn(
                     "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 group",
                     isActive
-                      ? "bg-primary text-white shadow-md shadow-primary/20"
-                      : "text-on-surface-variant hover:bg-surface-container-highest hover:text-primary"
+                      ? "bg-[#0058be] text-white shadow-md shadow-[#0058be]/20"
+                      : "text-[#424754] hover:bg-[#eff4ff] hover:text-[#0058be]"
                   )}
                 >
                   <item.icon
                     size={22}
                     className={cn(
                       "transition-colors",
-                      isActive ? "text-white" : "text-on-surface-variant group-hover:text-primary"
+                      isActive ? "text-white" : "text-[#727785] group-hover:text-[#0058be]"
                     )}
                   />
-                  {isOpen && <span className="text-[15px] font-bold tracking-tight">{item.name}</span>}
+                  {isOpen && <span className="text-[14px] font-semibold tracking-tight">{item.name}</span>}
                 </Link>
               )
             })}
           </nav>
 
-          <div className="mt-auto border-t border-outline-variant pt-6">
+          <div className="mt-auto border-t border-[#c2c6d6]/40 pt-6">
             <Link
               href="/login"
-              className="flex items-center gap-4 px-4 py-3 rounded-2xl text-on-surface-variant hover:bg-tertiary-container hover:text-tertiary transition-all group"
+              className="flex items-center gap-4 px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 transition-all group"
             >
-              <LogOut size={22} className="group-hover:text-tertiary" />
-              {isOpen && <span className="text-[15px] font-bold tracking-tight">Log Out</span>}
+              <LogOut size={22} className="" />
+              {isOpen && <span className="text-[14px] font-semibold tracking-tight">Log Out</span>}
             </Link>
           </div>
         </div>
