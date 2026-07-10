@@ -65,8 +65,8 @@ function WorkspaceContent() {
       setMessages(prev => [...prev, { 
         role: "ai", 
         content: (isDocAttached && attachedDoc)
-          ? `Based on the document "${attachedDoc.title}", here is an analysis...\n\n(This is a mock response demonstrating the flow.)` 
-          : `Here is an analysis based on the entire collection...\n\n(This is a mock response demonstrating the flow without a specific document.)`
+          ? `Dựa trên tài liệu "${attachedDoc.title}", dưới đây là kết quả phân tích...\n\n(Đây là phản hồi giả lập minh họa quy trình hoạt động.)` 
+          : `Dưới đây là kết quả phân tích dựa trên toàn bộ bộ sưu tập tài liệu...\n\n(Đây là phản hồi giả lập minh họa quy trình hoạt động không đi kèm tài liệu cụ thể.)`
       }])
     }, 1500)
   }
@@ -78,7 +78,7 @@ function WorkspaceContent() {
         {/* Left: Collection Selector */}
         <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[#c2c6d6]/50 rounded-lg text-[13px] font-bold text-[#424754] hover:bg-gray-50 shadow-sm transition-colors">
           <Layers size={14} className="text-[#727785]" />
-          Collection: Quantum Computing Literature
+          Bộ sưu tập: Tài liệu Tính toán Lượng tử
           <ChevronDown size={14} className="text-[#727785] ml-1" />
         </button>
 
@@ -104,19 +104,19 @@ function WorkspaceContent() {
           <div className="grid grid-cols-4 gap-4 mb-10">
             <button className="flex flex-col items-center justify-center gap-2 text-center p-3 rounded-2xl hover:bg-white border border-transparent hover:border-[#c2c6d6]/40 hover:shadow-sm transition-all group">
               <FileText size={22} className="text-[#0058be] group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-              <span className="text-[12px] font-bold text-[#424754] leading-tight">Summarize<br/>Collection</span>
+              <span className="text-[12px] font-bold text-[#424754] leading-tight">Tóm tắt<br/>Bộ sưu tập</span>
             </button>
             <button className="flex flex-col items-center justify-center gap-2 text-center p-3 rounded-2xl hover:bg-white border border-transparent hover:border-[#c2c6d6]/40 hover:shadow-sm transition-all group">
               <FlaskConical size={22} className="text-[#0058be] group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-              <span className="text-[12px] font-bold text-[#424754] leading-tight">Explain<br/>Methodology</span>
+              <span className="text-[12px] font-bold text-[#424754] leading-tight">Giải thích<br/>Phương pháp</span>
             </button>
             <button className="flex flex-col items-center justify-center gap-2 text-center p-3 rounded-2xl hover:bg-white border border-transparent hover:border-[#c2c6d6]/40 hover:shadow-sm transition-all group">
               <AlertTriangle size={22} className="text-[#d93025] group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-              <span className="text-[12px] font-bold text-[#424754] leading-tight">Find<br/>Limitations</span>
+              <span className="text-[12px] font-bold text-[#424754] leading-tight">Tìm kiếm<br/>Hạn chế</span>
             </button>
             <button className="flex flex-col items-center justify-center gap-2 text-center p-3 rounded-2xl hover:bg-white border border-transparent hover:border-[#c2c6d6]/40 hover:shadow-sm transition-all group">
               <ArrowRightLeft size={22} className="text-[#a16207] group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-              <span className="text-[12px] font-bold text-[#424754] leading-tight">Compare<br/>Papers</span>
+              <span className="text-[12px] font-bold text-[#424754] leading-tight">So sánh<br/>Tài liệu</span>
             </button>
           </div>
 
@@ -124,7 +124,7 @@ function WorkspaceContent() {
           <div className="flex flex-col gap-6 flex-1 mb-8 overflow-y-auto">
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full text-[#727785] text-[14px]">
-                {(isDocAttached && attachedDoc) ? `Ask something about "${attachedDoc.title}"...` : "Start a new conversation..."}
+                {(isDocAttached && attachedDoc) ? `Hỏi bất kỳ điều gì về "${attachedDoc.title}"...` : "Bắt đầu một cuộc hội thoại mới..."}
               </div>
             )}
             
@@ -137,7 +137,7 @@ function WorkspaceContent() {
                 <div key={idx} className="self-start bg-white border border-[#c2c6d6]/40 shadow-sm rounded-2xl rounded-tl-sm px-6 py-5 max-w-[95%]">
                   <div className="flex items-center gap-2 mb-3 text-[#0058be]">
                     <Sparkles size={16} />
-                    <span className="text-[13px] font-bold">Lumis Synthesis</span>
+                    <span className="text-[13px] font-bold">Tổng hợp bởi Lumis</span>
                   </div>
                   <div className="text-[14px] text-[#424754] leading-relaxed whitespace-pre-wrap">
                     {msg.content}
@@ -150,7 +150,7 @@ function WorkspaceContent() {
               <div className="self-start bg-white border border-[#c2c6d6]/40 shadow-sm rounded-2xl rounded-tl-sm px-6 py-5 max-w-[95%]">
                 <div className="flex items-center gap-2 text-[#0058be]">
                   <Sparkles size={16} className="animate-pulse" />
-                  <span className="text-[13px] font-bold animate-pulse">Lumis is thinking...</span>
+                  <span className="text-[13px] font-bold animate-pulse">Lumis đang suy nghĩ...</span>
                 </div>
               </div>
             )}
@@ -178,17 +178,17 @@ function WorkspaceContent() {
                   }
                 }}
                 className="w-full bg-transparent border-none outline-none resize-none text-[14px] text-[#121c2a] placeholder:text-[#727785] min-h-[44px] max-h-[120px]"
-                placeholder={(isDocAttached && attachedDoc) ? `Ask Lumis to analyze ${attachedDoc.title}...` : "Ask Lumis to synthesize, analyze, or compare documents..."}
+                placeholder={(isDocAttached && attachedDoc) ? `Yêu cầu Lumis phân tích ${attachedDoc.title}...` : "Yêu cầu Lumis tổng hợp, phân tích hoặc so sánh tài liệu..."}
                 rows={2}
               />
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#c2c6d6]/20">
                 <div className="flex items-center gap-1">
-                  <button className="p-2 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-lg transition-colors" title="Attach file">
+                  <button className="p-2 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-lg transition-colors" title="Đính kèm tài liệu">
                     <Paperclip size={17} />
                   </button>
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors text-[12px] font-semibold" title="Share this session">
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors text-[12px] font-semibold" title="Chia sẻ phiên làm việc">
                     <Share2 size={14} />
-                    Share session
+                    Chia sẻ phiên
                   </button>
                 </div>
                 <button 
@@ -197,7 +197,7 @@ function WorkspaceContent() {
                   className="flex items-center gap-2 px-5 py-2 bg-[#0058be] disabled:opacity-50 hover:bg-[#2170e4] text-white rounded-xl text-[14px] font-semibold transition-all shadow-md shadow-[#0058be]/20"
                 >
                   <Send size={16} />
-                  Send
+                  Gửi
                 </button>
               </div>
             </div>
@@ -209,7 +209,7 @@ function WorkspaceContent() {
         <div className="w-[380px] shrink-0 border-l border-[#c2c6d6]/30 bg-[#fafbff] flex flex-col overflow-hidden">
           <div className="px-6 py-5 border-b border-[#c2c6d6]/30">
             <h2 className="text-[18px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-              Source References
+              Tài liệu tham khảo nguồn
             </h2>
           </div>
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
@@ -249,7 +249,7 @@ function WorkspaceContent() {
 
 export default function AIWorkspacePage() {
   return (
-    <React.Suspense fallback={<div className="p-10 text-center text-[#727785]">Loading workspace...</div>}>
+    <React.Suspense fallback={<div className="p-10 text-center text-[#727785]">Đang tải không gian làm việc...</div>}>
       <WorkspaceContent />
     </React.Suspense>
   )
