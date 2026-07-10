@@ -122,10 +122,10 @@ export default function UserSettingsPage() {
             </button>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-bold text-[#1a2333]">Dr. Jane Doe</p>
+            <p className="text-[15px] font-bold text-[#1a2333]">TS. Jane Doe</p>
             <p className="text-[12.5px] text-[#8b90a0] mt-0.5 truncate">jane.doe@university.edu</p>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-2.5 py-0.5 rounded-full">PhD Student</span>
+              <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-2.5 py-0.5 rounded-full">Nghiên cứu sinh</span>
               <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                 Hoạt động

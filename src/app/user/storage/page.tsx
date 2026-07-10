@@ -124,9 +124,9 @@ function FileRowMenu() {
       {open && (
         <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-[#c2c6d6]/50 rounded-2xl shadow-xl shadow-black/8 py-1 overflow-hidden">
           {[
-            { icon: Download, label: "Download" },
-            { icon: Share2, label: "Share" },
-            { icon: Trash2, label: "Delete", danger: true },
+            { icon: Download, label: "Tải xuống" },
+            { icon: Share2, label: "Chia sẻ" },
+            { icon: Trash2, label: "Xóa", danger: true },
           ].map(({ icon: Icon, label, danger }) => (
             <button
               key={label}
@@ -173,17 +173,17 @@ export default function StoragePage() {
               variants={fadeUp} custom={0}
             >
               <HardDrive size={12} />
-              CLOUD STORAGE
+              LƯU TRỮ ĐÁM MÂY
             </motion.div>
             <motion.h1
               className="text-[28px] font-bold text-[#121c2a] tracking-tight leading-none mb-2"
               style={{ fontFamily: "Geist, sans-serif" }}
               variants={fadeUp} custom={1}
             >
-              Storage
+              Lưu trữ
             </motion.h1>
             <motion.p className="text-[14px] text-[#424754]" variants={fadeUp} custom={2}>
-              Manage your research files, monitor usage, and optimise storage space.
+              Quản lý tệp nghiên cứu, theo dõi dung lượng và tối ưu hóa không gian lưu trữ.
             </motion.p>
           </div>
 
@@ -197,7 +197,7 @@ export default function StoragePage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search research files..."
+              placeholder="Tìm kiếm tệp nghiên cứu..."
               className="flex-1 bg-transparent text-[14px] text-[#121c2a] placeholder:text-[#727785] outline-none"
             />
           </motion.div>
@@ -212,7 +212,7 @@ export default function StoragePage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
             <div>
               <p className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-1">
-                TOTAL STORAGE
+                TỔNG LƯU TRỮ
               </p>
               <div className="flex items-baseline gap-2">
                 <span
@@ -222,15 +222,15 @@ export default function StoragePage() {
                   <AnimatedNumber value={totalUsed} decimals={1} /> GB
                 </span>
                 <span className="text-[16px] text-[#424754] font-medium">
-                  of {totalCap} GB
+                  trên {totalCap} GB
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <p className="text-[12px] text-[#727785]"><AnimatedNumber value={usedPct} />% used</p>
-                <p className="text-[12px] text-[#424754] font-medium">{totalCap - totalUsed} GB free</p>
+                <p className="text-[12px] text-[#727785]"><AnimatedNumber value={usedPct} />% đã dùng</p>
+                <p className="text-[12px] text-[#424754] font-medium">{totalCap - totalUsed} GB trống</p>
               </div>
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
                 <Link
@@ -238,7 +238,7 @@ export default function StoragePage() {
                   className="flex items-center gap-2 px-5 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[13px] font-semibold transition-all shadow-md shadow-[#0058be]/20 whitespace-nowrap"
                 >
                   <ArrowUpRight size={15} />
-                  Upgrade Plan
+                  Nâng cấp gói
                 </Link>
               </motion.div>
             </div>
@@ -341,29 +341,29 @@ export default function StoragePage() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-[16px] font-bold text-white mb-1" style={{ fontFamily: "Geist, sans-serif" }}>
-                Optimization Opportunity
+                Cơ hội tối ưu hóa
               </h3>
               <p className="text-[13px] text-white/80 leading-relaxed">
-                Lumis AI found <span className="font-semibold text-white">4.2 GB</span> of duplicate research papers across your library. Merge them to free up space.
+                Lumis AI đã tìm thấy <span className="font-semibold text-white">4.2 GB</span> bài báo nghiên cứu trùng lặp trong thư viện của bạn. Gộp chúng lại để giải phóng dung lượng.
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <button className="flex items-center gap-1.5 text-[13px] font-semibold text-white/90 hover:text-white underline underline-offset-2 transition-colors whitespace-nowrap">
-                Review Duplicates
+                Xem lại trùng lặp
                 <ChevronRight size={14} />
               </button>
               <button className="flex items-center gap-1.5 px-4 py-2.5 bg-white text-[#0058be] rounded-2xl text-[13px] font-bold hover:bg-[#eff4ff] transition-colors shadow-md whitespace-nowrap">
                 <Zap size={14} />
-                Auto-Clean
+                Dọn dẹp tự động
               </button>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-5 pt-4 border-t border-white/15 relative z-10">
             {[
-              { icon: CheckCircle2, label: "Duplicates found", value: "4.2 GB" },
-              { icon: TrendingUp, label: "Potential savings", value: "6.5%" },
-              { icon: RefreshCw, label: "Last scanned", value: "2 hrs ago" },
+              { icon: CheckCircle2, label: "Trùng lặp tìm thấy", value: "4.2 GB" },
+              { icon: TrendingUp, label: "Dung lượng tiết kiệm", value: "6.5%" },
+              { icon: RefreshCw, label: "Lần quét cuối", value: "2 giờ trước" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-2">
                 <Icon size={14} className="text-white/70" />
@@ -382,10 +382,10 @@ export default function StoragePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-5 border-b border-[#c2c6d6]/30">
               <div>
                 <h2 className="text-[16px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-                  Largest Files
+                  Tệp lớn nhất
                 </h2>
                 <p className="text-[13px] text-[#727785] mt-0.5">
-                  Files consuming the most storage space
+                  Các tệp chiếm nhiều không gian lưu trữ nhất
                 </p>
               </div>
               {/* Filter chips */}
@@ -401,7 +401,7 @@ export default function StoragePage() {
                         : "text-[#424754] hover:text-[#0058be]"
                     )}
                   >
-                    {f === "all" ? "All" : f}
+                    {f === "all" ? "Tất cả" : f}
                   </button>
                 ))}
               </div>
@@ -409,9 +409,9 @@ export default function StoragePage() {
 
             {/* Col headers */}
             <div className="grid grid-cols-[minmax(0,1fr)_80px_100px_40px] gap-4 px-6 py-3 bg-[#f8f9ff]/60 border-b border-[#c2c6d6]/20 text-[11px] font-bold text-[#727785] uppercase tracking-wider">
-              <div>File Name</div>
-              <div>Type</div>
-              <div>Size</div>
+              <div>Tên tệp</div>
+              <div>Loại</div>
+              <div>Kích thước</div>
               <div />
             </div>
 
@@ -451,7 +451,7 @@ export default function StoragePage() {
               {filtered.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <AlertCircle size={32} className="text-[#c2c6d6] mb-3" />
-                  <p className="text-[14px] font-medium text-[#727785]">No files match your search</p>
+                  <p className="text-[14px] font-medium text-[#727785]">Không có tệp nào khớp với tìm kiếm của bạn</p>
                 </div>
               )}
             </div>
@@ -463,13 +463,13 @@ export default function StoragePage() {
             <div className="bg-white border border-[#c2c6d6]/40 rounded-3xl shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-[#c2c6d6]/30">
                 <h3 className="text-[15px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-                  Recently Uploaded
+                  Tải lên gần đây
                 </h3>
                 <Link
                   href="/user/upload"
                   className="flex items-center gap-1 text-[12px] font-semibold text-[#0058be] hover:underline"
                 >
-                  Upload <CloudUpload size={13} />
+                  Tải lên <CloudUpload size={13} />
                 </Link>
               </div>
               <div className="divide-y divide-[#c2c6d6]/20">
@@ -509,11 +509,11 @@ export default function StoragePage() {
                 </div>
                 <div>
                   <h4 className="text-[14px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-                    Cloud Sync
+                    Đồng bộ đám mây
                   </h4>
                   <p className="text-[12px] text-[#424754] mt-0.5 leading-relaxed">
-                    Securely synced with institutional repository. Last sync:{" "}
-                    <span className="font-medium text-[#0058be]">5 min ago</span>.
+                    Được đồng bộ bảo mật với kho lưu trữ của tổ chức. Lần đồng bộ cuối:{" "}
+                    <span className="font-medium text-[#0058be]">5 phút trước</span>.
                   </p>
                 </div>
               </div>
@@ -521,21 +521,21 @@ export default function StoragePage() {
                 <div className="h-full bg-[#0058be] rounded-full" style={{ width: "51%" }} />
               </div>
               <div className="flex justify-between mt-1.5">
-                <span className="text-[11px] text-[#727785]">Synced</span>
-                <span className="text-[11px] font-medium text-[#0058be]">51% of capacity</span>
+                <span className="text-[11px] text-[#727785]">Đã đồng bộ</span>
+                <span className="text-[11px] font-medium text-[#0058be]">51% dung lượng</span>
               </div>
             </div>
 
             {/* Quick Actions */}
             <div className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-5 shadow-sm">
               <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">
-                Quick Actions
+                Thao tác nhanh
               </h4>
               <div className="flex flex-col gap-1">
                 {[
-                  { icon: Download, label: "Export all files" },
-                  { icon: RefreshCw, label: "Scan for duplicates" },
-                  { icon: Trash2, label: "Empty trash", danger: true },
+                  { icon: Download, label: "Xuất tất cả tệp" },
+                  { icon: RefreshCw, label: "Quét tệp trùng lặp" },
+                  { icon: Trash2, label: "Làm sạch thùng rác", danger: true },
                 ].map(({ icon: Icon, label, danger }) => (
                   <button
                     key={label}
