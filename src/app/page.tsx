@@ -8,7 +8,6 @@ import { FadeInSection } from "@/components/animations/fade-in-section";
 export default function Home() {
   const [showDemo, setShowDemo] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
-  const [videoKey, setVideoKey] = useState<number>(Date.now());
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [activeTab, setActiveTab] = useState<"transcript" | "summary">("transcript");
@@ -17,7 +16,7 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(false);
   const [voiceLang, setVoiceLang] = useState<"vi" | "en">("vi");
   const timelineRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const stepStartTimesVi = [0, 20, 39, 56];
   const stepStartTimesEn = [0, 21, 43, 65];
@@ -60,19 +59,18 @@ export default function Home() {
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
   const restartDemo = () => {
-    setVideoKey(Date.now());
     setCurrentTime(0);
     setProgress(0);
     setActiveStep(0);
     setIsPlaying(true);
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {});
     }
   };
 
@@ -82,9 +80,9 @@ export default function Home() {
     setProgress((targetTime / totalDuration) * 100);
     setActiveStep(index);
     setIsPlaying(true);
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+    if (videoRef.current) {
+      videoRef.current.currentTime = targetTime;
+      videoRef.current.play().catch(() => {});
     }
   };
 
@@ -109,22 +107,32 @@ export default function Home() {
     }
     setActiveStep(stepIdx);
     setIsPlaying(true);
-  };
-
-  const handleAudioTimeUpdate = () => {
-    if (!audioRef.current) return;
-    const stepOffset = currentStepStartTimes[activeStep] || 0;
-    const totalCurrent = stepOffset + audioRef.current.currentTime;
-    setCurrentTime(Math.min(totalCurrent, totalDuration));
-    setProgress(Math.min((totalCurrent / totalDuration) * 100, 100));
-  };
-
-  const handleAudioEnded = () => {
-    if (activeStep < demoSteps.length - 1) {
-      setActiveStep((prev) => prev + 1);
-    } else {
-      setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+      videoRef.current.play().catch(() => {});
     }
+  };
+
+  const handleVideoTimeUpdate = () => {
+    if (!videoRef.current) return;
+    const time = videoRef.current.currentTime;
+    setCurrentTime(time);
+    setProgress(Math.min((time / totalDuration) * 100, 100));
+
+    let stepIdx = 0;
+    for (let i = currentStepStartTimes.length - 1; i >= 0; i--) {
+      if (time >= currentStepStartTimes[i]) {
+        stepIdx = i;
+        break;
+      }
+    }
+    if (stepIdx !== activeStep) {
+      setActiveStep(stepIdx);
+    }
+  };
+
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
   };
 
   // Handle modal open/close
@@ -134,25 +142,39 @@ export default function Home() {
       setCurrentTime(0);
       setProgress(0);
       setActiveStep(0);
-      setVideoKey(Date.now());
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
     } else {
       setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (videoRef.current) {
+        videoRef.current.pause();
       }
     }
   }, [showDemo]);
 
-  // Handle audio step / play / mute synchronization
+  // Handle play/pause/mute synchronization
   useEffect(() => {
-    if (!audioRef.current || !showDemo) return;
-    if (isPlaying && !isMuted) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {});
+    if (!videoRef.current || !showDemo) return;
+    videoRef.current.muted = isMuted;
+    if (isPlaying) {
+      videoRef.current.play().catch(() => {});
     } else {
-      audioRef.current.pause();
+      videoRef.current.pause();
     }
-  }, [activeStep, isPlaying, isMuted, voiceLang, showDemo]);
+  }, [isPlaying, isMuted, showDemo]);
+
+  // Reload/seek video on language switch to load correct file
+  useEffect(() => {
+    if (!videoRef.current || !showDemo) return;
+    const currentT = currentTime;
+    videoRef.current.load();
+    videoRef.current.currentTime = currentT;
+    if (isPlaying) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [voiceLang]);
 
   return (
     <>
@@ -491,15 +513,6 @@ export default function Home() {
 
       {showDemo && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-md p-4 md:p-6 animate-fade-in">
-          {/* Audio element for real studio AI voiceover */}
-          <audio
-            ref={audioRef}
-            src={`/audio/${voiceLang}_step${activeStep}.mp3`}
-            preload="auto"
-            onTimeUpdate={handleAudioTimeUpdate}
-            onEnded={handleAudioEnded}
-          />
-
           <div className="relative w-full max-w-[1200px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-black/10 flex flex-col md:flex-row h-[90vh] max-h-[720px]">
             
             {/* Left Side: Video Player Area */}
@@ -546,12 +559,14 @@ export default function Home() {
 
               {/* Video frame/container */}
               <div className="flex-1 w-full relative flex items-center justify-center overflow-hidden">
-                <img
-                  key={videoKey}
-                  src={`/videos/demo.webp?t=${videoKey}`}
-                  alt="Lumis Product Demo"
-                  className="w-full h-full object-contain"
+                <video
+                  ref={videoRef}
+                  src={voiceLang === "vi" ? "/videos/demo.mp4" : "/videos/demo_en.mp4"}
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  onEnded={handleVideoEnded}
+                  className="w-full h-full object-contain cursor-pointer"
                   onClick={() => setIsPlaying(!isPlaying)}
+                  playsInline
                 />
 
                 {/* Subtitle text overlay directly in the video frame */}
