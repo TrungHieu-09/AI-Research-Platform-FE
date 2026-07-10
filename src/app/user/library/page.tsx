@@ -86,7 +86,7 @@ export default function LibraryPage() {
   const [selectedDocs, setSelectedDocs] = React.useState<number[]>([1])
 
   const toggleDoc = (id: number) => {
-    setSelectedDocs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+    setSelectedDocs(prev => prev.includes(id) ? [] : [id])
   }
 
   return (
@@ -289,7 +289,7 @@ export default function LibraryPage() {
 
           {/* Table Header */}
           <div className="grid grid-cols-[auto_minmax(0,1fr)_100px_160px_40px] gap-4 px-6 py-3 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider">
-            <div className="w-[20px] flex items-center justify-center"><input type="checkbox" className="rounded text-[#0058be] focus:ring-[#0058be]" /></div>
+            <div className="w-[20px]"></div>
             <div>Title & Authors</div>
             <div>Year</div>
             <div>Collection</div>

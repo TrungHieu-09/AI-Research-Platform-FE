@@ -32,29 +32,41 @@ export function AdminDashboardPage() {
   const currentData = timeRange === '7d' ? DATA_7D : DATA_30D
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="flex items-end justify-between">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Top Title Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-[#121c2a] mb-3">Admin Overview</h1>
-          <p className="text-[17px] text-[#424754] max-w-2xl font-medium">
-            Monitor and manage the FPT Documentation system's core metrics and user activity.
+          <h1
+            className="text-3xl font-bold tracking-tight text-[#121c2a] mb-1.5"
+            style={{ fontFamily: "Geist, sans-serif" }}
+          >
+            Admin Overview
+          </h1>
+          <p className="text-[14px] text-[#424754] max-w-2xl">
+            Monitor and manage the Lumis platform's core metrics, document moderation, and user activity.
           </p>
         </div>
-        <div className="hidden md:flex items-center gap-3 p-1.5 bg-[#f0f4ff] rounded-2xl border border-[#c2c6d6]/40 shadow-sm">
-          <button 
+
+        {/* Time Range Filter Pill */}
+        <div className="flex items-center gap-1.5 p-1.5 bg-white rounded-2xl border border-[#c2c6d6]/40 shadow-sm w-fit">
+          <button
             onClick={() => setTimeRange('7d')}
             className={cn(
-              "px-5 py-2 rounded-xl text-[14px] font-bold transition-all",
-              timeRange === '7d' ? "bg-white shadow-sm text-[#0058be]" : "hover:bg-white/50 text-[#727785]"
+              "px-4 py-1.5 rounded-xl text-[13px] font-bold transition-all",
+              timeRange === '7d'
+                ? "bg-[#0058be] text-white shadow-sm"
+                : "hover:bg-[#f8f9ff] text-[#424754]"
             )}
           >
             Past 7 days
           </button>
-          <button 
+          <button
             onClick={() => setTimeRange('30d')}
             className={cn(
-              "px-5 py-2 rounded-xl text-[14px] font-bold transition-all",
-              timeRange === '30d' ? "bg-white shadow-sm text-[#0058be]" : "hover:bg-white/50 text-[#727785]"
+              "px-4 py-1.5 rounded-xl text-[13px] font-bold transition-all",
+              timeRange === '30d'
+                ? "bg-[#0058be] text-white shadow-sm"
+                : "hover:bg-[#f8f9ff] text-[#424754]"
             )}
           >
             Past 30 days
@@ -62,7 +74,8 @@ export function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Metric Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
           title={currentData.stats[0].title}
           value={currentData.stats[0].value}
@@ -95,60 +108,96 @@ export function AdminDashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-        <div className="lg:col-span-2 bg-white border border-[#c2c6d6]/40 shadow-sm p-8 rounded-3xl">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-semibold text-[#121c2a]">System Performance</h2>
-            <div className="flex items-center gap-2 text-[#0058be] font-medium text-[14px]">
-              <TrendingUp size={16} />
-              <span>{timeRange === '7d' ? 'Weekly' : 'Monthly'} growth trend</span>
+      {/* Chart & Activity Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* System Performance Chart Card */}
+        <div className="lg:col-span-2 bg-white border border-[#c2c6d6]/40 p-7 rounded-3xl shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-0.5">
+                  ANALYTICS
+                </p>
+                <h2 className="text-lg font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                  System Performance
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 text-[#0058be] font-bold text-[13px] bg-[#eff4ff] px-3 py-1 rounded-full">
+                <TrendingUp size={15} />
+                <span>{timeRange === '7d' ? 'Weekly' : 'Monthly'} Growth</span>
+              </div>
+            </div>
+
+            <div className="h-[280px] w-full flex items-end gap-2 pt-6 px-2">
+              {currentData.chart.map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 bg-gradient-to-t from-[#0058be]/20 to-[#0058be]/70 hover:from-[#0058be] hover:to-[#2170e4] rounded-t-xl transition-all cursor-pointer relative group"
+                  style={{ height: `${h}%` }}
+                >
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#121c2a] text-white text-[11px] font-bold py-1 px-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg z-50">
+                    {currentData.labels[i]}: {h}%
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="h-[300px] w-full flex items-end gap-1.5 px-4">
-            {currentData.chart.map((h, i) => (
-              <div
-                key={i}
-                className="flex-1 bg-[#0058be]/20 rounded-t-lg hover:bg-[#0058be] transition-all cursor-pointer relative group"
-                style={{ height: `${h}%` }}
-              >
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#121c2a] text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  {currentData.labels[i]}: {h}%
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-4 text-[12px] text-[#727785] px-2 font-bold">
+
+          <div className="flex justify-between mt-5 pt-4 border-t border-[#c2c6d6]/30 text-[11px] text-[#727785] font-bold uppercase tracking-wider px-1">
             <span>{currentData.labels[0]}</span>
             <span>{currentData.labels[Math.floor(currentData.labels.length / 2)]}</span>
             <span>{currentData.labels[currentData.labels.length - 1]}</span>
           </div>
         </div>
 
-        <div className="bg-white border border-[#c2c6d6]/40 shadow-sm p-8 rounded-3xl space-y-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-bold text-[#121c2a]">Recent Activity</h2>
-            <button className="text-[12px] font-bold text-[#0058be] hover:underline">View All</button>
-          </div>
-          <div className="space-y-6">
-            {[
-              { text: "New user registered: Nguyen Van A", time: "2m ago", icon: UserIcon, color: "text-blue-600", bg: "bg-blue-50" },
-              { text: "Document 'ML_Paper.pdf' approved", time: "15m ago", icon: FileText, color: "text-green-600", bg: "bg-green-50" },
-              { text: "Subject 'C#' added to catalog", time: "1h ago", icon: BookOpen, color: "text-purple-600", bg: "bg-purple-50" },
-              { text: "System limits updated by Admin", time: "3h ago", icon: Settings, color: "text-amber-600", bg: "bg-amber-50" },
-            ].map((activity, i) => (
-              <div key={i} className="flex gap-4 items-start group cursor-pointer">
-                <div className={cn("p-2 rounded-xl transition-all group-hover:scale-110", activity.bg, activity.color)}>
-                  <activity.icon size={16} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[14px] font-bold text-[#121c2a] leading-snug group-hover:text-[#0058be] transition-colors">{activity.text}</p>
-                  <span className="text-[12px] text-[#727785] font-medium">{activity.time}</span>
-                </div>
+        {/* Recent Activity Card */}
+        <div className="bg-white border border-[#c2c6d6]/40 p-7 rounded-3xl shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-0.5">
+                  LOGS
+                </p>
+                <h2 className="text-lg font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                  Recent Activity
+                </h2>
               </div>
-            ))}
+              <button className="text-[12px] font-bold text-[#0058be] hover:underline">
+                View All
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {[
+                { text: "New researcher registered: Nguyen Van A", time: "2m ago", icon: UserIcon, color: "text-[#0058be]", bg: "bg-[#eff4ff]" },
+                { text: "Document 'ML_Paper.pdf' approved", time: "15m ago", icon: FileText, color: "text-green-600", bg: "bg-green-50" },
+                { text: "Subject 'Neuroscience' added to catalog", time: "1h ago", icon: BookOpen, color: "text-purple-600", bg: "bg-purple-50" },
+                { text: "System AI cache limits updated", time: "3h ago", icon: Settings, color: "text-orange-600", bg: "bg-orange-50" },
+              ].map((activity, i) => (
+                <div key={i} className="flex gap-3.5 items-start group cursor-pointer p-2 rounded-xl hover:bg-[#f8f9ff] transition-colors">
+                  <div className={cn("p-2.5 rounded-xl transition-all group-hover:scale-105 shrink-0", activity.bg, activity.color)}>
+                    <activity.icon size={16} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-bold text-[#121c2a] leading-snug group-hover:text-[#0058be] transition-colors truncate">
+                      {activity.text}
+                    </p>
+                    <span className="text-[11px] text-[#727785] font-medium">{activity.time}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-[#c2c6d6]/30">
+            <div className="flex items-center justify-between text-[12px]">
+              <span className="text-[#727785] font-medium">Audit logging enabled</span>
+              <span className="font-bold text-[#0058be]">Real-time</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   )
 }
+
