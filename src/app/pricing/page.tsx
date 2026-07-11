@@ -25,7 +25,7 @@ export default function PricingPage() {
           <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 hover:border-[#0058be]/30 transition-all hover:shadow-lg hover:-translate-y-1">
             <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Explorer</h3>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-[48px] font-bold text-[#121c2a]">$0</span>
+              <span className="text-[48px] font-bold text-[#121c2a]">0₫</span>
               <span className="text-[#727785] font-medium">/ mãi mãi</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
@@ -35,7 +35,7 @@ export default function PricingPage() {
               Bắt đầu miễn phí
             </GetStartedButton>
             <ul className="flex flex-col gap-4">
-              {["Tối đa 50 tài liệu", "Tổng hợp AI cơ bản", "Tìm kiếm tiêu chuẩn", "1 Bộ sưu tập"].map(feature => (
+              {["500 truy vấn AI / tháng", "Lưu trữ đám mây 5 GB", "Tổng hợp AI cơ bản", "Tìm kiếm tiêu chuẩn"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
                   <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
                   {feature}
@@ -49,19 +49,19 @@ export default function PricingPage() {
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0058be] text-white px-4 py-1 rounded-full text-[12px] font-bold tracking-wide uppercase shadow-sm whitespace-nowrap">
               Phổ biến nhất
             </div>
-            <h3 className="text-[20px] font-bold text-[#0058be] mb-2">Researcher Pro</h3>
+            <h3 className="text-[20px] font-bold text-[#0058be] mb-2">AI Pro</h3>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-[48px] font-bold text-[#121c2a]">$12</span>
+              <span className="text-[48px] font-bold text-[#121c2a]">250.000₫</span>
               <span className="text-[#727785] font-medium">/ tháng</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
               Dành cho học giả và chuyên gia cần phân tích chuyên sâu.
             </p>
-            <button className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#2170e4] transition-colors mb-8 shadow-md">
-              Dùng thử 14 ngày
-            </button>
+            <Link href="/user/payment/checkout?plan=ai" className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#2170e4] transition-colors mb-8 shadow-md text-center block">
+              Nâng cấp ngay
+            </Link>
             <ul className="flex flex-col gap-4">
-              {["Không giới hạn tài liệu", "Tổng hợp LLM nâng cao", "Tìm kiếm vector ngữ nghĩa", "Không giới hạn bộ sưu tập", "Hỗ trợ ưu tiên"].map(feature => (
+              {["Truy vấn AI không giới hạn", "Mô hình nâng cao (GPT-4)", "Lưu trữ đám mây 5 GB", "Tìm kiếm vector ngữ nghĩa", "Hỗ trợ ưu tiên"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
                   <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
                   {feature}
@@ -70,21 +70,21 @@ export default function PricingPage() {
             </ul>
           </div>
 
-          {/* Team Plan */}
+          {/* Ultimate Plan */}
           <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 hover:border-[#0058be]/30 transition-all hover:shadow-lg hover:-translate-y-1">
-            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Lab & Team</h3>
+            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Ultimate</h3>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-[48px] font-bold text-[#121c2a]">$29</span>
+              <span className="text-[48px] font-bold text-[#121c2a]">300.000₫</span>
               <span className="text-[#727785] font-medium">/ người dùng / tháng</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
-              Được thiết kế cho các nhóm nghiên cứu và phòng thí nghiệm.
+              Không gian làm việc nghiên cứu toàn diện cho nhóm và phòng thí nghiệm.
             </p>
-            <button className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
-              Liên hệ Sale
-            </button>
+            <Link href="/user/payment/checkout?plan=ultimate" className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm text-center block">
+              Nâng cấp Ultimate
+            </Link>
             <ul className="flex flex-col gap-4">
-              {["Tất cả tính năng của Pro", "Không gian làm việc chung", "Đồng tác giả & ghi chú", "Trang quản trị", "Tích hợp SSO"].map(feature => (
+              {["Truy vấn & Mô hình AI không giới hạn", "Lưu trữ đám mây 100 GB", "Hỗ trợ chuyên dụng 24/7", "Không gian làm việc chung", "Tích hợp SSO"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
                   <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
                   {feature}
