@@ -81,13 +81,20 @@ export default function DocumentDetailPage({
     return () => window.clearTimeout(timeoutId)
   }, [loadDocument])
 
-  async function handleModerate(action: "APPROVED" | "REJECTED") {
+  async function handleModerate(decision: "APPROVED" | "REJECTED") {
     try {
       setIsSubmitting(true)
       setErrorMessage("")
+      const trimmedRejectionReason = rejectionReason.trim()
+
+      if (decision === "REJECTED" && !trimmedRejectionReason) {
+        setErrorMessage("Vui lòng nhập lý do từ chối document trước khi reject.")
+        return
+      }
+
       await moderateDocument(id, {
-        action,
-        rejectionReason: action === "REJECTED" ? rejectionReason.trim() || undefined : undefined,
+        decision,
+        rejectionReason: decision === "REJECTED" ? trimmedRejectionReason : undefined,
       })
       await loadDocument()
     } catch (error) {

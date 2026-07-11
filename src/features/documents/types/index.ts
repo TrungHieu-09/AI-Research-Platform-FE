@@ -28,9 +28,15 @@ export interface DocumentRecord {
 }
 
 export interface PaginatedDocuments {
-  data?: DocumentRecord[]
+  data?: DocumentRecord[] | PaginatedDocuments
+  docs?: DocumentRecord[]
   documents?: DocumentRecord[]
   items?: DocumentRecord[]
+  list?: DocumentRecord[]
+  rows?: DocumentRecord[]
+  records?: DocumentRecord[]
+  result?: DocumentRecord[] | PaginatedDocuments
+  results?: DocumentRecord[] | PaginatedDocuments
   total?: number
   page?: number
   limit?: number

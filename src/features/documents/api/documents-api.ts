@@ -48,7 +48,7 @@ export interface GetDocumentsQuery {
 }
 
 export interface ModerateDocumentRequest {
-  action: "APPROVED" | "REJECTED"
+  decision: "APPROVED" | "REJECTED"
   rejectionReason?: string
 }
 
@@ -58,6 +58,7 @@ export interface MessageResponse {
 
 const DOCUMENT_ENDPOINTS = {
   list: "/api/documents",
+  adminList: "/api/admin/documents",
   uploadUrl: "/api/documents/upload-url",
   byId: (id: string) => `/api/documents/${id}`,
   moderate: (id: string) => `/api/documents/${id}/moderate`,
@@ -79,9 +80,65 @@ function buildQueryString(query: object = {}) {
   return queryString ? `?${queryString}` : ""
 }
 
-export function getDocumentItems(response: DocumentRecord[] | PaginatedDocuments) {
+function isDocumentLike(value: unknown) {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      ("id" in value || "title" in value || "fileUrl" in value || "status" in value),
+  )
+}
+
+function findDocumentArray(value: unknown): DocumentRecord[] {
+  if (Array.isArray(value)) {
+    return value.filter(isDocumentLike) as DocumentRecord[]
+  }
+
+  if (!value || typeof value !== "object") return []
+
+  const record = value as Record<string, unknown>
+  const knownKeys = [
+    "documents",
+    "docs",
+    "items",
+    "rows",
+    "records",
+    "list",
+    "data",
+    "result",
+    "results",
+  ]
+
+  for (const key of knownKeys) {
+    const found = findDocumentArray(record[key])
+    if (found.length > 0) return found
+  }
+
+  for (const nestedValue of Object.values(record)) {
+    const found = findDocumentArray(nestedValue)
+    if (found.length > 0) return found
+  }
+
+  return []
+}
+
+export function getDocumentItems(response: DocumentRecord[] | PaginatedDocuments): DocumentRecord[] {
   if (Array.isArray(response)) return response
-  return response.data ?? response.documents ?? response.items ?? []
+  if (Array.isArray(response.data)) return response.data
+  if (response.data) return getDocumentItems(response.data)
+  if (Array.isArray(response.result)) return response.result
+  if (response.result) return getDocumentItems(response.result)
+  if (Array.isArray(response.results)) return response.results
+  if (response.results) return getDocumentItems(response.results)
+
+  return (
+    response.documents ??
+    response.docs ??
+    response.items ??
+    response.rows ??
+    response.records ??
+    response.list ??
+    findDocumentArray(response)
+  )
 }
 
 export function requestDocumentUploadUrl(payload: RequestUploadUrlRequest) {
@@ -101,6 +158,12 @@ export function createDocument(payload: CreateDocumentRequest) {
 export function getDocuments(query?: GetDocumentsQuery) {
   return apiFetch<DocumentRecord[] | PaginatedDocuments>(
     `${DOCUMENT_ENDPOINTS.list}${buildQueryString(query)}`,
+  )
+}
+
+export function getAdminDocuments(query?: GetDocumentsQuery) {
+  return apiFetch<DocumentRecord[] | PaginatedDocuments>(
+    `${DOCUMENT_ENDPOINTS.adminList}${buildQueryString(query)}`,
   )
 }
 

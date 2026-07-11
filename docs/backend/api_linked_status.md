@@ -21,9 +21,10 @@ Tài liệu này ghi lại trạng thái link API của FE hiện tại sau khi 
 | `POST /api/documents/upload-url` | `/user/upload` | Đã link |
 | `PUT <presigned-upload-url>` | `/user/upload` | Đã link |
 | `POST /api/documents` | `/user/upload` | Đã link |
-| `GET /api/documents` | `/user/library`, `/admin/documents` | Đã link |
+| `GET /api/documents` | `/user/library` | Đã link |
+| `GET /api/admin/documents` | `/admin/documents` | Đã link, dùng để admin lấy toàn bộ documents rồi filter trên FE |
 | `GET /api/documents/[id]` | `/admin/documents/[id]` | Đã link |
-| `POST /api/documents/[id]/moderate` | `/admin/documents`, `/admin/documents/[id]` | Đã link |
+| `POST /api/documents/[id]/moderate` | `/admin/documents`, `/admin/documents/[id]` | Đã link, body dùng `{ decision: "APPROVED" \| "REJECTED", rejectionReason? }` |
 | `DELETE /api/documents/[id]` | `/admin/documents/[id]` | Đã link |
 | `POST /api/documents/[id]/restore` | `/admin/documents/[id]` | Đã link |
 | `DELETE /api/admin/documents/[id]/hard` | `/admin/documents/[id]` | Đã link |

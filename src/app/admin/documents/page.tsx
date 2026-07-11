@@ -6,13 +6,13 @@ import Link from "next/link"
 import { CheckCircle, Clock, Eye, FileText, Plus, Search, XCircle } from "lucide-react"
 
 import {
+  getAdminDocuments,
   getDocumentItems,
-  getDocuments,
   moderateDocument,
 } from "@/features/documents/api/documents-api"
 import type { DocumentRecord, DocumentStatus } from "@/features/documents/types"
 
-const statusFilters = ["Pending", "All", "Approved", "Rejected"] as const
+const statusFilters = ["All", "Pending", "Approved", "Rejected"] as const
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("vi-VN").format(new Date(value))
@@ -24,18 +24,30 @@ function formatFileSize(bytes: number) {
 }
 
 function formatStatus(status: DocumentStatus) {
-  if (status === "APPROVED") return "Approved"
-  if (status === "REJECTED") return "Rejected"
+  const normalizedStatus = normalizeDocumentStatus(status)
+  if (normalizedStatus === "APPROVED") return "Approved"
+  if (normalizedStatus === "REJECTED") return "Rejected"
   return "Pending"
+}
+
+function normalizeDocumentStatus(status?: string | null): DocumentStatus {
+  const normalizedStatus = status?.toUpperCase()
+  if (normalizedStatus === "APPROVED") return "APPROVED"
+  if (normalizedStatus === "REJECTED") return "REJECTED"
+  return "PENDING"
 }
 
 export default function DocumentsPage() {
   const router = useRouter()
-  const [documents, setDocuments] = useState<DocumentRecord[]>([])
+  const [allDocuments, setAllDocuments] = useState<DocumentRecord[]>([])
   const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>("Pending")
+  const [statusFilter, setStatusFilter] = useState<(typeof statusFilters)[number]>("All")
   const [isLoading, setIsLoading] = useState(true)
+  const [isModerating, setIsModerating] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [rejectingDocument, setRejectingDocument] = useState<DocumentRecord | null>(null)
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [rejectionError, setRejectionError] = useState("")
 
   const queryStatus = useMemo<DocumentStatus | undefined>(() => {
     if (statusFilter === "Approved") return "APPROVED"
@@ -44,23 +56,34 @@ export default function DocumentsPage() {
     return undefined
   }, [statusFilter])
 
+  const filteredDocuments = useMemo(() => {
+    const keyword = search.trim().toLowerCase()
+
+    return allDocuments.filter((doc) => {
+      const matchesStatus = queryStatus
+        ? normalizeDocumentStatus(doc.status) === queryStatus
+        : true
+      const matchesSearch = keyword
+        ? (doc.title ?? "").toLowerCase().includes(keyword)
+        : true
+
+      return matchesStatus && matchesSearch
+    })
+  }, [allDocuments, queryStatus, search])
+
   const loadDocuments = useCallback(async () => {
     try {
       setIsLoading(true)
       setErrorMessage("")
-      const response = await getDocuments({
-        search: search.trim() || undefined,
-        page: 1,
-        limit: 50,
-      })
+      const response = await getAdminDocuments()
       const items = getDocumentItems(response)
-      setDocuments(queryStatus ? items.filter((doc) => doc.status === queryStatus) : items)
+      setAllDocuments(items)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Không thể tải documents.")
     } finally {
       setIsLoading(false)
     }
-  }, [queryStatus, search])
+  }, [])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -70,18 +93,41 @@ export default function DocumentsPage() {
     return () => window.clearTimeout(timeoutId)
   }, [loadDocuments])
 
-  async function handleModerate(documentId: string, action: "APPROVED" | "REJECTED") {
+  async function handleModerate(
+    documentId: string,
+    decision: "APPROVED" | "REJECTED",
+    reason?: string,
+  ) {
     try {
+      setIsModerating(true)
       setErrorMessage("")
-      await moderateDocument(documentId, { action })
+      setRejectionError("")
+
+      const trimmedReason = reason?.trim()
+
+      if (decision === "REJECTED" && !trimmedReason) {
+        setRejectionError("Vui lòng nhập lý do từ chối document.")
+        return
+      }
+
+      await moderateDocument(documentId, {
+        decision,
+        rejectionReason: decision === "REJECTED" ? trimmedReason : undefined,
+      })
+
+      setRejectingDocument(null)
+      setRejectionReason("")
       await loadDocuments()
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Không thể duyệt document.")
+    } finally {
+      setIsModerating(false)
     }
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <>
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-1.5">
@@ -135,19 +181,25 @@ export default function DocumentsPage() {
         </div>
       ) : null}
 
+      {!isLoading && !errorMessage ? (
+        <p className="text-[13px] font-semibold text-[#727785]">
+          Showing {filteredDocuments.length} of {allDocuments.length} documents.
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4">
         {isLoading ? (
           <div className="bg-white p-8 rounded-3xl border border-[#c2c6d6]/40 text-center text-[#727785]">
             Loading documents...
           </div>
-        ) : documents.length === 0 ? (
+        ) : filteredDocuments.length === 0 ? (
           <div className="bg-white p-8 rounded-3xl border border-[#c2c6d6]/40 text-center text-[#727785]">
             {statusFilter === "Pending"
               ? "No pending documents waiting for review."
               : "No documents found."}
           </div>
         ) : (
-          documents.map((doc) => (
+          filteredDocuments.map((doc) => (
             <div
               key={doc.id}
               onClick={() => router.push(`/admin/documents/${doc.id}`)}
@@ -163,8 +215,8 @@ export default function DocumentsPage() {
                     {doc.title}
                   </h3>
                   <span className={`shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-md uppercase tracking-wider border ${
-                    doc.status === "APPROVED" ? "bg-green-50 text-green-700 border-green-200/60" :
-                    doc.status === "PENDING" ? "bg-amber-50 text-amber-700 border-amber-200/60" : "bg-red-50 text-red-700 border-red-200/60"
+                    normalizeDocumentStatus(doc.status) === "APPROVED" ? "bg-green-50 text-green-700 border-green-200/60" :
+                    normalizeDocumentStatus(doc.status) === "PENDING" ? "bg-amber-50 text-amber-700 border-amber-200/60" : "bg-red-50 text-red-700 border-red-200/60"
                   }`}>
                     {formatStatus(doc.status)}
                   </span>
@@ -183,26 +235,30 @@ export default function DocumentsPage() {
               </div>
 
               <div className="flex items-center gap-2 border-t border-[#c2c6d6]/30 md:border-t-0 pt-4 md:pt-0 shrink-0">
-                {doc.status === "PENDING" ? (
+                {normalizeDocumentStatus(doc.status) === "PENDING" ? (
                   <>
                     <button
                       type="button"
+                      disabled={isModerating}
                       onClick={(event) => {
                         event.stopPropagation()
                         void handleModerate(doc.id, "APPROVED")
                       }}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-xl text-[13px] font-bold hover:bg-green-700 transition-all shadow-sm"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-xl text-[13px] font-bold hover:bg-green-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <CheckCircle size={16} />
                       Approve
                     </button>
                     <button
                       type="button"
+                      disabled={isModerating}
                       onClick={(event) => {
                         event.stopPropagation()
-                        void handleModerate(doc.id, "REJECTED")
+                        setRejectingDocument(doc)
+                        setRejectionReason("")
+                        setRejectionError("")
                       }}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 border border-red-200/60 rounded-xl text-[13px] font-bold hover:bg-red-600 hover:text-white transition-all"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 border border-red-200/60 rounded-xl text-[13px] font-bold hover:bg-red-600 hover:text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <XCircle size={16} />
                       Reject
@@ -219,6 +275,79 @@ export default function DocumentsPage() {
           ))
         )}
       </div>
-    </div>
+
+      </div>
+
+      {rejectingDocument ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#121c2a]/45 px-4 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reject-document-title"
+            style={{ width: "min(92vw, 520px)" }}
+            className="rounded-3xl border border-red-100 bg-white p-6 shadow-2xl shadow-[#121c2a]/20"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-5 flex items-start gap-3">
+              <div className="rounded-2xl bg-red-50 p-3 text-red-600">
+                <XCircle size={22} />
+              </div>
+              <div>
+                <h2 id="reject-document-title" className="text-xl font-bold text-[#121c2a]">
+                  Reject document
+                </h2>
+                <p className="mt-1 text-[14px] text-[#727785]">
+                  Nhập lý do từ chối cho{" "}
+                  <span className="font-bold text-[#121c2a]">{rejectingDocument.title}</span>.
+                </p>
+              </div>
+            </div>
+
+            <label className="mb-2 block text-[13px] font-bold text-[#121c2a]">
+              Rejection reason
+            </label>
+            <textarea
+              autoFocus
+              value={rejectionReason}
+              onChange={(event) => {
+                setRejectionReason(event.target.value)
+                setRejectionError("")
+              }}
+              placeholder="Ví dụ: Tài liệu không đúng môn học hoặc nội dung không phù hợp..."
+              className="min-h-32 w-full resize-none rounded-2xl border border-[#c2c6d6]/60 bg-[#f8f9ff] p-4 text-[14px] text-[#121c2a] outline-none transition-all placeholder:text-[#727785] focus:border-red-400 focus:ring-4 focus:ring-red-100"
+            />
+
+            {rejectionError ? (
+              <p className="mt-2 text-[13px] font-semibold text-red-600">{rejectionError}</p>
+            ) : null}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={isModerating}
+                onClick={() => {
+                  setRejectingDocument(null)
+                  setRejectionReason("")
+                  setRejectionError("")
+                }}
+                className="rounded-xl border border-[#c2c6d6]/60 px-5 py-2.5 text-[14px] font-bold text-[#424754] transition-all hover:bg-[#f8f9ff] disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isModerating}
+                onClick={() =>
+                  void handleModerate(rejectingDocument.id, "REJECTED", rejectionReason)
+                }
+                className="rounded-xl bg-red-600 px-5 py-2.5 text-[14px] font-bold text-white shadow-sm transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isModerating ? "Rejecting..." : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   )
 }

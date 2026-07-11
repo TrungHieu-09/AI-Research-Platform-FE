@@ -2,7 +2,19 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Calendar, FileText, FolderOpen, Hash, LayoutGrid, List, Search, Upload, Users, X } from "lucide-react"
+import {
+  AlertCircle,
+  Calendar,
+  FileText,
+  FolderOpen,
+  Hash,
+  LayoutGrid,
+  List,
+  Search,
+  Upload,
+  Users,
+  X,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getDocumentItems, getDocuments } from "@/features/documents/api/documents-api"
 import type { DocumentRecord } from "@/features/documents/types"
@@ -34,6 +46,36 @@ function getIconStyle(document: DocumentRecord) {
   if (type === "PDF") return { iconColor: "text-red-500", iconBg: "bg-red-50" }
   if (type === "DOCX" || type === "DOC") return { iconColor: "text-blue-500", iconBg: "bg-blue-50" }
   return { iconColor: "text-gray-500", iconBg: "bg-gray-100" }
+}
+
+function getRejectionReason(document?: DocumentRecord | null) {
+  if (!document) return ""
+
+  const record = document as DocumentRecord & {
+    reason?: string | null
+    rejectReason?: string | null
+    rejectionNote?: string | null
+    moderationReason?: string | null
+    moderatorNote?: string | null
+    moderation?: {
+      reason?: string | null
+      rejectionReason?: string | null
+      note?: string | null
+    } | null
+  }
+
+  return (
+    record.rejectionReason ??
+    record.reason ??
+    record.rejectReason ??
+    record.rejectionNote ??
+    record.moderationReason ??
+    record.moderatorNote ??
+    record.moderation?.rejectionReason ??
+    record.moderation?.reason ??
+    record.moderation?.note ??
+    ""
+  )
 }
 
 export default function LibraryPage() {
@@ -174,6 +216,7 @@ export default function LibraryPage() {
               documents.map((doc) => {
                 const iconStyle = getIconStyle(doc)
                 const isSelected = selectedDocument?.id === doc.id
+                const rejectionReason = getRejectionReason(doc)
                 return (
                   <div
                     key={doc.id}
@@ -204,6 +247,14 @@ export default function LibraryPage() {
                           ) : null}
                         </div>
                         <p className="text-[12px] text-[#727785] truncate">{doc.owner?.name ?? "Unknown owner"}</p>
+                        {doc.status === "REJECTED" && rejectionReason ? (
+                          <p className="mt-1 flex items-start gap-1.5 text-[12px] font-medium text-red-600">
+                            <AlertCircle size={13} className="mt-0.5 shrink-0" />
+                            <span className="line-clamp-2">
+                              Lý do từ chối: {rejectionReason}
+                            </span>
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                     <div className="text-[13px] font-medium text-[#424754]">{getDocumentYear(doc)}</div>
@@ -259,6 +310,18 @@ export default function LibraryPage() {
               <p className="text-[13px] font-bold text-[#121c2a]">{selectedDocument?.pageCount ?? 0}</p>
             </div>
           </div>
+
+          {selectedDocument?.status === "REJECTED" ? (
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+              <div className="mb-2 flex items-center gap-2 text-red-700">
+                <AlertCircle size={16} />
+                <p className="text-[12px] font-bold uppercase tracking-wider">Rejected reason</p>
+              </div>
+              <p className="text-[13px] font-semibold leading-relaxed text-red-700">
+                {getRejectionReason(selectedDocument) || "Admin chưa gửi lý do từ chối."}
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
