@@ -23,6 +23,8 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<{ email: string }>
   verifyOtp: (email: string, otpCode: string) => Promise<void>
+  forgotPassword: (email: string) => Promise<void>
+  resetPassword: (email: string, otpCode: string, password: string) => Promise<void>
   logout: () => void
 }
 
@@ -115,6 +117,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // The user is prompted to log in manually after a successful verification.
   }, [])
 
+  const forgotPassword = React.useCallback(async (email: string) => {
+    await api.post("/api/auth/forgot-password", { email }, { noAuth: true })
+  }, [])
+
+  const resetPassword = React.useCallback(async (email: string, otpCode: string, password: string) => {
+    await api.post("/api/auth/reset-password", { email, otpCode, password }, { noAuth: true })
+  }, [])
+
   const logout = React.useCallback(() => {
     clearSession()
     setToken(null)
@@ -123,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router])
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, forgotPassword, resetPassword, logout }}>
       {children}
     </AuthContext.Provider>
   )
