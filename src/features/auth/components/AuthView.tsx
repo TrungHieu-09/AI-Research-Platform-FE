@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -21,16 +21,51 @@ function OtpStep({
   onVerify: (code: string) => Promise<void>;
   onBack: () => void;
 }) {
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState<string[]>(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    
+    const newCode = [...code];
+    newCode[index] = value.substring(value.length - 1);
+    setCode(newCode);
+    setError("");
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pastedData) {
+      const newCode = [...code];
+      for (let i = 0; i < pastedData.length; i++) {
+        newCode[i] = pastedData[i];
+      }
+      setCode(newCode);
+      const focusIndex = Math.min(pastedData.length, 5);
+      inputRefs.current[focusIndex]?.focus();
+      setError("");
+    }
+  };
+
+  const triggerSubmit = async (finalCode: string) => {
+    if (finalCode.length < 6) return;
     setError("");
     setLoading(true);
     try {
-      await onVerify(code);
+      await onVerify(finalCode);
     } catch (err: any) {
       setError(err.message ?? "Mã OTP không hợp lệ.");
     } finally {
@@ -38,69 +73,118 @@ function OtpStep({
     }
   };
 
+  // Auto-submit when fully filled
+  useEffect(() => {
+    const finalCode = code.join("");
+    if (finalCode.length === 6 && !loading && !error) {
+      triggerSubmit(finalCode);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+
   return (
     <motion.div
       key="otp-form"
       initial={{ x: 20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: -20, opacity: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center md:items-start"
     >
-      <div className="mb-[48px] text-center md:text-left">
-        <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[4px]">
+      <div className="mb-[40px] text-center md:text-left">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="w-16 h-16 bg-[#eef4ff] rounded-full flex items-center justify-center mb-6 mx-auto md:mx-0 shadow-sm border border-[#d2e3fc]"
+        >
+          <span className="material-symbols-outlined text-[32px] text-[#0058be]">mail</span>
+        </motion.div>
+        <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[8px] tracking-tight">
           Xác thực email
         </h2>
-        <p className="text-[16px] text-[#424754]">
-          Nhập mã 6 chữ số đã gửi tới{" "}
+        <p className="text-[15px] text-[#424754] leading-relaxed">
+          Chúng tôi đã gửi mã gồm 6 chữ số tới <br className="hidden md:block" />
           <span className="font-semibold text-[#0058be]">{email}</span>
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-[24px]">
+      <form onSubmit={(e) => { e.preventDefault(); triggerSubmit(code.join("")); }} className="w-full space-y-[32px]">
         <div>
-          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]">
-            Mã OTP
-          </label>
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            className="w-full h-[56px] px-[16px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[28px] font-bold tracking-[0.4em] text-center shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#c2c6d6] placeholder:tracking-normal"
-            placeholder="······"
-            inputMode="numeric"
-            maxLength={6}
-            required
-          />
-          {error && (
-            <p className="mt-2 text-[13px] text-red-500 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[16px]">error</span>
-              {error}
-            </p>
-          )}
+          <div className="flex justify-between gap-2 md:gap-3 mb-2">
+            {code.map((digit, index) => (
+              <motion.input
+                key={index}
+                ref={(el) => { inputRefs.current[index] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={handlePaste}
+                className={`w-[45px] h-[56px] md:w-[56px] md:h-[64px] text-center text-[24px] md:text-[28px] font-bold rounded-xl transition-all shadow-sm focus:outline-none focus:ring-[3px] focus:ring-[#0058be]/15
+                  ${error ? "border-red-500 bg-red-50 text-red-700" : 
+                    digit ? "border-[#0058be] bg-[#f0f5ff] text-[#0058be]" : "border-[#c2c6d6] bg-[#f8f9ff] text-[#121c2a]"} 
+                  border`}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+              />
+            ))}
+          </div>
+          
+          <AnimatePresence>
+            {error && (
+              <motion.p 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="mt-3 text-[14px] font-medium text-red-500 flex items-center justify-center md:justify-start gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">error</span>
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
 
-        <button
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
           type="submit"
-          disabled={loading || code.length < 6}
-          className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={loading || code.join("").length < 6}
+          className="w-full h-[52px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[15px] rounded-xl hover:shadow-[0_8px_30px_rgba(0,88,190,0.2)] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed group"
         >
           {loading ? (
             <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
           ) : (
             <>
-              Xác thực tài khoản
-              <span className="material-symbols-outlined text-[18px]">verified</span>
+              Xác thực ngay
+              <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">check_circle</span>
             </>
           )}
-        </button>
+        </motion.button>
 
-        <button
-          type="button"
-          onClick={onBack}
-          className="w-full text-[14px] text-[#424754] hover:text-[#0058be] transition-colors flex items-center justify-center gap-1"
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-col items-center gap-4"
         >
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Quay lại đăng ký
-        </button>
+          <p className="text-[14px] text-[#727785]">
+            Chưa nhận được mã? <button type="button" className="text-[#0058be] font-medium hover:underline">Gửi lại</button>
+          </p>
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-[14px] font-medium text-[#424754] hover:text-[#121c2a] transition-colors flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg hover:bg-[#f0f4ff]"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            Thay đổi email đăng ký
+          </button>
+        </motion.div>
       </form>
     </motion.div>
   );
