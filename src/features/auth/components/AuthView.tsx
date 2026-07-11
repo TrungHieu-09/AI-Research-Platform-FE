@@ -682,6 +682,9 @@ export default function AuthView({ initialMode }: AuthViewProps) {
   const handleSetNewPassword = async (password: string) => {
     if (!resetEmail || !resetOtpCode) return;
     await resetPassword(resetEmail, resetOtpCode, password);
+    // Clear step states BEFORE setting success so AnimatePresence renders correctly
+    setResetOtpCode(null);
+    setResetEmail(null);
     setIsResetSuccess(true);
   };
 
