@@ -143,7 +143,7 @@ function OtpStep({
                 className="mt-3 text-[14px] font-medium text-red-500 flex items-center justify-center md:justify-start gap-1.5"
               >
                 <span className="material-symbols-outlined text-[18px]">error</span>
-                {error}
+                {error.length > 150 ? "Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau." : error}
               </motion.p>
             )}
           </AnimatePresence>
@@ -324,14 +324,14 @@ function ForgotPasswordStep({
   );
 }
 
-// ─── Reset Password Step ─────────────────────────────────────────────────────────────
-function ResetPasswordStep({
+// ─── Reset OTP Step (bước 2: chỉ nhập mã OTP) ─────────────────────────────────────────────────────────────
+function ResetOtpStep({
   email,
-  onReset,
+  onVerify,
   onBack,
 }: {
   email: string;
-  onReset: (code: string, password: string) => Promise<void>;
+  onVerify: (code: string) => Promise<void>;
   onBack: () => void;
 }) {
   const [code, setCode] = useState<string[]>(Array(6).fill(""));
@@ -370,15 +370,12 @@ function ResetPasswordStep({
     e.preventDefault();
     const finalCode = code.join("");
     if (finalCode.length < 6) return;
-    const formData = new FormData(e.currentTarget);
-    const password = formData.get("password") as string;
-    
     setError("");
     setLoading(true);
     try {
-      await onReset(finalCode, password);
+      await onVerify(finalCode);
     } catch (err: any) {
-      setError(err.message ?? "Mã OTP không hợp lệ.");
+      setError(err.message ?? "Mã OTP không đúng.");
     } finally {
       setLoading(false);
     }
@@ -386,7 +383,7 @@ function ResetPasswordStep({
 
   return (
     <motion.div
-      key="reset-form"
+      key="reset-otp-form"
       initial={{ x: 20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: -20, opacity: 0 }}
@@ -394,20 +391,25 @@ function ResetPasswordStep({
       className="flex flex-col items-center md:items-start"
     >
       <div className="mb-[40px] text-center md:text-left">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="w-16 h-16 bg-[#eef4ff] rounded-full flex items-center justify-center mb-6 mx-auto md:mx-0 shadow-sm border border-[#d2e3fc]"
+        >
+          <span className="material-symbols-outlined text-[32px] text-[#0058be]">mark_email_read</span>
+        </motion.div>
         <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[8px] tracking-tight">
-          Kiểm tra email
+          Nhập mã xác nhận
         </h2>
         <p className="text-[15px] text-[#424754] leading-relaxed">
-          Mã xác thực đã được gửi đến mail của bạn. Vui lòng kiểm tra hộp thư (và mục Spam) để nhận mã 6 số gửi tới <br className="hidden md:block" />
+          Mã 6 số đã được gửi đến hộp thư (cà mục Spam) của email:<br className="hidden md:block" />
           <span className="font-semibold text-[#0058be]">{email}</span>
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="w-full space-y-[32px]">
         <div>
-          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[8px]">
-            Mã OTP
-          </label>
           <div className="flex justify-between gap-2 md:gap-3 mb-2">
             {code.map((digit, index) => (
               <motion.input
@@ -421,8 +423,8 @@ function ResetPasswordStep({
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={handlePaste}
                 className={`w-[45px] h-[56px] md:w-[56px] md:h-[64px] text-center text-[24px] md:text-[28px] font-bold rounded-xl transition-all shadow-sm focus:outline-none focus:ring-[3px] focus:ring-[#0058be]/15
-                  ${error && !code.join("") ? "border-red-500 bg-red-50 text-red-700" : 
-                    digit ? "border-[#0058be] bg-[#f0f5ff] text-[#0058be]" : "border-[#c2c6d6] bg-[#f8f9ff] text-[#121c2a]"} 
+                  ${error ? "border-red-500 bg-red-50 text-red-700" :
+                    digit ? "border-[#0058be] bg-[#f0f5ff] text-[#0058be]" : "border-[#c2c6d6] bg-[#f8f9ff] text-[#121c2a]"}
                   border`}
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -430,39 +432,20 @@ function ResetPasswordStep({
               />
             ))}
           </div>
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-3 text-[13px] font-medium text-red-500 flex items-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">error</span>
+                {error.length > 150 ? "Lỗi kết nối. Vui lòng thử lại sau." : error}
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
-
-        <div>
-          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="password-reset">
-            Mật khẩu mới
-          </label>
-          <div className="relative">
-            <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">lock</span>
-            <input
-              className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
-              id="password-reset"
-              name="password"
-              placeholder="Tối thiểu 8 ký tự, 1 hoa, 1 số"
-              type="password"
-              required
-              minLength={8}
-            />
-          </div>
-        </div>
-        
-        <AnimatePresence>
-          {error && (
-            <motion.p 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="mt-3 text-[14px] font-medium text-red-500 flex items-center justify-center md:justify-start gap-1.5"
-            >
-              <span className="material-symbols-outlined text-[18px]">error</span>
-              {error}
-            </motion.p>
-          )}
-        </AnimatePresence>
 
         <motion.button
           initial={{ opacity: 0, y: 10 }}
@@ -476,13 +459,13 @@ function ResetPasswordStep({
             <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
           ) : (
             <>
-              Xác nhận đổi mật khẩu
-              <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">check_circle</span>
+              Xác nhận mã
+              <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">arrow_forward</span>
             </>
           )}
         </motion.button>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
@@ -502,21 +485,132 @@ function ResetPasswordStep({
   );
 }
 
+// ─── New Password Step (bước 3: nhập mật khẩu mới) ─────────────────────────────────────────────────────────────
+function NewPasswordStep({
+  email,
+  otpCode,
+  onSetPassword,
+  onBack,
+}: {
+  email: string;
+  otpCode: string;
+  onSetPassword: (password: string) => Promise<void>;
+  onBack: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const password = formData.get("password") as string;
+    setError("");
+    setLoading(true);
+    try {
+      await onSetPassword(password);
+    } catch (err: any) {
+      setError(err.message ?? "Có lỗi xảy ra.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key="new-password-form"
+      initial={{ x: 20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -20, opacity: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="mb-[40px]">
+        <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[8px] tracking-tight">
+          Tạo mật khẩu mới
+        </h2>
+        <p className="text-[15px] text-[#424754] leading-relaxed">
+          Nhập mật khẩu mới cho tài khoản <span className="font-semibold text-[#0058be]">{email}</span>
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-[24px]">
+        <div>
+          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="new-password">
+            Mật khẩu mới
+          </label>
+          <div className="relative">
+            <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">lock</span>
+            <input
+              className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
+              id="new-password"
+              name="password"
+              placeholder="Tối thiểu 8 ký tự, 1 hoa, 1 số"
+              type="password"
+              required
+              minLength={8}
+            />
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-2 text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5"
+            >
+              <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+              <span>{error.length > 150 ? "Lỗi kết nối. Vui lòng thử lại sau." : error}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-[52px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[15px] rounded-xl hover:shadow-[0_8px_30px_rgba(0,88,190,0.2)] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed group"
+        >
+          {loading ? (
+            <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+          ) : (
+            <>
+              Xác nhận đổi mật khẩu
+              <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">check_circle</span>
+            </>
+          )}
+        </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-[14px] font-medium text-[#424754] hover:text-[#121c2a] transition-colors flex items-center justify-center gap-1.5 mx-auto px-4 py-2 rounded-lg hover:bg-[#f0f4ff]"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            Nhập lại mã OTP
+          </button>
+        </div>
+      </form>
+    </motion.div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AuthView({ initialMode }: AuthViewProps) {
   const pathname = usePathname();
-  const { login, register, verifyOtp, forgotPassword, resetPassword } = useAuth();
+  const { login, register, verifyOtp, forgotPassword, verifyResetOtp, resetPassword } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // OTP flow state
+  // OTP flow state (đăng ký)
   const [otpEmail, setOtpEmail] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   
-  // Forgot password flow state
-  const [resetEmail, setResetEmail] = useState<string | null>(null);
+  // Forgot password flow state (3 bước)
+  const [resetEmail, setResetEmail] = useState<string | null>(null);   // bước 1 xong -> bước 2
+  const [resetOtpCode, setResetOtpCode] = useState<string | null>(null); // bước 2 xong -> bước 3
   const [isResetSuccess, setIsResetSuccess] = useState(false);
 
   // Sync mode with URL if user navigates via browser history
@@ -577,9 +671,17 @@ export default function AuthView({ initialMode }: AuthViewProps) {
     setResetEmail(email);
   };
 
-  const handleResetPassword = async (code: string, password: string) => {
+  // Bước 2: verify OTP (chỉ kiểm tra mã, chưa đổi mật khẩu)
+  const handleVerifyResetOtp = async (code: string) => {
     if (!resetEmail) return;
-    await resetPassword(resetEmail, code, password);
+    await verifyResetOtp(resetEmail, code);
+    setResetOtpCode(code); // Lưu mã OTP đã xác minh để dùng ở bước 3
+  };
+
+  // Bước 3: đặt mật khẩu mới
+  const handleSetNewPassword = async (password: string) => {
+    if (!resetEmail || !resetOtpCode) return;
+    await resetPassword(resetEmail, resetOtpCode, password);
     setIsResetSuccess(true);
   };
 
@@ -732,12 +834,21 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                     switchMode("login");
                   }}
                 />
+              ) : resetOtpCode ? (
+                /* ── Bước 3: Nhập mật khẩu mới ── */
+                <NewPasswordStep
+                  key="new-password"
+                  email={resetEmail!}
+                  otpCode={resetOtpCode}
+                  onSetPassword={handleSetNewPassword}
+                  onBack={() => setResetOtpCode(null)}
+                />
               ) : resetEmail ? (
-                /* ── Reset Password Step ── */
-                <ResetPasswordStep
-                  key="reset"
+                /* ── Bước 2: Nhập mã OTP ── */
+                <ResetOtpStep
+                  key="reset-otp"
                   email={resetEmail}
-                  onReset={handleResetPassword}
+                  onVerify={handleVerifyResetOtp}
                   onBack={() => { setResetEmail(null); setError(""); }}
                 />
               ) : /* ── Success Step ── */
@@ -826,7 +937,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                     {error && (
                       <div className="flex items-center gap-2 text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
                         <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
-                        {error}
+                        {error.length > 150 ? "Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau." : error}
                       </div>
                     )}
 
@@ -924,7 +1035,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                     {error && (
                       <div className="flex items-center gap-2 text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
                         <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
-                        {error}
+                        {error.length > 150 ? "Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau." : error}
                       </div>
                     )}
 

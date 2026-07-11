@@ -77,21 +77,42 @@ const TABS = [
 ]
 
 export default function UserSettingsPage() {
-  const { user } = useAuth()
+  const { user, updateProfile } = useAuth()
   const [tab, setTab] = React.useState("profile")
   const [saved, setSaved] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState("")
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2800)
+  // Local state for form fields
+  const [firstName, setFirstName] = React.useState("")
+  const [lastName, setLastName] = React.useState("")
+
+  // Initialize state from user object
+  React.useEffect(() => {
+    if (user) {
+      const nameParts = user.name.trim().split(" ")
+      setFirstName(nameParts.length > 1 ? nameParts[nameParts.length - 1] : user.name)
+      setLastName(nameParts.length > 1 ? nameParts.slice(0, -1).join(" ") : "")
+    }
+  }, [user])
+
+  const handleSave = async () => {
+    if (!user) return
+    setError("")
+    setLoading(true)
+    try {
+      const newName = `${lastName} ${firstName}`.trim()
+      await updateProfile({ name: newName })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2800)
+    } catch (err: any) {
+      setError(err.message ?? "Lỗi khi cập nhật hồ sơ")
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!user) return null
-
-  // Split name for First Name and Last Name inputs
-  const nameParts = user.name.split(" ")
-  const firstName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : user.name
-  const lastName = nameParts.length > 1 ? nameParts.slice(0, -1).join(" ") : ""
 
   return (
     <div className="min-h-screen bg-[#f5f7fc] p-4 md:p-8 pb-24">
@@ -113,12 +134,19 @@ export default function UserSettingsPage() {
           </div>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 bg-[#0058be] hover:bg-[#004fa8] text-white px-5 py-2.5 rounded-xl font-bold text-[13.5px] transition-all shadow-md shadow-[#0058be]/25 hover:-translate-y-px active:translate-y-0"
+            disabled={loading}
+            className="flex items-center gap-2 bg-[#0058be] hover:bg-[#004fa8] text-white px-5 py-2.5 rounded-xl font-bold text-[13.5px] transition-all shadow-md shadow-[#0058be]/25 hover:-translate-y-px active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Save size={15} />
-            Lưu thay đổi
+            {loading ? <span className="material-symbols-outlined text-[15px] animate-spin">progress_activity</span> : <Save size={15} />}
+            {loading ? "Đang lưu..." : "Lưu thay đổi"}
           </button>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3 text-red-600 text-[13.5px] font-medium">
+            <Info size={16} /> {error}
+          </div>
+        )}
 
         {/* ── Avatar Card ── */}
         <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-5 flex items-center gap-5 mb-6">
@@ -186,7 +214,8 @@ export default function UserSettingsPage() {
                     <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Họ</label>
                     <input
                       type="text"
-                      defaultValue={lastName}
+                      value={lastName}
+                      onChange={e => setLastName(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all"
                     />
                   </div>
@@ -194,7 +223,8 @@ export default function UserSettingsPage() {
                     <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Tên</label>
                     <input
                       type="text"
-                      defaultValue={firstName}
+                      value={firstName}
+                      onChange={e => setFirstName(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all"
                     />
                   </div>

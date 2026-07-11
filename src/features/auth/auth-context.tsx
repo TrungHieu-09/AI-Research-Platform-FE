@@ -24,7 +24,9 @@ interface AuthContextValue {
   register: (name: string, email: string, password: string) => Promise<{ email: string }>
   verifyOtp: (email: string, otpCode: string) => Promise<void>
   forgotPassword: (email: string) => Promise<void>
+  verifyResetOtp: (email: string, otpCode: string) => Promise<void>
   resetPassword: (email: string, otpCode: string, password: string) => Promise<void>
+  updateProfile: (data: { name: string }) => Promise<void>
   logout: () => void
 }
 
@@ -121,9 +123,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await api.post("/api/auth/forgot-password", { email }, { noAuth: true })
   }, [])
 
+  const verifyResetOtp = React.useCallback(async (email: string, otpCode: string) => {
+    await api.post("/api/auth/verify-reset-otp", { email, otpCode }, { noAuth: true })
+  }, [])
+
   const resetPassword = React.useCallback(async (email: string, otpCode: string, password: string) => {
     await api.post("/api/auth/reset-password", { email, otpCode, password }, { noAuth: true })
   }, [])
+
+  const updateProfile = React.useCallback(async (data: { name: string }) => {
+    const res = await api.put<{ user: any }>("/api/users/me", data)
+    const updatedAuthUser: AuthUser = { ...res.user, initials: makeInitials(res.user.name) }
+    
+    // Update local state and storage
+    setUser(updatedAuthUser)
+    if (token) {
+      saveSession(token, updatedAuthUser)
+    }
+  }, [token])
 
   const logout = React.useCallback(() => {
     clearSession()
@@ -133,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router])
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, forgotPassword, resetPassword, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, forgotPassword, verifyResetOtp, resetPassword, updateProfile, logout }}>
       {children}
     </AuthContext.Provider>
   )
