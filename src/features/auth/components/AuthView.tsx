@@ -290,7 +290,7 @@ function ForgotPasswordStep({
         {error && (
           <div className="flex items-center gap-2 text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
             <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
-            {error}
+            <span className="break-all">{error.length > 150 ? "Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau." : error}</span>
           </div>
         )}
 
@@ -303,7 +303,7 @@ function ForgotPasswordStep({
             <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
           ) : (
             <>
-              Gửi mã OTP
+              Xác nhận
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </>
           )}
@@ -395,10 +395,10 @@ function ResetPasswordStep({
     >
       <div className="mb-[40px] text-center md:text-left">
         <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[8px] tracking-tight">
-          Đặt lại mật khẩu
+          Kiểm tra email
         </h2>
         <p className="text-[15px] text-[#424754] leading-relaxed">
-          Nhập mã OTP gồm 6 chữ số đã gửi tới <br className="hidden md:block" />
+          Mã xác thực đã được gửi đến mail của bạn. Vui lòng kiểm tra hộp thư (và mục Spam) để nhận mã 6 số gửi tới <br className="hidden md:block" />
           <span className="font-semibold text-[#0058be]">{email}</span>
         </p>
       </div>
