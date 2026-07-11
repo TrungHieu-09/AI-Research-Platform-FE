@@ -190,6 +190,45 @@ function OtpStep({
   );
 }
 
+// ─── Success Step ─────────────────────────────────────────────────────────────
+function SuccessStep({ onGoToLogin }: { onGoToLogin: () => void }) {
+  return (
+    <motion.div
+      key="success-form"
+      initial={{ x: 20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -20, opacity: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center text-center py-[24px]"
+    >
+      <motion.div 
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.1 }}
+        className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-green-100"
+      >
+        <span className="material-symbols-outlined text-[40px] text-green-600">check_circle</span>
+      </motion.div>
+      <h2 className="font-semibold text-[28px] text-[#121c2a] mb-[12px] tracking-tight">
+        Đăng ký thành công!
+      </h2>
+      <p className="text-[15px] text-[#424754] leading-relaxed mb-[40px] max-w-[300px]">
+        Tài khoản của bạn đã được xác thực. Giờ đây bạn có thể đăng nhập để trải nghiệm Không gian AI.
+      </p>
+      
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onGoToLogin}
+        className="w-full h-[52px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[15px] rounded-xl hover:shadow-[0_8px_30px_rgba(0,88,190,0.2)] transition-all flex items-center justify-center gap-2 group"
+      >
+        Đăng nhập ngay
+        <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+      </motion.button>
+    </motion.div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AuthView({ initialMode }: AuthViewProps) {
   const pathname = usePathname();
@@ -201,6 +240,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
 
   // OTP flow state
   const [otpEmail, setOtpEmail] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Sync mode with URL if user navigates via browser history
   useEffect(() => {
@@ -252,6 +292,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
   const handleVerifyOtp = async (code: string) => {
     if (!otpEmail) return;
     await verifyOtp(otpEmail, code);
+    setIsSuccess(true);
   };
 
   return (
@@ -358,8 +399,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
       {/* Right Pane - Forms */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-[16px] md:p-[64px] bg-surface-container-lowest relative overflow-hidden">
         <div className="w-full max-w-[420px] relative z-10">
-          {/* Mode Switcher — hidden during OTP step */}
-          {!otpEmail && (
+          {/* Mode Switcher — hidden during OTP step or Success step */}
+          {(!otpEmail && !isSuccess) && (
             <div className="flex items-center justify-center p-1 bg-[#dee9fc] rounded-xl mb-[48px] relative">
               <button
                 onClick={() => switchMode("login")}
@@ -393,8 +434,18 @@ export default function AuthView({ initialMode }: AuthViewProps) {
           {/* Form Content */}
           <div className="relative">
             <AnimatePresence mode="wait">
-              {/* ── OTP Step ── */}
-              {otpEmail ? (
+              {/* ── Success Step ── */}
+              {isSuccess ? (
+                <SuccessStep
+                  key="success"
+                  onGoToLogin={() => {
+                    setIsSuccess(false);
+                    setOtpEmail(null);
+                    switchMode("login");
+                  }}
+                />
+              ) : otpEmail ? (
+                /* ── OTP Step ── */
                 <OtpStep
                   key="otp"
                   email={otpEmail}

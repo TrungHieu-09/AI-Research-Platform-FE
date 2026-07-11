@@ -106,17 +106,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const verifyOtp = React.useCallback(async (email: string, otpCode: string) => {
-    const res = await api.post<{ token: string; user: any }>(
+    await api.post<{ token: string; user: any }>(
       "/api/auth/verify-otp",
       { email, otpCode },
       { noAuth: true }
     )
-    const authUser: AuthUser = { ...res.user, initials: makeInitials(res.user.name) }
-    saveSession(res.token, authUser)
-    setToken(res.token)
-    setUser(authUser)
-    router.push("/user/library")
-  }, [router])
+    // We intentionally do not save the token here.
+    // The user is prompted to log in manually after a successful verification.
+  }, [])
 
   const logout = React.useCallback(() => {
     clearSession()
