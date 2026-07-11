@@ -229,10 +229,283 @@ function SuccessStep({ onGoToLogin }: { onGoToLogin: () => void }) {
   );
 }
 
+// ─── Forgot Password Step ────────────────────────────────────────────────────────
+function ForgotPasswordStep({
+  onSendOtp,
+  onBack,
+}: {
+  onSendOtp: (email: string) => Promise<void>;
+  onBack: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    try {
+      await onSendOtp(email);
+    } catch (err: any) {
+      setError(err.message ?? "Không thể gửi yêu cầu.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key="forgot-form"
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: 20, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="mb-[48px] text-center md:text-left">
+        <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[4px]">
+          Quên mật khẩu?
+        </h2>
+        <p className="text-[16px] text-[#424754]">
+          Nhập email của bạn để nhận mã đặt lại mật khẩu.
+        </p>
+      </div>
+
+      <form className="space-y-[24px]" onSubmit={handleSubmit}>
+        <div>
+          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="email-forgot">
+            Email
+          </label>
+          <input
+            className="w-full h-[48px] px-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
+            id="email-forgot"
+            name="email"
+            placeholder="researcher@university.edu"
+            type="email"
+            required
+          />
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
+            <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+            {error}
+          </div>
+        )}
+
+        <button
+          className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+          ) : (
+            <>
+              Gửi mã OTP
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </>
+          )}
+        </button>
+
+        <div className="text-center mt-6">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-[14px] font-medium text-[#424754] hover:text-[#121c2a] transition-colors flex items-center justify-center gap-1.5 mx-auto px-4 py-2 rounded-lg hover:bg-[#f0f4ff]"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            Quay lại đăng nhập
+          </button>
+        </div>
+      </form>
+    </motion.div>
+  );
+}
+
+// ─── Reset Password Step ─────────────────────────────────────────────────────────────
+function ResetPasswordStep({
+  email,
+  onReset,
+  onBack,
+}: {
+  email: string;
+  onReset: (code: string, password: string) => Promise<void>;
+  onBack: () => void;
+}) {
+  const [code, setCode] = useState<string[]>(Array(6).fill(""));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newCode = [...code];
+    newCode[index] = value.substring(value.length - 1);
+    setCode(newCode);
+    setError("");
+    if (value && index < 5) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pastedData) {
+      const newCode = [...code];
+      for (let i = 0; i < pastedData.length; i++) newCode[i] = pastedData[i];
+      setCode(newCode);
+      inputRefs.current[Math.min(pastedData.length, 5)]?.focus();
+      setError("");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const finalCode = code.join("");
+    if (finalCode.length < 6) return;
+    const formData = new FormData(e.currentTarget);
+    const password = formData.get("password") as string;
+    
+    setError("");
+    setLoading(true);
+    try {
+      await onReset(finalCode, password);
+    } catch (err: any) {
+      setError(err.message ?? "Mã OTP không hợp lệ.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key="reset-form"
+      initial={{ x: 20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -20, opacity: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center md:items-start"
+    >
+      <div className="mb-[40px] text-center md:text-left">
+        <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[8px] tracking-tight">
+          Đặt lại mật khẩu
+        </h2>
+        <p className="text-[15px] text-[#424754] leading-relaxed">
+          Nhập mã OTP gồm 6 chữ số đã gửi tới <br className="hidden md:block" />
+          <span className="font-semibold text-[#0058be]">{email}</span>
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="w-full space-y-[32px]">
+        <div>
+          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[8px]">
+            Mã OTP
+          </label>
+          <div className="flex justify-between gap-2 md:gap-3 mb-2">
+            {code.map((digit, index) => (
+              <motion.input
+                key={index}
+                ref={(el) => { inputRefs.current[index] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={handlePaste}
+                className={`w-[45px] h-[56px] md:w-[56px] md:h-[64px] text-center text-[24px] md:text-[28px] font-bold rounded-xl transition-all shadow-sm focus:outline-none focus:ring-[3px] focus:ring-[#0058be]/15
+                  ${error && !code.join("") ? "border-red-500 bg-red-50 text-red-700" : 
+                    digit ? "border-[#0058be] bg-[#f0f5ff] text-[#0058be]" : "border-[#c2c6d6] bg-[#f8f9ff] text-[#121c2a]"} 
+                  border`}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="password-reset">
+            Mật khẩu mới
+          </label>
+          <div className="relative">
+            <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">lock</span>
+            <input
+              className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
+              id="password-reset"
+              name="password"
+              placeholder="Tối thiểu 8 ký tự, 1 hoa, 1 số"
+              type="password"
+              required
+              minLength={8}
+            />
+          </div>
+        </div>
+        
+        <AnimatePresence>
+          {error && (
+            <motion.p 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="mt-3 text-[14px] font-medium text-red-500 flex items-center justify-center md:justify-start gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              {error}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          type="submit"
+          disabled={loading || code.join("").length < 6}
+          className="w-full h-[52px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[15px] rounded-xl hover:shadow-[0_8px_30px_rgba(0,88,190,0.2)] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed group"
+        >
+          {loading ? (
+            <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+          ) : (
+            <>
+              Xác nhận đổi mật khẩu
+              <span className="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">check_circle</span>
+            </>
+          )}
+        </motion.button>
+
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-[14px] font-medium text-[#424754] hover:text-[#121c2a] transition-colors flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg hover:bg-[#f0f4ff]"
+          >
+            <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+            Hủy và quay lại
+          </button>
+        </motion.div>
+      </form>
+    </motion.div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AuthView({ initialMode }: AuthViewProps) {
   const pathname = usePathname();
-  const { login, register, verifyOtp } = useAuth();
+  const { login, register, verifyOtp, forgotPassword, resetPassword } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [loading, setLoading] = useState(false);
@@ -241,6 +514,10 @@ export default function AuthView({ initialMode }: AuthViewProps) {
   // OTP flow state
   const [otpEmail, setOtpEmail] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // Forgot password flow state
+  const [resetEmail, setResetEmail] = useState<string | null>(null);
+  const [isResetSuccess, setIsResetSuccess] = useState(false);
 
   // Sync mode with URL if user navigates via browser history
   useEffect(() => {
@@ -251,7 +528,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
     setError("");
-    const newPath = newMode === "login" ? "/login" : "/signup";
+    const newPath = newMode === "login" ? "/login" : newMode === "register" ? "/signup" : "/forgot-password";
     window.history.pushState(null, "", newPath);
   };
 
@@ -293,6 +570,17 @@ export default function AuthView({ initialMode }: AuthViewProps) {
     if (!otpEmail) return;
     await verifyOtp(otpEmail, code);
     setIsSuccess(true);
+  };
+
+  const handleForgotPassword = async (email: string) => {
+    await forgotPassword(email);
+    setResetEmail(email);
+  };
+
+  const handleResetPassword = async (code: string, password: string) => {
+    if (!resetEmail) return;
+    await resetPassword(resetEmail, code, password);
+    setIsResetSuccess(true);
   };
 
   return (
@@ -399,8 +687,8 @@ export default function AuthView({ initialMode }: AuthViewProps) {
       {/* Right Pane - Forms */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-[16px] md:p-[64px] bg-surface-container-lowest relative overflow-hidden">
         <div className="w-full max-w-[420px] relative z-10">
-          {/* Mode Switcher — hidden during OTP step or Success step */}
-          {(!otpEmail && !isSuccess) && (
+          {/* Mode Switcher — hidden during OTP step, Success step, or Forgot Password */}
+          {(!otpEmail && !isSuccess && !resetEmail && !isResetSuccess && mode !== "forgot-password") && (
             <div className="flex items-center justify-center p-1 bg-[#dee9fc] rounded-xl mb-[48px] relative">
               <button
                 onClick={() => switchMode("login")}
@@ -434,8 +722,26 @@ export default function AuthView({ initialMode }: AuthViewProps) {
           {/* Form Content */}
           <div className="relative">
             <AnimatePresence mode="wait">
-              {/* ── Success Step ── */}
-              {isSuccess ? (
+              {/* ── Reset Success Step ── */}
+              {isResetSuccess ? (
+                <SuccessStep
+                  key="reset-success"
+                  onGoToLogin={() => {
+                    setIsResetSuccess(false);
+                    setResetEmail(null);
+                    switchMode("login");
+                  }}
+                />
+              ) : resetEmail ? (
+                /* ── Reset Password Step ── */
+                <ResetPasswordStep
+                  key="reset"
+                  email={resetEmail}
+                  onReset={handleResetPassword}
+                  onBack={() => { setResetEmail(null); setError(""); }}
+                />
+              ) : /* ── Success Step ── */
+              isSuccess ? (
                 <SuccessStep
                   key="success"
                   onGoToLogin={() => {
@@ -451,6 +757,13 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   email={otpEmail}
                   onVerify={handleVerifyOtp}
                   onBack={() => { setOtpEmail(null); setError(""); }}
+                />
+              ) : mode === "forgot-password" ? (
+                /* ── Forgot Password Form ── */
+                <ForgotPasswordStep
+                  key="forgot"
+                  onSendOtp={handleForgotPassword}
+                  onBack={() => switchMode("login")}
                 />
               ) : mode === "login" ? (
                 /* ── Login Form ── */
@@ -491,9 +804,13 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                         <label className="block font-semibold text-[14px] text-[#121c2a]" htmlFor="password-login">
                           Mật khẩu
                         </label>
-                        <a className="text-[14px] text-[#0058be] hover:text-[#2170e4] transition-colors cursor-pointer" href="#">
+                        <button 
+                          type="button" 
+                          onClick={() => switchMode("forgot-password")}
+                          className="text-[14px] text-[#0058be] hover:text-[#2170e4] transition-colors cursor-pointer"
+                        >
                           Quên mật khẩu?
-                        </a>
+                        </button>
                       </div>
                       <input
                         className="w-full h-[48px] px-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
