@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/features/auth/auth-context"
 
 /* ─── Toggle Component ─── */
 function Toggle({ defaultChecked = false }: { defaultChecked?: boolean }) {
@@ -76,6 +77,7 @@ const TABS = [
 ]
 
 export default function UserSettingsPage() {
+  const { user } = useAuth()
   const [tab, setTab] = React.useState("profile")
   const [saved, setSaved] = React.useState(false)
 
@@ -83,6 +85,13 @@ export default function UserSettingsPage() {
     setSaved(true)
     setTimeout(() => setSaved(false), 2800)
   }
+
+  if (!user) return null
+
+  // Split name for First Name and Last Name inputs
+  const nameParts = user.name.split(" ")
+  const firstName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : user.name
+  const lastName = nameParts.length > 1 ? nameParts.slice(0, -1).join(" ") : ""
 
   return (
     <div className="min-h-screen bg-[#f5f7fc] p-4 md:p-8 pb-24">
@@ -115,17 +124,23 @@ export default function UserSettingsPage() {
         <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-5 flex items-center gap-5 mb-6">
           <div className="relative shrink-0">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0058be] to-[#4d8ef0] flex items-center justify-center font-extrabold text-white text-xl shadow-lg">
-              JD
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                user.initials
+              )}
             </div>
             <button className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-[#0058be] text-white rounded-lg flex items-center justify-center shadow-md hover:bg-[#004fa8] transition-colors">
               <Camera size={12} />
             </button>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-bold text-[#1a2333]">TS. Jane Doe</p>
-            <p className="text-[12.5px] text-[#8b90a0] mt-0.5 truncate">jane.doe@university.edu</p>
+            <p className="text-[15px] font-bold text-[#1a2333]">{user.name}</p>
+            <p className="text-[12.5px] text-[#8b90a0] mt-0.5 truncate">{user.email}</p>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-2.5 py-0.5 rounded-full">Nghiên cứu sinh</span>
+              <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                {user.role}
+              </span>
               <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                 Hoạt động
@@ -171,7 +186,7 @@ export default function UserSettingsPage() {
                     <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Họ</label>
                     <input
                       type="text"
-                      defaultValue="Jane"
+                      defaultValue={lastName}
                       className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all"
                     />
                   </div>
@@ -179,7 +194,7 @@ export default function UserSettingsPage() {
                     <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Tên</label>
                     <input
                       type="text"
-                      defaultValue="Doe"
+                      defaultValue={firstName}
                       className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all"
                     />
                   </div>
@@ -190,7 +205,7 @@ export default function UserSettingsPage() {
                   <div className="relative">
                     <input
                       type="email"
-                      defaultValue="jane.doe@university.edu"
+                      defaultValue={user.email}
                       disabled
                       className="w-full px-3.5 py-2.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#9ca3af] cursor-not-allowed pr-28"
                     />
