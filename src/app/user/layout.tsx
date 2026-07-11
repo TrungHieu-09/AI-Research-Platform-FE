@@ -1,8 +1,33 @@
+"use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { LandingHeader } from "@/components/layouts/landing-header"
+import { useAuth } from "@/features/auth/auth-context"
 import Link from "next/link"
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/login")
+    }
+  }, [user, isLoading, router])
+
+  // Show spinner while rehydrating auth state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8f9ff] flex items-center justify-center">
+        <span className="material-symbols-outlined text-[40px] text-[#0058be] animate-spin">progress_activity</span>
+      </div>
+    )
+  }
+
+  // Don't render user pages for unauthenticated users
+  if (!user) return null
+
   return (
     <div className="min-h-screen bg-[#f8f9ff] flex flex-col">
       {/* Shared landing-style top header */}

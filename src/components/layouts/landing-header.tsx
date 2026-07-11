@@ -2,33 +2,13 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown, Bell
+  Wallet, Settings, LogOut, Search, ChevronDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-/* ─── Auth helpers (localStorage mock) ─────── */
-export interface AuthUser {
-  name: string
-  email: string
-  initials: string
-  role?: string
-}
-
-export function setAuthUser(user: AuthUser) {
-  localStorage.setItem("lumis_auth", JSON.stringify(user))
-}
-
-export function clearAuthUser() {
-  localStorage.removeItem("lumis_auth")
-}
-
-function getAuthUser(): AuthUser | null {
-  if (typeof window === "undefined") return null
-  try { return JSON.parse(localStorage.getItem("lumis_auth") ?? "null") } catch { return null }
-}
+import { useAuth } from "@/features/auth/auth-context"
 
 /* ─── Nav items when logged in ──────────────── */
 const appNavLinks = [
@@ -49,38 +29,24 @@ const appNavLinks = [
 /* ─── Component ─────────────────────────────── */
 export function LandingHeader() {
   const pathname = usePathname()
-  const router = useRouter()
+  const { user, logout } = useAuth()
 
-  const [user, setUser] = React.useState<AuthUser | null>(null)
   const [profileOpen, setProfileOpen] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
 
   const profileRef = React.useRef<HTMLDivElement>(null)
 
-  /* Read auth on mount */
-  React.useEffect(() => {
-    setUser(getAuthUser())
-  }, [])
-
-  /* Scroll handler for show/hide scroll shadow */
+  /* Scroll handler */
   React.useEffect(() => {
     const onScroll = () => {
-      const currentY = window.scrollY
-      
-      // Update background shadow
-      setScrolled(currentY > 8)
-
-      // Close profile dropdown when scrolling to avoid floating menu
-      if (profileOpen) {
-        setProfileOpen(false)
-      }
+      setScrolled(window.scrollY > 8)
+      if (profileOpen) setProfileOpen(false)
     }
-
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [profileOpen])
 
-  /* Close profile dropdown on outside click */
+  /* Close dropdown on outside click */
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node))
@@ -91,10 +57,8 @@ export function LandingHeader() {
   }, [])
 
   const handleLogout = () => {
-    clearAuthUser()
-    setUser(null)
     setProfileOpen(false)
-    router.push("/")
+    logout()
   }
 
   const isOnUserPage = pathname.startsWith("/user")

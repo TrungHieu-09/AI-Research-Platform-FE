@@ -1,20 +1,122 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { AuthMode } from "../types";
-import { setAuthUser } from "@/components/layouts/landing-header";
+import { useAuth } from "../auth-context";
 
 interface AuthViewProps {
   initialMode: AuthMode;
 }
 
+// ─── OTP Step ────────────────────────────────────────────────────────────────
+function OtpStep({
+  email,
+  onVerify,
+  onBack,
+}: {
+  email: string;
+  onVerify: (code: string) => Promise<void>;
+  onBack: () => void;
+}) {
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await onVerify(code);
+    } catch (err: any) {
+      setError(err.message ?? "Mã OTP không hợp lệ.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key="otp-form"
+      initial={{ x: 20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -20, opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="mb-[48px] text-center md:text-left">
+        <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[4px]">
+          Xác thực email
+        </h2>
+        <p className="text-[16px] text-[#424754]">
+          Nhập mã 6 chữ số đã gửi tới{" "}
+          <span className="font-semibold text-[#0058be]">{email}</span>
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-[24px]">
+        <div>
+          <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]">
+            Mã OTP
+          </label>
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="w-full h-[56px] px-[16px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[28px] font-bold tracking-[0.4em] text-center shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#c2c6d6] placeholder:tracking-normal"
+            placeholder="······"
+            inputMode="numeric"
+            maxLength={6}
+            required
+          />
+          {error && (
+            <p className="mt-2 text-[13px] text-red-500 flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">error</span>
+              {error}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading || code.length < 6}
+          className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+          ) : (
+            <>
+              Xác thực tài khoản
+              <span className="material-symbols-outlined text-[18px]">verified</span>
+            </>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-full text-[14px] text-[#424754] hover:text-[#0058be] transition-colors flex items-center justify-center gap-1"
+        >
+          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+          Quay lại đăng ký
+        </button>
+      </form>
+    </motion.div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function AuthView({ initialMode }: AuthViewProps) {
-  const router = useRouter();
   const pathname = usePathname();
+  const { login, register, verifyOtp } = useAuth();
+
   const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // OTP flow state
+  const [otpEmail, setOtpEmail] = useState<string | null>(null);
 
   // Sync mode with URL if user navigates via browser history
   useEffect(() => {
@@ -24,44 +126,61 @@ export default function AuthView({ initialMode }: AuthViewProps) {
 
   const switchMode = (newMode: AuthMode) => {
     setMode(newMode);
-    // Update URL without full page reload
+    setError("");
     const newPath = newMode === "login" ? "/login" : "/signup";
     window.history.pushState(null, "", newPath);
   };
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    
-    // Mock: save user to localStorage then redirect based on role
-    if (email && email.toLowerCase().includes("admin")) {
-      setAuthUser({ name: "System Admin", email: email, initials: "SA", role: "admin" });
-      router.push("/admin/dashboard");
-    } else {
-      setAuthUser({ name: "Dr. Jane Doe", email: email || "jane.doe@university.edu", initials: "JD", role: "user" });
-      router.push("/");
+    const password = formData.get("password") as string;
+    try {
+      await login(email, password);
+    } catch (err: any) {
+      setError(err.message ?? "Đăng nhập thất bại.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Mock: save user to localStorage then go back to landing
-    setAuthUser({ name: "Dr. Jane Doe", email: "jane.doe@university.edu", initials: "JD" });
-    router.push("/");
+    setError("");
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    try {
+      await register(name, email, password);
+      setOtpEmail(email);
+    } catch (err: any) {
+      setError(err.message ?? "Đăng ký thất bại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (code: string) => {
+    if (!otpEmail) return;
+    await verifyOtp(otpEmail, code);
   };
 
   return (
     <div className="flex w-full min-h-screen bg-surface-container-lowest font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
-      {/* Left Pane - Branding & Illustration (Animated) */}
+      {/* Left Pane - Branding & Illustration */}
       <motion.div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center"
         initial={false}
         animate={{
           background:
             mode === "login"
-              ? "linear-gradient(to bottom right, #003ea8, #0058be, #0051d5)" // Dark theme
-              : "linear-gradient(to bottom right, #e8f0fe, #d2e3fc, #aecbfa)", // Light theme
+              ? "linear-gradient(to bottom right, #003ea8, #0058be, #0051d5)"
+              : "linear-gradient(to bottom right, #e8f0fe, #d2e3fc, #aecbfa)",
         }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
       >
@@ -106,9 +225,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
               className="flex flex-col items-center w-full"
             >
               {mode === "login" ? (
-                <div
-                  className="w-[120px] h-[120px] sm:w-[140px] sm:h-[140px] rounded-[32px] flex items-center justify-center mb-[32px] shadow-2xl transition-colors duration-500 bg-white/10 backdrop-blur-xl border border-white/20"
-                >
+                <div className="w-[120px] h-[120px] sm:w-[140px] sm:h-[140px] rounded-[32px] flex items-center justify-center mb-[32px] shadow-2xl bg-white/10 backdrop-blur-xl border border-white/20">
                   <span
                     className="material-symbols-outlined text-white"
                     style={{ fontVariationSettings: "'FILL' 1", fontSize: "80px" }}
@@ -118,7 +235,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                 </div>
               ) : (
                 <div className="relative h-[120px] sm:h-[140px] w-full max-w-[280px] mb-[32px]">
-                  <div className="absolute inset-0 rounded-[32px] bg-white/40 backdrop-blur-md border border-white/60 transform rotate-[-2deg] scale-95 transition-transform duration-700 hover:rotate-0 hover:scale-100 shadow-[0_10px_40px_rgba(31,41,55,0.05)]"></div>
+                  <div className="absolute inset-0 rounded-[32px] bg-white/40 backdrop-blur-md border border-white/60 transform rotate-[-2deg] scale-95 shadow-[0_10px_40px_rgba(31,41,55,0.05)]"></div>
                   <div className="absolute inset-0 rounded-[32px] bg-white/60 backdrop-blur-lg border border-white/80 transform rotate-1 shadow-[0_10px_40px_rgba(31,41,55,0.05)] flex items-center justify-center">
                     <div className="w-16 h-16 rounded-full bg-[#2170e4]/20 flex items-center justify-center text-[#0058be] animate-pulse">
                       <span className="material-symbols-outlined text-[32px]">auto_awesome</span>
@@ -147,7 +264,7 @@ export default function AuthView({ initialMode }: AuthViewProps) {
               >
                 {mode === "login"
                   ? "Nâng tầm quy trình nghiên cứu của bạn với thông tin chi tiết theo ngữ cảnh và tổng hợp tài liệu bằng AI."
-                  : "Trải nghiệm không gian làm việc tối giản, hiện đại dành riêng cho cộng đồng học thuật và nghiên cứu AI. Nâng cao sự tập trung với các công cụ được thiết kế để quản lý tài liệu và tổng hợp kiến thức một cách chặt chẽ."}
+                  : "Trải nghiệm không gian làm việc tối giản, hiện đại dành riêng cho cộng đồng học thuật và nghiên cứu AI."}
               </p>
             </motion.div>
           </AnimatePresence>
@@ -157,41 +274,51 @@ export default function AuthView({ initialMode }: AuthViewProps) {
       {/* Right Pane - Forms */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-[16px] md:p-[64px] bg-surface-container-lowest relative overflow-hidden">
         <div className="w-full max-w-[420px] relative z-10">
-          {/* Top Switcher */}
-          <div className="flex items-center justify-center p-1 bg-[#dee9fc] dark:bg-surface-container-high rounded-xl mb-[48px] relative">
-            <button
-              onClick={() => switchMode("login")}
-              className={`flex-1 py-2 font-semibold text-[14px] text-center transition-all z-10 rounded-lg ${
-                mode === "login"
-                  ? "text-[#121c2a] dark:text-on-surface"
-                  : "text-[#424754] dark:text-on-surface-variant hover:text-[#121c2a]"
-              }`}
-            >
-              Đăng nhập
-            </button>
-            <button
-              onClick={() => switchMode("register")}
-              className={`flex-1 py-2 font-semibold text-[14px] text-center transition-all z-10 rounded-lg ${
-                mode === "register"
-                  ? "text-[#121c2a] dark:text-on-surface"
-                  : "text-[#424754] dark:text-on-surface-variant hover:text-[#121c2a]"
-              }`}
-            >
-              Đăng ký
-            </button>
-            {/* Sliding Pill Indicator */}
-            <motion.div
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-surface shadow-sm rounded-lg"
-              initial={false}
-              animate={{ left: mode === "login" ? "4px" : "calc(50%)" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            />
-          </div>
+          {/* Mode Switcher — hidden during OTP step */}
+          {!otpEmail && (
+            <div className="flex items-center justify-center p-1 bg-[#dee9fc] rounded-xl mb-[48px] relative">
+              <button
+                onClick={() => switchMode("login")}
+                className={`flex-1 py-2 font-semibold text-[14px] text-center transition-all z-10 rounded-lg ${
+                  mode === "login"
+                    ? "text-[#121c2a]"
+                    : "text-[#424754] hover:text-[#121c2a]"
+                }`}
+              >
+                Đăng nhập
+              </button>
+              <button
+                onClick={() => switchMode("register")}
+                className={`flex-1 py-2 font-semibold text-[14px] text-center transition-all z-10 rounded-lg ${
+                  mode === "register"
+                    ? "text-[#121c2a]"
+                    : "text-[#424754] hover:text-[#121c2a]"
+                }`}
+              >
+                Đăng ký
+              </button>
+              <motion.div
+                className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white shadow-sm rounded-lg"
+                initial={false}
+                animate={{ left: mode === "login" ? "4px" : "calc(50%)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            </div>
+          )}
 
           {/* Form Content */}
           <div className="relative">
             <AnimatePresence mode="wait">
-              {mode === "login" ? (
+              {/* ── OTP Step ── */}
+              {otpEmail ? (
+                <OtpStep
+                  key="otp"
+                  email={otpEmail}
+                  onVerify={handleVerifyOtp}
+                  onBack={() => { setOtpEmail(null); setError(""); }}
+                />
+              ) : mode === "login" ? (
+                /* ── Login Form ── */
                 <motion.div
                   key="login-form"
                   initial={{ x: -20, opacity: 0 }}
@@ -199,110 +326,76 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   exit={{ x: 20, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {/* Heading */}
                   <div className="mb-[48px] text-center md:text-left">
-                    <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] dark:text-on-surface mb-[4px]">
+                    <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[4px]">
                       Chào mừng trở lại
                     </h2>
-                    <p className="text-[16px] text-[#424754] dark:text-on-surface-variant">
+                    <p className="text-[16px] text-[#424754]">
                       Truy cập không gian làm việc thông minh của bạn.
                     </p>
                   </div>
 
-                  {/* OAuth Buttons */}
-                  <div className="flex flex-col gap-[12px] mb-[24px]">
-                    <button className="w-full h-[48px] flex items-center justify-center gap-[12px] bg-white border border-[#c2c6d6] hover:bg-[#eff4ff] hover:border-[#727785] text-[#121c2a] font-semibold text-[14px] rounded-xl transition-all shadow-[0px_2px_4px_rgba(31,41,55,0.02)]">
-                      <img
-                        alt="Google Logo"
-                        className="w-5 h-5"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPeIEbAZsWW4q5svAcXAyDsyZ5pyeFAKa-zGIFarjXQ5smpYkm6YHYz59IfrsE5-SDTkN1D8OuFF7EGH5d4fF9OwO68NCPa9g2wp5dYmLWqa7lHyp0fNI_Zo1MFOcU8mlFxX1HSleSvF-xWk5k-ne3HMKt60phBjNY8F7zO6Z96nNlRClTTEqw60oHb6fMzW2mdcQqRi1EV3yNJlXiPUM9-8mw8Mpvgj02NDLO5sLOxtxMBEUcOjHTrJJrjqhokRm3zh3ZLbY-MYR0"
-                      />
-                      Tiếp tục với Google
-                    </button>
-                    <button className="w-full h-[48px] flex items-center justify-center gap-[12px] bg-white border border-[#c2c6d6] hover:bg-[#eff4ff] hover:border-[#727785] text-[#121c2a] font-semibold text-[14px] rounded-xl transition-all shadow-[0px_2px_4px_rgba(31,41,55,0.02)]">
-                      <svg
-                        className="w-5 h-5 text-[#181717] fill-current"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
-                      </svg>
-                      Tiếp tục với GitHub
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-[12px] mb-[24px]">
-                    <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
-                    <span className="font-semibold text-[12px] text-[#424754] uppercase tracking-wider">
-                      Hoặc tiếp tục bằng email
-                    </span>
-                    <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
-                  </div>
-
                   <form className="space-y-[24px]" onSubmit={handleLogin}>
                     <div>
-                      <label
-                        className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
-                        htmlFor="email-login"
-                      >
-                        Email Tổ chức
+                      <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="email-login">
+                        Email
                       </label>
                       <input
-                        className="w-full h-[48px] px-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785] dark:placeholder:text-outline"
+                        className="w-full h-[48px] px-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                         id="email-login"
                         name="email"
                         placeholder="researcher@university.edu"
                         type="email"
                         required
+                        autoComplete="email"
                       />
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-[4px]">
-                        <label
-                          className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface"
-                          htmlFor="password-login"
-                        >
+                        <label className="block font-semibold text-[14px] text-[#121c2a]" htmlFor="password-login">
                           Mật khẩu
                         </label>
-                        <a
-                          className="text-[14px] text-[#0058be] dark:text-primary hover:text-[#2170e4] dark:hover:text-primary-container transition-colors cursor-pointer"
-                          href="#"
-                        >
+                        <a className="text-[14px] text-[#0058be] hover:text-[#2170e4] transition-colors cursor-pointer" href="#">
                           Quên mật khẩu?
                         </a>
                       </div>
-                      <div className="relative">
-                        <input
-                          className="w-full h-[48px] px-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
-                          id="password-login"
-                          placeholder="••••••••"
-                          type="password"
-                          required
-                        />
-                        <button
-                          className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[#424754] hover:text-[#121c2a] p-1"
-                          type="button"
-                        >
-                          <span className="material-symbols-outlined text-[20px]">
-                            visibility_off
-                          </span>
-                        </button>
-                      </div>
+                      <input
+                        className="w-full h-[48px] px-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
+                        id="password-login"
+                        name="password"
+                        placeholder="••••••••"
+                        type="password"
+                        required
+                        autoComplete="current-password"
+                      />
                     </div>
 
+                    {error && (
+                      <div className="flex items-center gap-2 text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
+                        <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+                        {error}
+                      </div>
+                    )}
+
                     <button
-                      className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[48px]"
+                      className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
                       type="submit"
+                      disabled={loading}
                     >
-                      Đăng nhập vào Workspace
-                      <span className="material-symbols-outlined text-[18px]">
-                        arrow_forward
-                      </span>
+                      {loading ? (
+                        <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                      ) : (
+                        <>
+                          Đăng nhập vào Workspace
+                          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </>
+                      )}
                     </button>
                   </form>
                 </motion.div>
               ) : (
+                /* ── Register Form ── */
                 <motion.div
                   key="register-form"
                   initial={{ x: 20, opacity: 0 }}
@@ -310,82 +403,44 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                   exit={{ x: -20, opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {/* Heading */}
                   <div className="mb-[48px] text-center md:text-left">
-                    <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] dark:text-on-surface mb-[4px]">
+                    <h2 className="font-semibold text-[24px] md:text-[32px] text-[#121c2a] mb-[4px]">
                       Tạo tài khoản của bạn
                     </h2>
-                    <p className="text-[16px] text-[#424754] dark:text-on-surface-variant">
+                    <p className="text-[16px] text-[#424754]">
                       Gia nhập cùng hàng ngàn nhà nghiên cứu sử dụng AI để đẩy nhanh khám phá.
                     </p>
                   </div>
 
-                  {/* OAuth Buttons */}
-                  <div className="flex flex-col gap-[12px] mb-[24px]">
-                    <button className="w-full h-[48px] flex items-center justify-center gap-[12px] bg-white border border-[#c2c6d6] hover:bg-[#eff4ff] hover:border-[#727785] text-[#121c2a] font-semibold text-[14px] rounded-xl transition-all shadow-[0px_2px_4px_rgba(31,41,55,0.02)]">
-                      <img
-                        alt="Google Logo"
-                        className="w-5 h-5"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPeIEbAZsWW4q5svAcXAyDsyZ5pyeFAKa-zGIFarjXQ5smpYkm6YHYz59IfrsE5-SDTkN1D8OuFF7EGH5d4fF9OwO68NCPa9g2wp5dYmLWqa7lHyp0fNI_Zo1MFOcU8mlFxX1HSleSvF-xWk5k-ne3HMKt60phBjNY8F7zO6Z96nNlRClTTEqw60oHb6fMzW2mdcQqRi1EV3yNJlXiPUM9-8mw8Mpvgj02NDLO5sLOxtxMBEUcOjHTrJJrjqhokRm3zh3ZLbY-MYR0"
-                      />
-                      Đăng ký với Google
-                    </button>
-                    <button className="w-full h-[48px] flex items-center justify-center gap-[12px] bg-white border border-[#c2c6d6] hover:bg-[#eff4ff] hover:border-[#727785] text-[#121c2a] font-semibold text-[14px] rounded-xl transition-all shadow-[0px_2px_4px_rgba(31,41,55,0.02)]">
-                      <svg
-                        className="w-5 h-5 text-[#181717] fill-current"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"></path>
-                      </svg>
-                      Đăng ký với GitHub
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-[12px] mb-[24px]">
-                    <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
-                    <span className="font-semibold text-[12px] text-[#424754] uppercase tracking-wider">
-                      Hoặc tiếp tục bằng email
-                    </span>
-                    <div className="h-px bg-[#c2c6d6]/50 flex-1"></div>
-                  </div>
-
                   <form className="space-y-[16px]" onSubmit={handleSignup}>
                     <div>
-                      <label
-                        className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
-                        htmlFor="name"
-                      >
+                      <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="name">
                         Họ và tên
                       </label>
                       <div className="relative">
-                        <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">
-                          person
-                        </span>
+                        <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">person</span>
                         <input
-                          className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
+                          className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="name"
-                          placeholder="Dr. Jane Doe"
+                          name="name"
+                          placeholder="Nguyễn Văn A"
                           type="text"
                           required
+                          minLength={2}
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label
-                        className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
-                        htmlFor="email-signup"
-                      >
-                        Email Tổ chức
+                      <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="email-signup">
+                        Email
                       </label>
                       <div className="relative">
-                        <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">
-                          mail
-                        </span>
+                        <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">mail</span>
                         <input
-                          className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] dark:focus:border-primary focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
+                          className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="email-signup"
+                          name="email"
                           placeholder="jane.doe@university.edu"
                           type="email"
                           required
@@ -394,34 +449,46 @@ export default function AuthView({ initialMode }: AuthViewProps) {
                     </div>
 
                     <div>
-                      <label
-                        className="block font-semibold text-[14px] text-[#121c2a] dark:text-on-surface mb-[4px]"
-                        htmlFor="password-signup"
-                      >
+                      <label className="block font-semibold text-[14px] text-[#121c2a] mb-[4px]" htmlFor="password-signup">
                         Mật khẩu
                       </label>
                       <div className="relative">
-                        <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">
-                          lock
-                        </span>
+                        <span className="absolute left-[12px] top-1/2 -translate-y-1/2 material-symbols-outlined text-[#727785] text-[20px]">lock</span>
                         <input
-                          className="w-full h-[48px] pl-[40px] pr-[40px] bg-[#f8f9ff] dark:bg-surface border border-[#c2c6d6] dark:border-outline-variant rounded-xl text-[#121c2a] dark:text-on-surface text-[16px] shadow-[0px_4px_12px_rgba(31,41,55,0.03)] focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
+                          className="w-full h-[48px] pl-[40px] pr-[12px] bg-[#f8f9ff] border border-[#c2c6d6] rounded-xl text-[#121c2a] text-[16px] shadow-sm focus:outline-none focus:border-[#0058be] focus:ring-[3px] focus:ring-[#0058be]/10 transition-all placeholder:text-[#727785]"
                           id="password-signup"
-                          placeholder="••••••••"
+                          name="password"
+                          placeholder="Tối thiểu 8 ký tự, 1 hoa, 1 số"
                           type="password"
                           required
+                          minLength={8}
                         />
                       </div>
+                      <p className="text-[12px] text-[#727785] mt-1.5">
+                        Mật khẩu cần ít nhất 8 ký tự, có chữ hoa và chữ số.
+                      </p>
                     </div>
 
+                    {error && (
+                      <div className="flex items-center gap-2 text-[13px] text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
+                        <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+                        {error}
+                      </div>
+                    )}
+
                     <button
-                      className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-[0px_10px_40px_rgba(31,41,55,0.12)] transition-all flex items-center justify-center gap-[4px] mt-[32px] !mt-[32px]"
+                      className="w-full h-[48px] bg-gradient-to-r from-[#0058be] to-[#0051d5] text-white font-semibold text-[14px] rounded-xl hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-2 mt-[32px] disabled:opacity-60 disabled:cursor-not-allowed"
                       type="submit"
+                      disabled={loading}
                     >
-                      Tạo tài khoản
-                      <span className="material-symbols-outlined text-[18px]">
-                        arrow_forward
-                      </span>
+                      {loading ? (
+                        <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                      ) : (
+                        <>
+                          Tạo tài khoản
+                          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </>
+                      )}
                     </button>
                   </form>
                 </motion.div>
