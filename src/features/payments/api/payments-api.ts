@@ -7,7 +7,7 @@ import type {
 } from "../types"
 
 export interface CreateCheckoutRequest {
-  planId: string
+  planId: "PREMIUM_MONTHLY" | "PREMIUM_YEARLY"
   referenceCode?: string
 }
 

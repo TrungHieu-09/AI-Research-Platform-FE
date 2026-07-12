@@ -57,9 +57,12 @@ export default function PricingPage() {
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
               For academics and professionals needing deep analysis.
             </p>
-            <button className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#2170e4] transition-colors mb-8 shadow-md">
+            <Link
+              href="/user/payment/checkout?plan=ai"
+              className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#2170e4] transition-colors mb-8 shadow-md text-center block"
+            >
               Start 14-day Trial
-            </button>
+            </Link>
             <ul className="flex flex-col gap-4">
               {["Unlimited documents", "Advanced LLM synthesis", "Semantic vector search", "Unlimited collections", "Priority support"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
@@ -80,9 +83,12 @@ export default function PricingPage() {
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
               Built for collaborative research groups and labs.
             </p>
-            <button className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
-              Contact Sales
-            </button>
+            <Link
+              href="/user/payment/checkout?plan=ultimate"
+              className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm text-center block"
+            >
+              Upgrade Team Plan
+            </Link>
             <ul className="flex flex-col gap-4">
               {["Everything in Pro", "Shared workspaces", "Co-authoring & annotations", "Admin dashboard", "SSO integration"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">

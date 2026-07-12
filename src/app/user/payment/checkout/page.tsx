@@ -10,19 +10,27 @@ const PLANS = {
   storage: {
     name: "Storage Pro",
     price: "125.000",
+    checkoutPlanId: "PREMIUM_MONTHLY",
     features: ["100 GB Cloud Storage", "500 AI Queries / month", "Priority Support"]
   },
   ai: {
     name: "AI Pro",
     price: "250.000",
+    checkoutPlanId: "PREMIUM_MONTHLY",
     features: ["Unlimited AI Queries", "Advanced Models (GPT-4)", "5 GB Cloud Storage"]
   },
   ultimate: {
     name: "Ultimate",
     price: "300.000",
+    checkoutPlanId: "PREMIUM_YEARLY",
     features: ["Unlimited AI Queries & Models", "100 GB Cloud Storage", "24/7 Dedicated Support"]
   }
-}
+} satisfies Record<string, {
+  name: string
+  price: string
+  checkoutPlanId: "PREMIUM_MONTHLY" | "PREMIUM_YEARLY"
+  features: string[]
+}>
 
 function CheckoutContent() {
   const searchParams = useSearchParams()
@@ -56,8 +64,8 @@ function CheckoutContent() {
       setIsCreating(true)
       setErrorMessage("")
       const createdReceipt = await createPaymentCheckout({
-        planId,
-        referenceCode: `LUMIS-${planId.toUpperCase()}-${Date.now()}`,
+        planId: plan.checkoutPlanId,
+        referenceCode: `LUMIS-${plan.checkoutPlanId}-${Date.now()}`,
       })
       setReceipt(createdReceipt)
     } catch (error) {

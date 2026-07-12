@@ -5,10 +5,15 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown
+  Wallet, Settings, LogOut, Search, ChevronDown, Bell
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { clearAuthSession, getAuthUser as getApiAuthUser } from "@/lib/api/client"
+import {
+  getNotificationItems,
+  getNotifications,
+} from "@/features/notifications/api/notifications-api"
+import type { NotificationRecord } from "@/features/notifications/types"
 
 /* ─── Auth helpers (localStorage mock) ─────── */
 export interface AuthUser {
@@ -73,9 +78,34 @@ export function LandingHeader() {
 
   const [user, setUser] = React.useState<AuthUser | null>(null)
   const [profileOpen, setProfileOpen] = React.useState(false)
+  const [notificationsOpen, setNotificationsOpen] = React.useState(false)
+  const [notifications, setNotifications] = React.useState<NotificationRecord[]>([])
+  const [isLoadingNotifications, setIsLoadingNotifications] = React.useState(false)
+  const [notificationError, setNotificationError] = React.useState("")
   const [scrolled, setScrolled] = React.useState(false)
 
   const profileRef = React.useRef<HTMLDivElement>(null)
+  const notificationsRef = React.useRef<HTMLDivElement>(null)
+
+  const unreadCount = React.useMemo(
+    () => notifications.filter((notification) => !notification.isRead).length,
+    [notifications],
+  )
+
+  const loadNotifications = React.useCallback(async () => {
+    if (!user) return
+
+    try {
+      setIsLoadingNotifications(true)
+      setNotificationError("")
+      const response = await getNotifications({ page: 1, limit: 10 })
+      setNotifications(getNotificationItems(response))
+    } catch (error) {
+      setNotificationError(error instanceof Error ? error.message : "Không thể tải thông báo.")
+    } finally {
+      setIsLoadingNotifications(false)
+    }
+  }, [user])
 
   /* Read auth on mount */
   React.useEffect(() => {
@@ -85,6 +115,15 @@ export function LandingHeader() {
 
     return () => window.clearTimeout(timeoutId)
   }, [])
+
+  React.useEffect(() => {
+    if (!user) {
+      setNotifications([])
+      return
+    }
+
+    void loadNotifications()
+  }, [loadNotifications, user])
 
   /* Scroll handler for show/hide scroll shadow */
   React.useEffect(() => {
@@ -98,17 +137,22 @@ export function LandingHeader() {
       if (profileOpen) {
         setProfileOpen(false)
       }
+      if (notificationsOpen) {
+        setNotificationsOpen(false)
+      }
     }
 
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [profileOpen])
+  }, [notificationsOpen, profileOpen])
 
   /* Close profile dropdown on outside click */
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node))
         setProfileOpen(false)
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node))
+        setNotificationsOpen(false)
     }
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
@@ -119,6 +163,8 @@ export function LandingHeader() {
     clearAuthUser()
     setUser(null)
     setProfileOpen(false)
+    setNotificationsOpen(false)
+    setNotifications([])
     router.push("/")
   }
 
@@ -209,6 +255,90 @@ export function LandingHeader() {
         {user ? (
           /* ── Authenticated: name + avatar + dropdown ── */
           <>
+            <div className="relative" ref={notificationsRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setNotificationsOpen((open) => !open)
+                  if (!notificationsOpen) void loadNotifications()
+                }}
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#424754] transition-all hover:bg-[#eff4ff] hover:text-[#0058be]"
+                aria-label="Open notifications"
+              >
+                <Bell size={17} />
+                {unreadCount > 0 ? (
+                  <span className="absolute -right-0.5 -top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                ) : null}
+              </button>
+
+              {notificationsOpen ? (
+                <div className="absolute right-0 top-[calc(100%+8px)] w-80 overflow-hidden rounded-2xl border border-[#c2c6d6]/40 bg-white shadow-xl shadow-black/8">
+                  <div className="flex items-center justify-between border-b border-[#c2c6d6]/30 bg-[#f8f9ff] px-4 py-3">
+                    <div>
+                      <p className="text-[13px] font-bold text-[#121c2a]">Thông báo</p>
+                      <p className="text-[11px] text-[#727785]">
+                        {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Không có thông báo mới"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void loadNotifications()}
+                      className="rounded-lg px-2 py-1 text-[11px] font-bold text-[#0058be] hover:bg-[#eff4ff]"
+                    >
+                      Làm mới
+                    </button>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto py-1">
+                    {isLoadingNotifications ? (
+                      <p className="px-4 py-5 text-center text-[13px] text-[#727785]">
+                        Đang tải thông báo...
+                      </p>
+                    ) : notificationError ? (
+                      <p className="px-4 py-5 text-center text-[13px] font-semibold text-red-600">
+                        {notificationError}
+                      </p>
+                    ) : notifications.length === 0 ? (
+                      <p className="px-4 py-5 text-center text-[13px] text-[#727785]">
+                        Chưa có thông báo.
+                      </p>
+                    ) : (
+                      notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={cn(
+                            "border-b border-[#f0f1f7] px-4 py-3 last:border-b-0",
+                            !notification.isRead && "bg-[#eff4ff]/55",
+                          )}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            {!notification.isRead ? (
+                              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#0058be]" />
+                            ) : (
+                              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-transparent" />
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-bold text-[#121c2a]">
+                                {notification.title}
+                              </p>
+                              <p className="mt-1 text-[12px] leading-relaxed text-[#424754]">
+                                {notification.content}
+                              </p>
+                              <p className="mt-1.5 text-[11px] text-[#8b90a0]">
+                                {new Date(notification.createdAt).toLocaleString("vi-VN")}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
             <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}

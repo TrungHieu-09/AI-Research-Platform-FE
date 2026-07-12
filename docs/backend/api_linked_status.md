@@ -59,6 +59,20 @@ Tài liệu này ghi lại trạng thái link API của FE hiện tại sau khi 
 | `POST /api/payments/webhook` | Không gọi từ FE | Không link, đúng vì endpoint dành cho service/system |
 | `GET /api/payments/receipts` | `/user/payment` | Đã link |
 
+## Notifications
+
+| API | FE đang dùng ở đâu | Trạng thái |
+| --- | --- | --- |
+| `GET /api/notifications` | Header user notification dropdown, `/user/settings` tab Thông báo | Đã link |
+
+## Dashboard, Collections, Tags
+
+| Phần | API | Trạng thái |
+| --- | --- | --- |
+| Admin Dashboard | Dùng lại `GET /api/users`, `GET /api/admin/documents`, `GET /api/subjects` | Đã link bằng API hiện có, chưa có endpoint dashboard riêng |
+| Collections | Chưa thấy endpoint collection trong docs/source | Chưa link |
+| Tags | Chưa thấy endpoint tag riêng; hiện dùng `subjects` như category chính | Chưa link tag riêng |
+
 ## Cấu hình gọi API
 
 - API client: `src/lib/api/client.ts`

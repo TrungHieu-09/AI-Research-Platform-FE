@@ -17,6 +17,11 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  getNotificationItems,
+  getNotifications,
+} from "@/features/notifications/api/notifications-api"
+import type { NotificationRecord } from "@/features/notifications/types"
 
 /* ─── Toggle Component ─── */
 function Toggle({ defaultChecked = false }: { defaultChecked?: boolean }) {
@@ -78,6 +83,28 @@ const TABS = [
 export default function UserSettingsPage() {
   const [tab, setTab] = React.useState("profile")
   const [saved, setSaved] = React.useState(false)
+  const [notifications, setNotifications] = React.useState<NotificationRecord[]>([])
+  const [isLoadingNotifications, setIsLoadingNotifications] = React.useState(false)
+  const [notificationError, setNotificationError] = React.useState("")
+
+  const loadNotifications = React.useCallback(async () => {
+    try {
+      setIsLoadingNotifications(true)
+      setNotificationError("")
+      const response = await getNotifications({ page: 1, limit: 20 })
+      setNotifications(getNotificationItems(response))
+    } catch (error) {
+      setNotificationError(error instanceof Error ? error.message : "Không thể tải thông báo.")
+    } finally {
+      setIsLoadingNotifications(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (tab !== "notifications") return
+
+    void loadNotifications()
+  }, [loadNotifications, tab])
 
   const handleSave = () => {
     setSaved(true)
@@ -274,6 +301,70 @@ export default function UserSettingsPage() {
         ══════════════════════════════════════ */}
         {tab === "notifications" && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-6">
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <SectionHeader
+                  title="Thông báo gần đây"
+                  subtitle="Thông báo hệ thống gửi riêng cho tài khoản của bạn"
+                />
+                <button
+                  type="button"
+                  onClick={() => void loadNotifications()}
+                  className="rounded-xl bg-[#eff4ff] px-3.5 py-2 text-[12px] font-bold text-[#0058be] hover:bg-[#dce9ff]"
+                >
+                  Làm mới
+                </button>
+              </div>
+
+              {isLoadingNotifications ? (
+                <p className="rounded-xl bg-[#f9fafb] px-4 py-5 text-center text-[13px] text-[#8b90a0]">
+                  Đang tải thông báo...
+                </p>
+              ) : notificationError ? (
+                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-5 text-center text-[13px] font-semibold text-red-600">
+                  {notificationError}
+                </p>
+              ) : notifications.length === 0 ? (
+                <p className="rounded-xl bg-[#f9fafb] px-4 py-5 text-center text-[13px] text-[#8b90a0]">
+                  Chưa có thông báo.
+                </p>
+              ) : (
+                <div className="divide-y divide-[#f3f4f6]">
+                  {notifications.map((notification) => (
+                    <div key={notification.id} className="flex items-start gap-3 py-4">
+                      <div
+                        className={cn(
+                          "mt-0.5 rounded-xl p-2",
+                          notification.isRead
+                            ? "bg-[#f3f4f6] text-[#8b90a0]"
+                            : "bg-[#eff4ff] text-[#0058be]",
+                        )}
+                      >
+                        <Bell size={15} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-[13.5px] font-bold text-[#1a2333]">
+                            {notification.title}
+                          </p>
+                          {!notification.isRead ? (
+                            <span className="shrink-0 rounded-full bg-[#0058be] px-2 py-0.5 text-[10px] font-bold text-white">
+                              Mới
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-1 text-[12.5px] leading-relaxed text-[#424754]">
+                          {notification.content}
+                        </p>
+                        <p className="mt-2 text-[11.5px] text-[#8b90a0]">
+                          {new Date(notification.createdAt).toLocaleString("vi-VN")}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-6">
               <SectionHeader title="Thông báo Email" subtitle="Nhận email về hoạt động tài khoản của bạn" />
