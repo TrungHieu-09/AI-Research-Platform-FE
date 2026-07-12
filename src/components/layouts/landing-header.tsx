@@ -2,69 +2,24 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown, Bell
+  Wallet, Settings, LogOut, Search, ChevronDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { clearAuthSession, getAuthUser as getApiAuthUser } from "@/lib/api/client"
-import {
-  getNotificationItems,
-  getNotifications,
-} from "@/features/notifications/api/notifications-api"
-import type { NotificationRecord } from "@/features/notifications/types"
-
-/* ─── Auth helpers (localStorage mock) ─────── */
-export interface AuthUser {
-  name: string
-  email: string
-  initials: string
-  role?: string
-}
-
-export function setAuthUser(user: AuthUser) {
-  localStorage.setItem("lumis_auth", JSON.stringify(user))
-}
-
-export function clearAuthUser() {
-  localStorage.removeItem("lumis_auth")
-}
-
-function getAuthUser(): AuthUser | null {
-  if (typeof window === "undefined") return null
-  try {
-    const legacyUser = JSON.parse(localStorage.getItem("lumis_auth") ?? "null") as AuthUser | null
-    if (legacyUser) return legacyUser
-
-    const apiUser = getApiAuthUser()
-    if (!apiUser) return null
-
-    return {
-      name: apiUser.name,
-      email: apiUser.email,
-      initials: apiUser.name
-        .split(" ")
-        .filter(Boolean)
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase(),
-      role: apiUser.role === "ADMIN" ? "admin" : "user",
-    }
-  } catch { return null }
-}
+import { useAuth } from "@/features/auth/auth-context"
 
 /* ─── Nav items when logged in ──────────────── */
 const appNavLinks = [
   {
-    name: "Library",
+    name: "Thư viện",
     href: "/user/library",
     icon: BookOpen,
     activePrefix: "/user/library",
   },
   {
-    name: "AI Workspace",
+    name: "Không gian AI",
     href: "/user/ai-workspace",
     icon: Brain,
     activePrefix: "/user/ai-workspace",
@@ -74,99 +29,39 @@ const appNavLinks = [
 /* ─── Component ─────────────────────────────── */
 export function LandingHeader() {
   const pathname = usePathname()
-  const router = useRouter()
+  const { user, logout } = useAuth()
 
-  const [user, setUser] = React.useState<AuthUser | null>(null)
   const [profileOpen, setProfileOpen] = React.useState(false)
-  const [notificationsOpen, setNotificationsOpen] = React.useState(false)
-  const [notifications, setNotifications] = React.useState<NotificationRecord[]>([])
-  const [isLoadingNotifications, setIsLoadingNotifications] = React.useState(false)
-  const [notificationError, setNotificationError] = React.useState("")
   const [scrolled, setScrolled] = React.useState(false)
 
   const profileRef = React.useRef<HTMLDivElement>(null)
-  const notificationsRef = React.useRef<HTMLDivElement>(null)
 
-  const unreadCount = React.useMemo(
-    () => notifications.filter((notification) => !notification.isRead).length,
-    [notifications],
-  )
-
-  const loadNotifications = React.useCallback(async () => {
-    if (!user) return
-
-    try {
-      setIsLoadingNotifications(true)
-      setNotificationError("")
-      const response = await getNotifications({ page: 1, limit: 10 })
-      setNotifications(getNotificationItems(response))
-    } catch (error) {
-      setNotificationError(error instanceof Error ? error.message : "Không thể tải thông báo.")
-    } finally {
-      setIsLoadingNotifications(false)
-    }
-  }, [user])
-
-  /* Read auth on mount */
-  React.useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setUser(getAuthUser())
-    }, 0)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [])
-
-  React.useEffect(() => {
-    if (!user) {
-      setNotifications([])
-      return
-    }
-
-    void loadNotifications()
-  }, [loadNotifications, user])
-
-  /* Scroll handler for show/hide scroll shadow */
+  /* Scroll handler */
   React.useEffect(() => {
     const onScroll = () => {
-      const currentY = window.scrollY
-      
-      // Update background shadow
-      setScrolled(currentY > 8)
-
-      // Close profile dropdown when scrolling to avoid floating menu
-      if (profileOpen) {
-        setProfileOpen(false)
-      }
-      if (notificationsOpen) {
-        setNotificationsOpen(false)
-      }
+      setScrolled(window.scrollY > 8)
+      if (profileOpen) setProfileOpen(false)
     }
-
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [notificationsOpen, profileOpen])
+  }, [profileOpen])
 
-  /* Close profile dropdown on outside click */
+  /* Close dropdown on outside click */
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node))
         setProfileOpen(false)
-      if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node))
-        setNotificationsOpen(false)
     }
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
   const handleLogout = () => {
-    clearAuthSession()
-    clearAuthUser()
-    setUser(null)
     setProfileOpen(false)
-    setNotificationsOpen(false)
-    setNotifications([])
-    router.push("/")
+    logout()
   }
+
+  const isOnUserPage = pathname.startsWith("/user")
 
   return (
     <header
@@ -216,13 +111,13 @@ export function LandingHeader() {
               href="/#how-it-works"
               className="px-3 py-2 text-[14px] font-semibold text-[#727785] hover:text-[#424754] transition-colors rounded-xl hover:bg-[#f0f4ff]"
             >
-              How it works
+              Cách hoạt động
             </Link>
             <Link
               href="/pricing"
               className="px-3 py-2 text-[14px] font-semibold text-[#727785] hover:text-[#424754] transition-colors rounded-xl hover:bg-[#f0f4ff]"
             >
-              Pricing
+              Bảng giá
             </Link>
           </>
         ) : (
@@ -232,19 +127,19 @@ export function LandingHeader() {
               href="/#features"
               className="px-4 py-2 text-[14px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors rounded-xl hover:bg-[#eff4ff]"
             >
-              Features
+              Tính năng
             </Link>
             <Link
               href="/#how-it-works"
               className="px-4 py-2 text-[14px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors rounded-xl hover:bg-[#eff4ff]"
             >
-              How it works
+              Cách hoạt động
             </Link>
             <Link
               href="/pricing"
               className="px-4 py-2 text-[14px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors rounded-xl hover:bg-[#eff4ff]"
             >
-              Pricing
+              Bảng giá
             </Link>
           </>
         )}
@@ -255,90 +150,6 @@ export function LandingHeader() {
         {user ? (
           /* ── Authenticated: name + avatar + dropdown ── */
           <>
-            <div className="relative" ref={notificationsRef}>
-              <button
-                type="button"
-                onClick={() => {
-                  setNotificationsOpen((open) => !open)
-                  if (!notificationsOpen) void loadNotifications()
-                }}
-                className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#424754] transition-all hover:bg-[#eff4ff] hover:text-[#0058be]"
-                aria-label="Open notifications"
-              >
-                <Bell size={17} />
-                {unreadCount > 0 ? (
-                  <span className="absolute -right-0.5 -top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                ) : null}
-              </button>
-
-              {notificationsOpen ? (
-                <div className="absolute right-0 top-[calc(100%+8px)] w-80 overflow-hidden rounded-2xl border border-[#c2c6d6]/40 bg-white shadow-xl shadow-black/8">
-                  <div className="flex items-center justify-between border-b border-[#c2c6d6]/30 bg-[#f8f9ff] px-4 py-3">
-                    <div>
-                      <p className="text-[13px] font-bold text-[#121c2a]">Thông báo</p>
-                      <p className="text-[11px] text-[#727785]">
-                        {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Không có thông báo mới"}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => void loadNotifications()}
-                      className="rounded-lg px-2 py-1 text-[11px] font-bold text-[#0058be] hover:bg-[#eff4ff]"
-                    >
-                      Làm mới
-                    </button>
-                  </div>
-
-                  <div className="max-h-96 overflow-y-auto py-1">
-                    {isLoadingNotifications ? (
-                      <p className="px-4 py-5 text-center text-[13px] text-[#727785]">
-                        Đang tải thông báo...
-                      </p>
-                    ) : notificationError ? (
-                      <p className="px-4 py-5 text-center text-[13px] font-semibold text-red-600">
-                        {notificationError}
-                      </p>
-                    ) : notifications.length === 0 ? (
-                      <p className="px-4 py-5 text-center text-[13px] text-[#727785]">
-                        Chưa có thông báo.
-                      </p>
-                    ) : (
-                      notifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={cn(
-                            "border-b border-[#f0f1f7] px-4 py-3 last:border-b-0",
-                            !notification.isRead && "bg-[#eff4ff]/55",
-                          )}
-                        >
-                          <div className="flex items-start gap-2.5">
-                            {!notification.isRead ? (
-                              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#0058be]" />
-                            ) : (
-                              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-transparent" />
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-[13px] font-bold text-[#121c2a]">
-                                {notification.title}
-                              </p>
-                              <p className="mt-1 text-[12px] leading-relaxed text-[#424754]">
-                                {notification.content}
-                              </p>
-                              <p className="mt-1.5 text-[11px] text-[#8b90a0]">
-                                {new Date(notification.createdAt).toLocaleString("vi-VN")}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
             <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
@@ -378,7 +189,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <HardDrive size={14} className="shrink-0 text-[#727785]" />
-                    Storage
+                    Lưu trữ
                   </Link>
                   <Link
                     href="/user/payment"
@@ -386,7 +197,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <Wallet size={14} className="shrink-0 text-[#727785]" />
-                    Payment Management
+                    Quản lý thanh toán
                   </Link>
                   <Link
                     href="/user/settings"
@@ -394,7 +205,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <Settings size={14} className="shrink-0 text-[#727785]" />
-                    Settings
+                    Cài đặt
                   </Link>
                 </div>
 
@@ -404,7 +215,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={14} className="shrink-0" />
-                    Sign out
+                    Đăng xuất
                   </button>
                 </div>
               </div>
@@ -421,13 +232,13 @@ export function LandingHeader() {
               href="/login"
               className="text-[14px] font-semibold text-[#0058be] hover:text-[#2170e4] transition-colors"
             >
-              Log in
+              Đăng nhập
             </Link>
             <Link
               href="/signup"
               className="bg-[#0058be] hover:bg-[#2170e4] text-white text-[14px] font-semibold py-2 px-5 rounded-full shadow-sm transition-all duration-200 hover:shadow-md"
             >
-              Get Started
+              Bắt đầu
             </Link>
           </>
         )}

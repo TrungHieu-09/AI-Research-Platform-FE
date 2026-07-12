@@ -17,11 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  getNotificationItems,
-  getNotifications,
-} from "@/features/notifications/api/notifications-api"
-import type { NotificationRecord } from "@/features/notifications/types"
+import { useAuth } from "@/features/auth/auth-context"
 
 /* ─── Toggle Component ─── */
 function Toggle({ defaultChecked = false }: { defaultChecked?: boolean }) {
@@ -81,35 +77,42 @@ const TABS = [
 ]
 
 export default function UserSettingsPage() {
+  const { user, updateProfile } = useAuth()
   const [tab, setTab] = React.useState("profile")
   const [saved, setSaved] = React.useState(false)
-  const [notifications, setNotifications] = React.useState<NotificationRecord[]>([])
-  const [isLoadingNotifications, setIsLoadingNotifications] = React.useState(false)
-  const [notificationError, setNotificationError] = React.useState("")
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState("")
 
-  const loadNotifications = React.useCallback(async () => {
-    try {
-      setIsLoadingNotifications(true)
-      setNotificationError("")
-      const response = await getNotifications({ page: 1, limit: 20 })
-      setNotifications(getNotificationItems(response))
-    } catch (error) {
-      setNotificationError(error instanceof Error ? error.message : "Không thể tải thông báo.")
-    } finally {
-      setIsLoadingNotifications(false)
-    }
-  }, [])
+  // Local state for form fields
+  const [firstName, setFirstName] = React.useState("")
+  const [lastName, setLastName] = React.useState("")
 
+  // Initialize state from user object
   React.useEffect(() => {
-    if (tab !== "notifications") return
+    if (user) {
+      const nameParts = user.name.trim().split(" ")
+      setFirstName(nameParts.length > 1 ? nameParts[nameParts.length - 1] : user.name)
+      setLastName(nameParts.length > 1 ? nameParts.slice(0, -1).join(" ") : "")
+    }
+  }, [user])
 
-    void loadNotifications()
-  }, [loadNotifications, tab])
-
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2800)
+  const handleSave = async () => {
+    if (!user) return
+    setError("")
+    setLoading(true)
+    try {
+      const newName = `${lastName} ${firstName}`.trim()
+      await updateProfile({ name: newName })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2800)
+    } catch (err: any) {
+      setError(err.message ?? "Lỗi khi cập nhật hồ sơ")
+    } finally {
+      setLoading(false)
+    }
   }
+
+  if (!user) return null
 
   return (
     <div className="min-h-screen bg-[#f5f7fc] p-4 md:p-8 pb-24">
@@ -131,28 +134,41 @@ export default function UserSettingsPage() {
           </div>
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 bg-[#0058be] hover:bg-[#004fa8] text-white px-5 py-2.5 rounded-xl font-bold text-[13.5px] transition-all shadow-md shadow-[#0058be]/25 hover:-translate-y-px active:translate-y-0"
+            disabled={loading}
+            className="flex items-center gap-2 bg-[#0058be] hover:bg-[#004fa8] text-white px-5 py-2.5 rounded-xl font-bold text-[13.5px] transition-all shadow-md shadow-[#0058be]/25 hover:-translate-y-px active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Save size={15} />
-            Lưu thay đổi
+            {loading ? <span className="material-symbols-outlined text-[15px] animate-spin">progress_activity</span> : <Save size={15} />}
+            {loading ? "Đang lưu..." : "Lưu thay đổi"}
           </button>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3 text-red-600 text-[13.5px] font-medium">
+            <Info size={16} /> {error}
+          </div>
+        )}
 
         {/* ── Avatar Card ── */}
         <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-5 flex items-center gap-5 mb-6">
           <div className="relative shrink-0">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0058be] to-[#4d8ef0] flex items-center justify-center font-extrabold text-white text-xl shadow-lg">
-              JD
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                user.initials
+              )}
             </div>
             <button className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-[#0058be] text-white rounded-lg flex items-center justify-center shadow-md hover:bg-[#004fa8] transition-colors">
               <Camera size={12} />
             </button>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-bold text-[#1a2333]">Dr. Jane Doe</p>
-            <p className="text-[12.5px] text-[#8b90a0] mt-0.5 truncate">jane.doe@university.edu</p>
+            <p className="text-[15px] font-bold text-[#1a2333]">{user.name}</p>
+            <p className="text-[12.5px] text-[#8b90a0] mt-0.5 truncate">{user.email}</p>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-2.5 py-0.5 rounded-full">PhD Student</span>
+              <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                {user.role}
+              </span>
               <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                 Hoạt động
@@ -198,7 +214,8 @@ export default function UserSettingsPage() {
                     <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Họ</label>
                     <input
                       type="text"
-                      defaultValue="Jane"
+                      value={lastName}
+                      onChange={e => setLastName(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all"
                     />
                   </div>
@@ -206,7 +223,8 @@ export default function UserSettingsPage() {
                     <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Tên</label>
                     <input
                       type="text"
-                      defaultValue="Doe"
+                      value={firstName}
+                      onChange={e => setFirstName(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all"
                     />
                   </div>
@@ -217,7 +235,7 @@ export default function UserSettingsPage() {
                   <div className="relative">
                     <input
                       type="email"
-                      defaultValue="jane.doe@university.edu"
+                      defaultValue={user.email}
                       disabled
                       className="w-full px-3.5 py-2.5 bg-[#f3f4f6] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#9ca3af] cursor-not-allowed pr-28"
                     />
@@ -301,70 +319,6 @@ export default function UserSettingsPage() {
         ══════════════════════════════════════ */}
         {tab === "notifications" && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-6">
-              <div className="mb-5 flex items-start justify-between gap-4">
-                <SectionHeader
-                  title="Thông báo gần đây"
-                  subtitle="Thông báo hệ thống gửi riêng cho tài khoản của bạn"
-                />
-                <button
-                  type="button"
-                  onClick={() => void loadNotifications()}
-                  className="rounded-xl bg-[#eff4ff] px-3.5 py-2 text-[12px] font-bold text-[#0058be] hover:bg-[#dce9ff]"
-                >
-                  Làm mới
-                </button>
-              </div>
-
-              {isLoadingNotifications ? (
-                <p className="rounded-xl bg-[#f9fafb] px-4 py-5 text-center text-[13px] text-[#8b90a0]">
-                  Đang tải thông báo...
-                </p>
-              ) : notificationError ? (
-                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-5 text-center text-[13px] font-semibold text-red-600">
-                  {notificationError}
-                </p>
-              ) : notifications.length === 0 ? (
-                <p className="rounded-xl bg-[#f9fafb] px-4 py-5 text-center text-[13px] text-[#8b90a0]">
-                  Chưa có thông báo.
-                </p>
-              ) : (
-                <div className="divide-y divide-[#f3f4f6]">
-                  {notifications.map((notification) => (
-                    <div key={notification.id} className="flex items-start gap-3 py-4">
-                      <div
-                        className={cn(
-                          "mt-0.5 rounded-xl p-2",
-                          notification.isRead
-                            ? "bg-[#f3f4f6] text-[#8b90a0]"
-                            : "bg-[#eff4ff] text-[#0058be]",
-                        )}
-                      >
-                        <Bell size={15} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="text-[13.5px] font-bold text-[#1a2333]">
-                            {notification.title}
-                          </p>
-                          {!notification.isRead ? (
-                            <span className="shrink-0 rounded-full bg-[#0058be] px-2 py-0.5 text-[10px] font-bold text-white">
-                              Mới
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-1 text-[12.5px] leading-relaxed text-[#424754]">
-                          {notification.content}
-                        </p>
-                        <p className="mt-2 text-[11.5px] text-[#8b90a0]">
-                          {new Date(notification.createdAt).toLocaleString("vi-VN")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
             <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-6">
               <SectionHeader title="Thông báo Email" subtitle="Nhận email về hoạt động tài khoản của bạn" />

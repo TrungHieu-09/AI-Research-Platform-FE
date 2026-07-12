@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/features/auth/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,9 +19,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Lumis - Intelligence for your Research",
+  title: "Lumis - Trợ lý thông minh cho Nghiên cứu",
   description:
-    "Accelerate your discovery process with an AI-first workspace designed for deep academic and professional research.",
+    "Đẩy nhanh quá trình khám phá của bạn với không gian làm việc AI được thiết kế dành riêng cho nghiên cứu học thuật và chuyên sâu.",
 };
 
 export default function RootLayout({
@@ -30,8 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="vi"
       className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <link
@@ -43,7 +45,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

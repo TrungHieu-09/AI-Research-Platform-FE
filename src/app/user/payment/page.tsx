@@ -106,7 +106,7 @@ export default function PaymentManagementPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.05, duration: 0.45 }}
           >
-            Payment Management
+            Quản lý thanh toán
           </motion.h2>
           <motion.p
             className="font-normal text-[14px] text-[#424753] mt-1"
@@ -114,7 +114,7 @@ export default function PaymentManagementPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.4 }}
           >
-            Manage your AI capabilities, storage packages, and billing information.
+            Quản lý khả năng AI, gói lưu trữ và thông tin thanh toán của bạn.
           </motion.p>
         </div>
       </motion.div>
@@ -162,7 +162,7 @@ export default function PaymentManagementPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.35 }}
         >
-          Current Packages
+          Gói hiện tại
         </motion.h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* AI Package */}
@@ -182,17 +182,17 @@ export default function PaymentManagementPage() {
                 >
                   <span className="material-symbols-outlined text-[18px]">psychology</span>
                 </motion.div>
-                <span className="font-semibold text-[15px] tracking-wide uppercase">AI Package</span>
+                <span className="font-semibold text-[15px] tracking-wide uppercase">Gói AI</span>
               </div>
               <span className="px-2.5 py-1 bg-[#dfe9fc] text-[#004191] rounded-md font-medium text-[11px] uppercase tracking-wider">
-                Free Plan
+                Gói Miễn phí
               </span>
             </div>
             <div className="mb-3 flex justify-between items-end">
               <span className="font-medium text-[24px] leading-[1.3] text-[#004191]">
-                <AnimatedNumber value={105} /> <span className="font-normal text-[14px] text-[#424753]">Queries</span>
+                <AnimatedNumber value={105} /> <span className="font-normal text-[14px] text-[#424753]">Truy vấn</span>
               </span>
-              <span className="font-normal text-[14px] text-[#424753]">of 500 / month</span>
+              <span className="font-normal text-[14px] text-[#424753]">trên 500 / tháng</span>
             </div>
             <AnimatedBar pct={21} />
           </motion.div>
@@ -214,17 +214,17 @@ export default function PaymentManagementPage() {
                 >
                   <span className="material-symbols-outlined text-[18px]">cloud</span>
                 </motion.div>
-                <span className="font-semibold text-[15px] tracking-wide uppercase">Storage Package</span>
+                <span className="font-semibold text-[15px] tracking-wide uppercase">Gói lưu trữ</span>
               </div>
               <span className="px-2.5 py-1 bg-[#dfe9fc] text-[#004191] rounded-md font-medium text-[11px] uppercase tracking-wider">
-                Free Plan
+                Gói Miễn phí
               </span>
             </div>
             <div className="mb-3 flex justify-between items-end">
               <span className="font-medium text-[24px] leading-[1.3] text-[#004191]">
                 <AnimatedNumber value={2.1} decimals={1} /> <span className="font-normal text-[14px] text-[#424753]">GB</span>
               </span>
-              <span className="font-normal text-[14px] text-[#424753]">of 5 GB</span>
+              <span className="font-normal text-[14px] text-[#424753]">trên 5 GB</span>
             </div>
             <AnimatedBar pct={42} />
           </motion.div>
@@ -239,22 +239,22 @@ export default function PaymentManagementPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.38, duration: 0.35 }}
         >
-          Upgrade Your Workspace
+          Nâng cấp không gian làm việc
         </motion.h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
           {/* Plan 1: Basic */}
           <PlanCard delay={0.42}>
             <div className="mb-4">
-              <h4 className="font-semibold text-[18px] text-[#121c2a]">Basic</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">Essential tools for individual researchers.</p>
+              <h4 className="font-semibold text-[18px] text-[#121c2a]">Cơ bản</h4>
+              <p className="text-[13px] text-[#424753] mt-1 h-10">Công cụ cần thiết cho nhà nghiên cứu cá nhân.</p>
             </div>
             <div className="mb-6">
               <span className="font-bold text-[32px] text-[#121c2a]">0₫</span>
-              <span className="text-[14px] text-[#424753]">/month</span>
+              <span className="text-[14px] text-[#424753]">/tháng</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
-              {["500 AI Queries / month", "5 GB Cloud Storage", "Basic Support"].map(f => (
+              {["500 truy vấn AI / tháng", "Lưu trữ đám mây 5 GB", "Hỗ trợ cơ bản"].map(f => (
                 <div key={f} className="flex items-center gap-2 text-[13px] text-[#424753]">
                   <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
                   {f}
@@ -262,37 +262,37 @@ export default function PaymentManagementPage() {
               ))}
             </div>
             <button className="w-full bg-[#f1f5f9] text-[#424753] font-semibold text-[13px] py-2.5 rounded-lg border border-[#c2c6d6]/40 cursor-not-allowed">
-              Current Plan
+              Gói hiện tại
             </button>
           </PlanCard>
 
           {/* Plan 2: Storage Pro */}
           <PlanCard delay={0.5}>
             <div className="mb-4">
-              <h4 className="font-semibold text-[18px] text-[#121c2a]">Storage Pro</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">For heavy document and data management.</p>
+              <h4 className="font-semibold text-[18px] text-[#121c2a]">Lưu trữ Pro</h4>
+              <p className="text-[13px] text-[#424753] mt-1 h-10">Cho nhu cầu quản lý dữ liệu và tài liệu lớn.</p>
             </div>
             <div className="mb-6">
               <span className="font-bold text-[32px] text-[#121c2a]">125.000₫</span>
-              <span className="text-[14px] text-[#424753]">/month</span>
+              <span className="text-[14px] text-[#424753]">/tháng</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
               <div className="flex items-center gap-2 text-[13px] text-[#424753]">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                500 AI Queries / month
+                500 truy vấn AI / tháng
               </div>
               <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                100 GB Cloud Storage
+                Lưu trữ đám mây 100 GB
               </div>
               <div className="flex items-center gap-2 text-[13px] text-[#424753]">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                Priority Support
+                Hỗ trợ ưu tiên
               </div>
             </div>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Link href="/user/payment/checkout?plan=storage" className="w-full bg-white text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
-                Upgrade Storage
+                Nâng cấp lưu trữ
               </Link>
             </motion.div>
           </PlanCard>
@@ -301,29 +301,29 @@ export default function PaymentManagementPage() {
           <PlanCard delay={0.58}>
             <div className="mb-4">
               <h4 className="font-semibold text-[18px] text-[#121c2a]">AI Pro</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">Unleash advanced AI synthesis and analysis.</p>
+              <p className="text-[13px] text-[#424753] mt-1 h-10">Mở khóa phân tích và tổng hợp AI nâng cao.</p>
             </div>
             <div className="mb-6">
               <span className="font-bold text-[32px] text-[#121c2a]">250.000₫</span>
-              <span className="text-[14px] text-[#424753]">/month</span>
+              <span className="text-[14px] text-[#424753]">/tháng</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
               <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Unlimited AI Queries
+                Truy vấn AI không giới hạn
               </div>
               <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Advanced Models (GPT-4)
+                Mô hình nâng cao (GPT-4)
               </div>
               <div className="flex items-center gap-2 text-[13px] text-[#424753]">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                5 GB Cloud Storage
+                Lưu trữ đám mây 5 GB
               </div>
             </div>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Link href="/user/payment/checkout?plan=ai" className="w-full bg-white text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
-                Upgrade AI
+                Nâng cấp AI
               </Link>
             </motion.div>
           </PlanCard>
@@ -337,34 +337,34 @@ export default function PaymentManagementPage() {
                 animate={{ scale: [1, 1.08, 1] }}
                 transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
               >
-                Best Value
+                Giá trị nhất
               </motion.span>
             </div>
             <div className="mb-4">
               <h4 className="font-semibold text-[18px] text-[#004191]">Ultimate</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">The complete research workstation.</p>
+              <p className="text-[13px] text-[#424753] mt-1 h-10">Không gian làm việc nghiên cứu toàn diện.</p>
             </div>
             <div className="mb-6">
               <span className="font-bold text-[32px] text-[#121c2a]">300.000₫</span>
-              <span className="text-[14px] text-[#424753]">/month</span>
+              <span className="text-[14px] text-[#424753]">/tháng</span>
             </div>
             <div className="space-y-3 mb-8 flex-1">
               <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Unlimited AI Queries &amp; Models
+                Truy vấn &amp; Mô hình AI không giới hạn
               </div>
               <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                100 GB Cloud Storage
+                Lưu trữ đám mây 100 GB
               </div>
               <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
                 <span className="material-symbols-outlined text-[16px] text-[#004191]">star</span>
-                24/7 Dedicated Support
+                Hỗ trợ chuyên dụng 24/7
               </div>
             </div>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Link href="/user/payment/checkout?plan=ultimate" className="w-full bg-gradient-to-br from-[#004191] to-[#0051d6] text-white font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-md text-center block">
-                Upgrade to Ultimate
+                Nâng cấp lên Ultimate
               </Link>
             </motion.div>
           </PlanCard>
