@@ -8,6 +8,7 @@ import {
   MoreVertical, Calendar, Hash, Users, BookOpen, Download
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/features/auth/auth-context"
 
 /* --- Mock Data --- */
 const collections = [
@@ -82,12 +83,57 @@ const documents = [
 ]
 
 export default function LibraryPage() {
+  const { token } = useAuth()
   const [search, setSearch] = React.useState("")
-  const [selectedDocs, setSelectedDocs] = React.useState<number[]>([1])
+  const [selectedDocs, setSelectedDocs] = React.useState<string[]>([])
+  const [docs, setDocs] = React.useState<any[]>([])
 
-  const toggleDoc = (id: number) => {
+  React.useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/documents`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.items) {
+        setDocs(data.items.map((item: any) => {
+          let type = "DOC";
+          let iconBg = "bg-gray-100";
+          let iconColor = "text-gray-500";
+          if (item.mimeType?.includes("pdf")) {
+            type = "PDF"; iconBg = "bg-red-50"; iconColor = "text-red-500";
+          } else if (item.mimeType?.includes("word") || item.mimeType?.includes("document")) {
+            type = "DOCX"; iconBg = "bg-blue-50"; iconColor = "text-blue-500";
+          } else if (item.mimeType?.includes("text")) {
+            type = "TXT";
+          }
+          return {
+            id: item.id,
+            title: item.title,
+            type,
+            iconColor,
+            iconBg,
+            authors: "You",
+            year: new Date(item.createdAt).getFullYear(),
+            collection: item.subject?.name || "N/A",
+            status: item.status,
+            raw: item
+          };
+        }));
+        if (data.items.length > 0) setSelectedDocs([data.items[0].id]);
+      }
+    })
+    .catch(console.error)
+  }, [token])
+
+  const filteredDocs = React.useMemo(() => {
+    return docs.filter(doc => doc.title.toLowerCase().includes(search.toLowerCase()))
+  }, [docs, search])
+
+  const toggleDoc = (id: string) => {
     setSelectedDocs(prev => prev.includes(id) ? [] : [id])
   }
+  
+  const selectedDocDetails = docs.find(d => d.id === selectedDocs[0])
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9ff]">
@@ -270,7 +316,7 @@ export default function LibraryPage() {
                 Danh mục tài liệu
               </h2>
               <p className="text-[13px] text-[#727785] mt-0.5">
-                8 tài liệu phù hợp trong không gian làm việc hiện tại.
+                {filteredDocs.length} tài liệu phù hợp trong không gian làm việc hiện tại.
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -298,7 +344,7 @@ export default function LibraryPage() {
 
           {/* Table Body */}
           <div className="flex-1 overflow-y-auto">
-            {documents.map((doc) => (
+            {filteredDocs.map((doc) => (
               <div 
                 key={doc.id}
                 className={cn(
@@ -354,40 +400,48 @@ export default function LibraryPage() {
           </div>
 
           {/* Featured Card */}
-          <div className="bg-gradient-to-br from-[#0058be] to-[#004ca3] rounded-2xl p-5 text-white shadow-md shadow-[#0058be]/20 mb-6">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4">
-              <FileText size={20} className="text-white" />
-            </div>
-            <h4 className="text-[16px] font-bold leading-snug mb-2">Attention Is All You Need</h4>
-            <p className="text-[12px] text-white/80 leading-relaxed">Ashish Vaswani, Noam Shazeer, Niki Parmar</p>
-          </div>
+          {selectedDocDetails ? (
+            <>
+              <div className="bg-gradient-to-br from-[#0058be] to-[#004ca3] rounded-2xl p-5 text-white shadow-md shadow-[#0058be]/20 mb-6">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm mb-4">
+                  <FileText size={20} className="text-white" />
+                </div>
+                <h4 className="text-[16px] font-bold leading-snug mb-2">{selectedDocDetails.title}</h4>
+                <p className="text-[12px] text-white/80 leading-relaxed">{selectedDocDetails.authors}</p>
+              </div>
 
-          {/* Metadata Grid */}
-          <div className="mb-6">
-            <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">Siêu dữ liệu</h4>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
-                <Calendar size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Năm</p>
-                <p className="text-[13px] font-bold text-[#121c2a]">2017</p>
+              {/* Metadata Grid */}
+              <div className="mb-6">
+                <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">Siêu dữ liệu</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
+                    <Calendar size={14} className="text-[#0058be] mb-2" />
+                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Năm</p>
+                    <p className="text-[13px] font-bold text-[#121c2a]">{selectedDocDetails.year}</p>
+                  </div>
+                  <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
+                    <Hash size={14} className="text-[#0058be] mb-2" />
+                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Trạng thái</p>
+                    <p className="text-[13px] font-bold text-[#121c2a]">{selectedDocDetails.status}</p>
+                  </div>
+                  <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
+                    <FolderOpen size={14} className="text-[#0058be] mb-2" />
+                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Bộ sưu tập</p>
+                    <p className="text-[13px] font-bold text-[#121c2a] truncate">{selectedDocDetails.collection}</p>
+                  </div>
+                  <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
+                    <Users size={14} className="text-[#0058be] mb-2" />
+                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Tác giả</p>
+                    <p className="text-[13px] font-bold text-[#121c2a]">1</p>
+                  </div>
+                </div>
               </div>
-              <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
-                <Hash size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Trạng thái</p>
-                <p className="text-[13px] font-bold text-[#121c2a]">Đã xuất bản</p>
-              </div>
-              <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
-                <FolderOpen size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Bộ sưu tập</p>
-                <p className="text-[13px] font-bold text-[#121c2a]">Machine Learning</p>
-              </div>
-              <div className="bg-white border border-[#c2c6d6]/40 rounded-xl p-3">
-                <Users size={14} className="text-[#0058be] mb-2" />
-                <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Tác giả</p>
-                <p className="text-[13px] font-bold text-[#121c2a]">3</p>
-              </div>
+            </>
+          ) : (
+            <div className="text-[13px] text-[#727785] text-center mt-10">
+              Chọn một tài liệu để xem chi tiết
             </div>
-          </div>
+          )}
 
           {/* Tags */}
           <div>

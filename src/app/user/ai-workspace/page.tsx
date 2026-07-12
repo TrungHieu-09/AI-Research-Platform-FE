@@ -8,6 +8,7 @@ import {
   Layers, Share2, X
 } from "lucide-react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
+import { useAuth } from "@/features/auth/auth-context"
 
 /* ─── Data ───────────────────────────────────── */
 const mockDocs = [
@@ -71,35 +72,77 @@ const msgVariants: Variants = {
 
 /* ─── Main Component ─────────────────────────── */
 function WorkspaceContent() {
+  const { token } = useAuth()
   const searchParams = useSearchParams()
   const docId = searchParams.get("docId")
-  const attachedDoc = docId ? mockDocs.find(d => d.id === Number(docId)) : null
 
   const [input, setInput] = React.useState("")
   const [messages, setMessages] = React.useState<{ role: string; content: string }[]>([])
   const [isTyping, setIsTyping] = React.useState(false)
-  const [isDocAttached, setIsDocAttached] = React.useState(!!attachedDoc)
   const bottomRef = React.useRef<HTMLDivElement>(null)
+
+  const [realSourceReferences, setRealSourceReferences] = React.useState<any[]>([])
+  const sessionId = React.useMemo(() => crypto.randomUUID(), [])
+  const [realAttachedDoc, setRealAttachedDoc] = React.useState<{ id: string, title: string } | null>(null)
+  const [isDocAttached, setIsDocAttached] = React.useState(false)
+
+  React.useEffect(() => {
+    if (docId) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/documents/${docId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          setRealAttachedDoc({ id: data.id, title: data.title })
+          setIsDocAttached(true)
+        }
+      })
+      .catch(console.error)
+    }
+  }, [docId, token])
 
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isTyping])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return
     const userMsg = input
     setMessages(prev => [...prev, { role: "user", content: userMsg }])
     setInput("")
     setIsTyping(true)
-    setTimeout(() => {
-      setIsTyping(false)
-      setMessages(prev => [...prev, {
-        role: "ai",
-        content: (isDocAttached && attachedDoc)
-          ? `Dựa trên tài liệu "${attachedDoc.title}", đây là phân tích...\n\n(Đây là phản hồi mẫu để minh họa.)`
-          : `Đây là phân tích dựa trên toàn bộ bộ sưu tập...\n\n(Đây là phản hồi mẫu để minh họa.)`,
-      }])
-    }, 1500)
+    
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          message: userMsg,
+          sessionId,
+          documentId: (isDocAttached && realAttachedDoc) ? realAttachedDoc.id : undefined,
+          scope: (isDocAttached && realAttachedDoc) ? "SINGLE_DOCUMENT" : "GLOBAL"
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lỗi khi gọi AI");
+      
+      setMessages(prev => [...prev, { role: "ai", content: data.answer }]);
+      
+      if (data.citations && data.citations.length > 0) {
+        setRealSourceReferences(data.citations.map((c: any, i: number) => ({
+          id: i, citationNumber: c.index, author: c.documentTitle, title: c.documentTitle, excerpt: c.excerpt, tags: [`Tr. ${c.pageNumber}`]
+        })));
+      }
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: "ai", content: `❌ Lỗi: ${err.message}` }]);
+    } finally {
+      setIsTyping(false);
+    }
   }
 
   return (
@@ -187,8 +230,8 @@ function WorkspaceContent() {
                       <Sparkles size={28} className="text-[#0058be]/40" />
                     </motion.div>
                     <p className="text-[#727785] text-[14px] font-medium">
-                      {isDocAttached && attachedDoc
-                        ? `Hỏi điều gì đó về "${attachedDoc.title}"...`
+                      {isDocAttached && realAttachedDoc
+                        ? `Hỏi điều gì đó về "${realAttachedDoc.title}"...`
                         : "Bắt đầu một cuộc trò chuyện mới..."}
                     </p>
                   </div>
@@ -253,7 +296,7 @@ function WorkspaceContent() {
           {/* Input Area */}
           <div className="mt-auto flex flex-col gap-2">
             <AnimatePresence>
-              {isDocAttached && attachedDoc && (
+              {isDocAttached && realAttachedDoc && (
                 <motion.div
                   className="flex items-center gap-2 self-start bg-white border border-[#0058be]/30 px-3 py-1.5 rounded-lg shadow-sm"
                   initial={{ opacity: 0, y: 6, scale: 0.95 }}
@@ -262,7 +305,7 @@ function WorkspaceContent() {
                   transition={{ duration: 0.2 }}
                 >
                   <FileText size={14} className="text-[#0058be]" />
-                  <span className="text-[12px] font-semibold text-[#121c2a] truncate max-w-[300px]">{attachedDoc.title}</span>
+                  <span className="text-[12px] font-semibold text-[#121c2a] truncate max-w-[300px]">{realAttachedDoc.title}</span>
                   <button onClick={() => setIsDocAttached(false)} className="text-[#727785] hover:text-red-500 ml-1 transition-colors">
                     <X size={12} />
                   </button>
@@ -279,8 +322,8 @@ function WorkspaceContent() {
                 }}
                 className="w-full bg-transparent border-none outline-none resize-none text-[14px] text-[#121c2a] placeholder:text-[#727785] min-h-[44px] max-h-[120px]"
                 placeholder={
-                  isDocAttached && attachedDoc
-                    ? `Yêu cầu Lumis phân tích ${attachedDoc.title}...`
+                  isDocAttached && realAttachedDoc
+                    ? `Yêu cầu Lumis phân tích ${realAttachedDoc.title}...`
                     : "Yêu cầu Lumis tổng hợp, phân tích hoặc so sánh các tài liệu..."
                 }
                 rows={2}
@@ -335,7 +378,7 @@ function WorkspaceContent() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
-            {sourceReferences.map((ref, i) => (
+            {(realSourceReferences.length > 0 ? realSourceReferences : sourceReferences).map((ref, i) => (
               <motion.div
                 key={ref.id}
                 className="bg-white border border-[#c2c6d6]/40 rounded-xl overflow-hidden shadow-sm cursor-pointer"
@@ -361,7 +404,7 @@ function WorkspaceContent() {
                     {ref.excerpt}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {ref.tags.map(tag => (
+                    {ref.tags.map((tag: string) => (
                       <span key={tag} className="px-2 py-0.5 bg-[#f0f4ff] text-[#0058be] rounded-[4px] text-[10px] font-bold border border-[#0058be]/10">
                         {tag}
                       </span>
