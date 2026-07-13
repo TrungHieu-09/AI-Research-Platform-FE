@@ -181,7 +181,14 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
   const normalizedText = text
     .replace(/^[ \t]*\*\s+/gm, "- ")
     .replace(/([^\n])\s*\n+[ \t]*(#[0-9]+|\[[0-9,\s]+\])\s*(?=\n|$)/g, "$1 $2")
-    .replace(/(\s|^)#([0-9]+)(?=\s|$|\.|,)/g, "$1[$2]");
+    .replace(/(\s|^)#([0-9]+)(?=\s|$|\.|,)/g, "$1[$2]")
+    // Break inline numbered items like "Khuyến Nghị Tiếp Theo 1. Nâng..." or "Tại sao...? 1. Sử dụng..." onto new lines
+    .replace(/([.!?:;\s]|^)(?=(?:\d+\.|\-|\•)\s+[A-ZÀ-Ỹa-zà-ỹ0-9"'(])/g, (match, p1) => {
+      if (p1.endsWith("\n")) return p1;
+      return p1 + "\n";
+    })
+    // Ensure headings/questions right before "\n1. " get a double line break above if stuck inside text
+    .replace(/([.!"')])\s+(?=(?:Tại sao|Lý do|Ví dụ|Tóm lại|Lưu ý|Khuyến [Nn]ghị|Tóm tắt|Đề xuất|[A-ZÀ-Ỹ][^\n.!?]+\?)\s*\n[\d+\.\-\•]\s)/g, "$1\n\n");
 
   // 1. Separate fenced code blocks first so inner double newlines don't split code blocks
   const codeBlockRegex = /```([\w-]*)\n([\s\S]*?)```/g;
@@ -339,10 +346,16 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
                 return (
                   <ul key={`list-${bIdx}`} className="flex flex-col gap-2.5 pl-1 my-1.5">
                     {lines.map((item, iIdx) => {
+                      const numMatch = item.trim().match(/^(\d+\.)\s+/);
+                      const numStr = numMatch ? numMatch[1] : null;
                       const cleanItem = item.trim().replace(/^([*\-•]|\d+\.)\s*/, "");
                       return (
                         <li key={iIdx} className="flex items-start gap-2.5 text-[14px] text-[#334155] leading-relaxed">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#0058be] mt-2 shrink-0 shadow-[0_0_6px_rgba(0,88,190,0.4)]" />
+                          {numStr ? (
+                            <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-md bg-[#eff4ff] text-[#0058be] font-bold text-[12.5px] border border-[#0058be]/20 mt-0.5 shrink-0 shadow-sm">{numStr}</span>
+                          ) : (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0058be] mt-2 shrink-0 shadow-[0_0_6px_rgba(0,88,190,0.4)]" />
+                          )}
                           <span className="flex-1">{parseInlineFormatting(cleanItem, onCitationClick)}</span>
                         </li>
                       );
@@ -354,19 +367,28 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
               // F. Mixed Paragraph / partial lists
               if (lines.length > 1 && lines.some(l => l.trim().match(/^([*\-•]|\d+\.)\s+/))) {
                 return (
-                  <div key={`mix-${bIdx}`} className="flex flex-col gap-2 text-[14px] text-[#334155] leading-relaxed">
+                  <div key={`mix-${bIdx}`} className="flex flex-col gap-2.5 text-[14px] text-[#334155] leading-relaxed my-1">
                     {lines.map((line, lIdx) => {
                       const trimmed = line.trim();
+                      const numMatch = trimmed.match(/^(\d+\.)\s+/);
+                      const numStr = numMatch ? numMatch[1] : null;
                       if (trimmed.match(/^([*\-•]|\d+\.)\s+/)) {
                         return (
-                          <div key={lIdx} className="flex items-start gap-2.5 pl-2 my-0.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0058be] mt-2 shrink-0 shadow-[0_0_6px_rgba(0,88,190,0.4)]" />
+                          <div key={lIdx} className="flex items-start gap-2.5 pl-1 my-0.5">
+                            {numStr ? (
+                              <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-md bg-[#eff4ff] text-[#0058be] font-bold text-[12.5px] border border-[#0058be]/20 mt-0.5 shrink-0 shadow-sm">{numStr}</span>
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#0058be] mt-2 shrink-0 shadow-[0_0_6px_rgba(0,88,190,0.4)]" />
+                            )}
                             <span className="flex-1">{parseInlineFormatting(trimmed.replace(/^([*\-•]|\d+\.)\s*/, ""), onCitationClick)}</span>
                           </div>
                         );
                       }
                       if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
                         return <div key={lIdx} className="font-bold text-[#0f172a] text-[14.5px] mt-1.5">{parseInlineFormatting(trimmed, onCitationClick)}</div>;
+                      }
+                      if (trimmed.endsWith("?") || trimmed.endsWith(":") || trimmed.match(/^(Khuyến nghị|Tóm tắt|Tại sao|Lý do|Ví dụ|Đề xuất|Phần \d+|Chương \d+)/i)) {
+                        return <div key={lIdx} className="font-bold text-[#0f172a] text-[15px] mt-2 pt-1 border-t border-slate-100 first:border-none first:mt-0">{parseInlineFormatting(trimmed, onCitationClick)}</div>;
                       }
                       return <p key={lIdx}>{parseInlineFormatting(trimmed, onCitationClick)}</p>;
                     })}
