@@ -106,12 +106,15 @@ function CodeBlock({ lang, content }: { lang: string; content: string }) {
 /* ─── Rich Formatting & Markdown Renderer ────── */
 function parseInlineFormatting(text: string, onCitationClick?: (num: number) => void) {
   if (!text) return null;
-  const parts = text.split(/(\*\*.*?\*\*|`[^`]+`|\[[0-9,\s]+\]|\$[^\$]+\$)/g);
+  const parts = text.split(/(\*\*.*?\*\*|\*[^\*\n]+\*|`[^`]+`|\[[0-9,\s]+\]|#[0-9]+|\$[^\$]+\$)/g);
 
   return parts.map((part, idx) => {
     if (!part) return null;
     if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={idx} className="font-bold text-[#0f172a]">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) {
+      return <em key={idx} className="italic text-[#1e293b] font-medium">{part.slice(1, -1)}</em>;
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
@@ -124,6 +127,22 @@ function parseInlineFormatting(text: string, onCitationClick?: (num: number) => 
       return (
         <span key={idx} className="px-1.5 py-0.5 bg-[#eff4ff] text-[#0058be] font-medium rounded-md font-mono text-[13px]">
           {part.slice(1, -1)}
+        </span>
+      );
+    }
+    if (part.match(/^#[0-9]+$/)) {
+      const num = Number(part.slice(1));
+      return (
+        <span
+          key={idx}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onCitationClick) onCitationClick(num);
+          }}
+          className="inline-flex items-center justify-center px-1.5 py-0.5 ml-1 text-[11px] font-bold bg-[#eff4ff] text-[#0058be] border border-[#0058be]/30 rounded-md hover:bg-[#0058be] hover:text-white transition-all cursor-pointer shadow-sm align-baseline"
+          title={`Click để xem chi tiết trích dẫn [${num}]`}
+        >
+          #{num}
         </span>
       );
     }
@@ -147,27 +166,37 @@ function parseInlineFormatting(text: string, onCitationClick?: (num: number) => 
         </span>
       );
     }
-    return part;
+    // For regular text parts, clean up any stray leading/trailing asterisks or weird bullet asterisks
+    const cleanPart = part.replace(/^[ \t]*\*[ \t]+/g, "");
+    return cleanPart;
   });
 }
 
 function renderFormattedContent(text: string, onCitationClick?: (num: number) => void) {
   if (!text) return null;
 
+  // 0. Preprocess text before block parsing:
+  // Convert lines starting with "* " into "- " for uniform, clean list formatting
+  // Convert "#1" or "\n#1" into "[1]" inline citation so they format nicely
+  const normalizedText = text
+    .replace(/^[ \t]*\*\s+/gm, "- ")
+    .replace(/([^\n])\s*\n+[ \t]*(#[0-9]+|\[[0-9,\s]+\])\s*(?=\n|$)/g, "$1 $2")
+    .replace(/(\s|^)#([0-9]+)(?=\s|$|\.|,)/g, "$1[$2]");
+
   // 1. Separate fenced code blocks first so inner double newlines don't split code blocks
   const codeBlockRegex = /```([\w-]*)\n([\s\S]*?)```/g;
   const tokens: { type: "code" | "markdown"; content: string; lang?: string }[] = [];
   let lastIndex = 0;
   let match;
-  while ((match = codeBlockRegex.exec(text)) !== null) {
+  while ((match = codeBlockRegex.exec(normalizedText)) !== null) {
     if (match.index > lastIndex) {
-      tokens.push({ type: "markdown", content: text.slice(lastIndex, match.index) });
+      tokens.push({ type: "markdown", content: normalizedText.slice(lastIndex, match.index) });
     }
     tokens.push({ type: "code", lang: match[1] || "code", content: match[2].trim() });
     lastIndex = match.index + match[0].length;
   }
-  if (lastIndex < text.length) {
-    tokens.push({ type: "markdown", content: text.slice(lastIndex) });
+  if (lastIndex < normalizedText.length) {
+    tokens.push({ type: "markdown", content: normalizedText.slice(lastIndex) });
   }
 
   return (
@@ -185,15 +214,19 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
               const trimmedBlock = block.trim();
               if (!trimmedBlock) return null;
 
-              // A. Markdown Table check
+              // A. Markdown Table check (supports both | pipe tables and \t tab tables)
               const lines = trimmedBlock.split("\n");
-              const tableLines = lines.filter(l => l.trim().startsWith("|"));
+              const tableLines = lines.filter(l => l.trim().startsWith("|") || (l.includes("\t") && lines.length >= 2));
               if (tableLines.length >= 2 && tableLines.length * 2 >= lines.length) {
-                const parseRow = (rowStr: string) =>
-                  rowStr.trim().replace(/^\||\|$/g, "").split("|").map(cell => cell.trim());
+                const parseRow = (rowStr: string) => {
+                  if (rowStr.includes("|")) {
+                    return rowStr.trim().replace(/^\||\|$/g, "").split("|").map(cell => cell.trim());
+                  }
+                  return rowStr.trim().split(/\t+/).map(cell => cell.trim());
+                };
                 
                 const headers = parseRow(tableLines[0]);
-                const dataRows = tableLines.slice(1).filter(r => !r.includes("---")).map(parseRow);
+                const dataRows = tableLines.slice(1).filter(r => !r.includes("---") && !r.match(/^[\-\s\|]+$/)).map(parseRow);
 
                 return (
                   <div key={`tbl-${bIdx}`} className="my-2 border border-[#cbd5e1] rounded-xl overflow-hidden shadow-sm bg-white w-full">
