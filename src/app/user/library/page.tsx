@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   Search, ChevronDown, Upload, List, LayoutGrid,
   FolderOpen, Plus, Tag, X, FileText, Check, Sparkles,
-  MoreVertical, Calendar, Hash, Users, BookOpen, Download
+  MoreVertical, Calendar, Hash, Users, BookOpen, Download, Trash2, Eye
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
@@ -131,6 +131,30 @@ export default function LibraryPage() {
 
   const toggleDoc = (id: string) => {
     setSelectedDocs(prev => prev.includes(id) ? [] : [id])
+  }
+
+  const handleDeleteDocument = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa tài liệu này?")) return;
+    
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/documents/${id}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      
+      if (res.ok) {
+        setDocs(prev => prev.filter(d => d.id !== id));
+        if (selectedDocs.includes(id)) {
+          setSelectedDocs(prev => prev.filter(selId => selId !== id));
+        }
+      } else {
+        const error = await res.json();
+        alert(error.error || "Có lỗi xảy ra khi xóa tài liệu.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Không thể kết nối đến máy chủ.");
+    }
   }
   
   const selectedDocDetails = docs.find(d => d.id === selectedDocs[0])
@@ -327,9 +351,6 @@ export default function LibraryPage() {
                 <Sparkles size={14} />
                 Phân tích với AI
               </Link>
-              <div className="px-3 py-1.5 rounded-full bg-[#eff4ff] border border-[#0058be]/20 text-[#0058be] text-[12px] font-semibold">
-                Sẵn sàng cho AI
-              </div>
             </div>
           </div>
 
@@ -377,9 +398,39 @@ export default function LibraryPage() {
                   <FolderOpen size={12} className="text-[#727785]" />
                   <span className="truncate">{doc.collection}</span>
                 </div>
-                <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="p-1.5 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors" title="Tải xuống">
-                    <Download size={16} />
+                <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                  {doc.raw?.fileUrl && (
+                    <a
+                      href={doc.raw.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors"
+                      title="Xem tài liệu"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Eye size={16} />
+                    </a>
+                  )}
+                  {doc.raw?.fileUrl && (
+                    <a
+                      href={doc.raw.fileUrl}
+                      download
+                      className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors"
+                      title="Tải xuống"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Download size={16} />
+                    </a>
+                  )}
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteDocument(doc.id);
+                    }}
+                    className="p-1.5 text-[#727785] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                    title="Xóa tài liệu"
+                  >
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -394,9 +445,35 @@ export default function LibraryPage() {
               <p className="text-[10px] font-bold text-[#727785] uppercase tracking-wider mb-0.5">CHI TIẾT</p>
               <h3 className="text-[15px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Chi tiết tài liệu</h3>
             </div>
-            <button className="p-1.5 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-xl transition-colors">
-              <X size={16} />
-            </button>
+            <div className="flex items-center gap-1">
+              {selectedDocDetails?.raw?.fileUrl && (
+                <a
+                  href={selectedDocDetails.raw.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-xl transition-colors"
+                  title="Xem tài liệu"
+                >
+                  <Eye size={16} />
+                </a>
+              )}
+              {selectedDocDetails && (
+                <button 
+                  onClick={() => handleDeleteDocument(selectedDocDetails.id)}
+                  className="p-1.5 text-[#727785] hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  title="Xóa tài liệu"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+              <button 
+                onClick={() => setSelectedDocs([])}
+                className="p-1.5 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-xl transition-colors"
+                title="Đóng"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Featured Card */}
