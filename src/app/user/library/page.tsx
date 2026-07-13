@@ -6,7 +6,8 @@ import {
   Search, ChevronDown, Upload, List, LayoutGrid,
   FolderOpen, Plus, Tag, X, FileText, Check, Sparkles,
   MoreVertical, Calendar, Hash, Users, BookOpen, Download, Trash2, Eye,
-  Bookmark, Share2, FolderPlus, Loader2, AlertCircle, CheckCircle2, Star
+  Bookmark, Share2, FolderPlus, Loader2, AlertCircle, CheckCircle2, Star,
+  Copy, Link as LinkIcon, Send
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
@@ -44,6 +45,10 @@ export default function LibraryPage() {
   const [targetDocIdForCol, setTargetDocIdForCol] = React.useState<string | null>(null)
   const [selectedColForAdd, setSelectedColForAdd] = React.useState<string>("")
   const [addingToCol, setAddingToCol] = React.useState(false)
+  const [showQuickCreateInput, setShowQuickCreateInput] = React.useState(false)
+  const [quickColName, setQuickColName] = React.useState("")
+  const [isQuickCreatingCol, setIsQuickCreatingCol] = React.useState(false)
+  const [copiedLink, setCopiedLink] = React.useState(false)
 
   const [toastMessage, setToastMessage] = React.useState<{ text: string; type: "success" | "error" } | null>(null)
 
@@ -270,6 +275,62 @@ export default function LibraryPage() {
     } finally {
       setAddingToCol(false)
     }
+  }
+
+  // Quick Create Collection and immediately add targeted document
+  const handleQuickCreateAndAdd = async () => {
+    if (!quickColName.trim() || !targetDocIdForCol || !token) return
+    setIsQuickCreatingCol(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const colRes = await fetch(`${baseUrl}/api/collections`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: quickColName.trim(), description: "Tạo nhanh từ thư viện" })
+      })
+
+      if (colRes.ok) {
+        const newCol = await colRes.json()
+        const addRes = await fetch(`${baseUrl}/api/collections/${newCol.id}/documents`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ documentId: targetDocIdForCol })
+        })
+
+        if (addRes.ok) {
+          showToast(`Đã tạo bộ sưu tập "${quickColName.trim()}" và thêm tài liệu thành công!`, "success")
+          setQuickColName("")
+          setShowQuickCreateInput(false)
+          setIsAddToColModalOpen(false)
+          fetchAllData()
+        } else {
+          showToast("Đã tạo bộ sưu tập nhưng lỗi khi thêm tài liệu.", "error")
+          fetchAllData()
+        }
+      } else {
+        const err = await colRes.json()
+        showToast(err.error || "Tên bộ sưu tập đã tồn tại hoặc không hợp lệ.", "error")
+      }
+    } catch (e) {
+      showToast("Lỗi kết nối khi tạo nhanh bộ sưu tập.", "error")
+    } finally {
+      setIsQuickCreatingCol(false)
+    }
+  }
+
+  const handleCopyLink = (docId: string) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : ""
+    const url = `${origin}/user/documents/${docId}`
+    navigator.clipboard.writeText(url)
+    setCopiedLink(true)
+    showToast("Đã sao chép liên kết chia sẻ vào bộ nhớ tạm!", "success")
+    setTimeout(() => setCopiedLink(false), 3000)
   }
 
   // Handle Share Document
@@ -965,108 +1026,274 @@ export default function LibraryPage() {
 
       {/* ── Modal 2: Add Document to Collection Modal ── */}
       {isAddToColModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#c2c6d6]/40">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-[#0058be]">
-                <FolderPlus size={20} />
-                <h3 className="text-[18px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Thêm vào Bộ sưu tập</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-7 shadow-2xl border border-[#c2c6d6]/40 flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-[#c2c6d6]/30 mb-5 shrink-0">
+              <div className="flex items-center gap-2.5 text-[#0058be]">
+                <div className="p-2.5 bg-[#eff4ff] rounded-2xl">
+                  <FolderPlus size={22} strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Thêm vào Bộ sưu tập</h3>
+                  <p className="text-[12px] text-[#727785] font-medium">Lưu trữ và phân loại tài liệu theo chủ đề nghiên cứu</p>
+                </div>
               </div>
-              <button onClick={() => setIsAddToColModalOpen(false)} className="p-1 text-[#727785] hover:text-[#121c2a]">
+              <button onClick={() => setIsAddToColModalOpen(false)} className="p-2 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-xl transition-colors">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleAddDocToCollection} className="space-y-4">
-              <div>
-                <label className="block text-[12px] font-bold text-[#424754] uppercase mb-1.5">Chọn bộ sưu tập đích</label>
-                {collections.length === 0 ? (
-                  <p className="text-[13px] text-[#727785] py-2">Bạn chưa có bộ sưu tập nào. Hãy tạo bộ sưu tập mới trước nhé!</p>
-                ) : (
-                  <select
-                    value={selectedColForAdd}
-                    onChange={(e) => setSelectedColForAdd(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-[#c2c6d6]/60 text-[14px] outline-none focus:border-[#0058be] bg-white cursor-pointer"
+
+            {/* Target Document Summary Banner */}
+            {(() => {
+              const targetDoc = docs.find(d => d.id === targetDocIdForCol) || selectedDocDetails
+              return targetDoc ? (
+                <div className="bg-[#f8f9ff] border border-[#0058be]/20 rounded-2xl p-4 mb-5 flex items-center gap-3.5 shrink-0">
+                  <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-[12px]", targetDoc.iconBg, targetDoc.iconColor)}>
+                    {targetDoc.type}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13.5px] font-bold text-[#121c2a] truncate">{targetDoc.title}</p>
+                    <p className="text-[11.5px] text-[#727785] truncate">
+                      Môn: <strong className="text-[#0058be]">{targetDoc.raw?.subject?.name || "Chung"}</strong> • Tạo năm {targetDoc.year}
+                    </p>
+                  </div>
+                </div>
+              ) : null
+            })()}
+
+            {/* Interactive Collection List */}
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 mb-5">
+              <div className="flex items-center justify-between">
+                <label className="text-[12px] font-extrabold text-[#424754] uppercase tracking-wider">Chọn bộ sưu tập ({collections.length})</label>
+                {!showQuickCreateInput && (
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickCreateInput(true)}
+                    className="text-[12px] font-bold text-[#0058be] hover:underline flex items-center gap-1"
                   >
-                    {collections.map(col => (
-                      <option key={col.id} value={col.id}>{col.name}</option>
-                    ))}
-                  </select>
+                    <Plus size={14} /> Tạo nhanh mới
+                  </button>
                 )}
               </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAddToColModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-[#424754] hover:bg-gray-100 transition-colors"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={addingToCol || collections.length === 0}
-                  className="px-6 py-2.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] disabled:opacity-50 text-white text-[13px] font-bold flex items-center gap-2 shadow-md shadow-[#0058be]/20 transition-all"
-                >
-                  {addingToCol ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                  Xác nhận thêm
-                </button>
-              </div>
-            </form>
+
+              {showQuickCreateInput && (
+                <div className="bg-[#eff4ff]/60 border border-[#0058be]/30 rounded-2xl p-3.5 space-y-3 animate-in fade-in duration-200">
+                  <p className="text-[12px] font-bold text-[#0058be]">Tạo & Thêm ngay vào Bộ sưu tập mới:</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={quickColName}
+                      onChange={(e) => setQuickColName(e.target.value)}
+                      placeholder="Nhập tên bộ sưu tập (ví dụ: Khóa luận 2026)..."
+                      className="flex-1 px-3.5 py-2 rounded-xl border border-[#0058be]/30 bg-white text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[#0058be]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleQuickCreateAndAdd}
+                      disabled={isQuickCreatingCol || !quickColName.trim()}
+                      className="px-4 py-2 bg-[#0058be] hover:bg-[#004ca3] text-white text-[12px] font-bold rounded-xl flex items-center gap-1.5 shadow disabled:opacity-50 shrink-0"
+                    >
+                      {isQuickCreatingCol ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                      <span>Tạo & Thêm</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowQuickCreateInput(false); setQuickColName(""); }}
+                      className="p-2 text-[#727785] hover:bg-gray-200 rounded-xl"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {collections.length === 0 && !showQuickCreateInput ? (
+                <div className="text-center py-10 bg-[#f8f9ff] rounded-2xl border border-dashed border-[#c2c6d6]/60">
+                  <FolderOpen size={36} className="mx-auto text-[#c2c6d6] mb-2" />
+                  <p className="text-[14px] font-bold text-[#121c2a]">Bạn chưa có bộ sưu tập nào</p>
+                  <p className="text-[12px] text-[#727785] mb-4">Bấm nút tạo nhanh bên dưới để tạo bộ sưu tập đầu tiên.</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickCreateInput(true)}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#0058be] text-white font-bold text-[13px] rounded-xl shadow-sm hover:bg-[#004ca3]"
+                  >
+                    <Plus size={16} /> Tạo bộ sưu tập mới
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2.5">
+                  {collections.map(col => {
+                    const isSelected = selectedColForAdd === col.id
+                    const count = col.documentCount ?? col._count?.documents ?? col.documents?.length ?? 0
+                    return (
+                      <div
+                        key={col.id}
+                        onClick={() => setSelectedColForAdd(col.id)}
+                        className={cn(
+                          "p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3",
+                          isSelected
+                            ? "border-[#0058be] bg-[#eff4ff]/80 shadow-sm ring-1 ring-[#0058be]"
+                            : "border-[#c2c6d6]/40 bg-white hover:border-[#0058be]/50 hover:bg-[#f8f9ff]/50"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+                            isSelected ? "bg-[#0058be] text-white" : "bg-[#f0f4ff] text-[#0058be]"
+                          )}>
+                            <FolderOpen size={18} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[13.5px] font-bold text-[#121c2a] truncate">{col.name}</p>
+                            <p className="text-[11.5px] text-[#727785] truncate">{col.description || "Bộ sưu tập tài liệu cá nhân"} • <strong className="text-[#0058be] font-mono">{count}</strong> tệp</p>
+                          </div>
+                        </div>
+                        <div className={cn(
+                          "w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all",
+                          isSelected ? "border-[#0058be] bg-[#0058be] text-white" : "border-[#c2c6d6] bg-white"
+                        )}>
+                          {isSelected && <Check size={12} strokeWidth={3} />}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end items-center gap-3 pt-3 border-t border-[#c2c6d6]/30 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsAddToColModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl text-[13px] font-bold text-[#727785] hover:bg-gray-100 transition-colors"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={handleAddDocToCollection}
+                disabled={addingToCol || !selectedColForAdd || collections.length === 0}
+                className="px-7 py-2.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] disabled:opacity-50 text-white text-[13px] font-bold flex items-center gap-2 shadow-lg shadow-[#0058be]/20 transition-all"
+              >
+                {addingToCol ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                <span>Xác nhận thêm vào Bộ sưu tập</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Modal 3: Share Document Modal ── */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#c2c6d6]/40">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-[#0058be]">
-                <Share2 size={20} />
-                <h3 className="text-[18px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Chia sẻ Tài liệu</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-7 shadow-2xl border border-[#c2c6d6]/40 flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-[#c2c6d6]/30 mb-5 shrink-0">
+              <div className="flex items-center gap-2.5 text-[#0058be]">
+                <div className="p-2.5 bg-[#eff4ff] rounded-2xl">
+                  <Share2 size={22} strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Chia sẻ & Mời cộng tác</h3>
+                  <p className="text-[12px] text-[#727785] font-medium">Gửi liên kết truy cập hoặc cấp quyền thành viên</p>
+                </div>
               </div>
-              <button onClick={() => setIsShareModalOpen(false)} className="p-1 text-[#727785] hover:text-[#121c2a]">
+              <button onClick={() => setIsShareModalOpen(false)} className="p-2 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-xl transition-colors">
                 <X size={18} />
               </button>
             </div>
-            <form onSubmit={handleShareDocument} className="space-y-4">
-              <div>
-                <label className="block text-[12px] font-bold text-[#424754] uppercase mb-1.5">Email hoặc User ID người nhận *</label>
+
+            {/* Target Document Summary Banner */}
+            {(() => {
+              const targetDoc = docs.find(d => d.id === shareDocId) || selectedDocDetails
+              return targetDoc ? (
+                <div className="bg-[#f8f9ff] border border-[#0058be]/20 rounded-2xl p-4 mb-5 flex items-center gap-3.5 shrink-0">
+                  <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-[12px]", targetDoc.iconBg, targetDoc.iconColor)}>
+                    {targetDoc.type}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13.5px] font-bold text-[#121c2a] truncate">{targetDoc.title}</p>
+                    <p className="text-[11.5px] text-[#727785] truncate">
+                      Trạng thái: <strong className="text-[#0058be]">{targetDoc.status === "APPROVED" ? "Đã duyệt công khai" : "Riêng tư / Chờ duyệt"}</strong>
+                    </p>
+                  </div>
+                </div>
+              ) : null
+            })()}
+
+            {/* Section 1: Copy Quick Link */}
+            <div className="bg-gradient-to-r from-[#eff4ff]/70 to-[#f8f9ff] border border-[#0058be]/25 rounded-2xl p-4.5 mb-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-extrabold text-[#0058be] uppercase tracking-wide flex items-center gap-1.5">
+                  <LinkIcon size={14} /> Đường dẫn chia sẻ nhanh
+                </span>
+                <span className="text-[11px] font-bold text-[#727785] bg-white px-2.5 py-0.5 rounded-full border">
+                  Truy cập bằng tài khoản Lumis
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  required
-                  value={shareInput}
-                  onChange={(e) => setShareInput(e.target.value)}
-                  placeholder="Nhập email đồng nghiệp (ví dụ: hieu@example.com)..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#c2c6d6]/60 text-[14px] outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/10 transition-all"
+                  readOnly
+                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/user/documents/${shareDocId}`}
+                  className="flex-1 px-3.5 py-2.5 bg-white border border-[#c2c6d6]/60 rounded-xl text-[13px] font-mono text-[#424754] select-all outline-none"
                 />
-              </div>
-              <div>
-                <label className="block text-[12px] font-bold text-[#424754] uppercase mb-1.5">Quyền truy cập</label>
-                <select
-                  value={sharePermission}
-                  onChange={(e: any) => setSharePermission(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#c2c6d6]/60 text-[14px] outline-none focus:border-[#0058be] bg-white cursor-pointer"
+                <button
+                  type="button"
+                  onClick={() => shareDocId && handleCopyLink(shareDocId)}
+                  className={cn(
+                    "px-4 py-2.5 rounded-xl font-bold text-[13px] flex items-center gap-1.5 shadow-sm transition-all shrink-0",
+                    copiedLink
+                      ? "bg-green-600 text-white"
+                      : "bg-[#0058be] hover:bg-[#004ca3] text-white"
+                  )}
                 >
-                  <option value="view">Chỉ xem (View only)</option>
-                  <option value="comment">Xem & Bình luận (Comment)</option>
-                  <option value="edit">Đồng chỉnh sửa (Collaborate & Edit)</option>
-                </select>
+                  {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                  <span>{copiedLink ? "Đã sao chép!" : "Sao chép link"}</span>
+                </button>
               </div>
-              <div className="flex justify-end gap-3 pt-2">
+            </div>
+
+            {/* Section 2: Invite by Email / ID */}
+            <form onSubmit={handleShareDocument} className="space-y-4">
+              <div>
+                <label className="block text-[12px] font-extrabold text-[#424754] uppercase tracking-wider mb-2">Mời cộng tác qua Email hoặc User ID *</label>
+                <div className="flex flex-col sm:flex-row gap-2.5">
+                  <input
+                    type="text"
+                    required
+                    value={shareInput}
+                    onChange={(e) => setShareInput(e.target.value)}
+                    placeholder="Nhập email (ví dụ: hieu@example.com)..."
+                    className="flex-1 px-4 py-3 rounded-xl border border-[#c2c6d6]/60 text-[14px] font-medium outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/10 transition-all bg-white"
+                  />
+                  <select
+                    value={sharePermission}
+                    onChange={(e: any) => setSharePermission(e.target.value)}
+                    className="px-4 py-3 rounded-xl border border-[#c2c6d6]/60 text-[13px] font-bold outline-none focus:border-[#0058be] bg-[#f8f9ff] text-[#121c2a] cursor-pointer shrink-0"
+                  >
+                    <option value="view">Chỉ xem (View)</option>
+                    <option value="comment">Bình luận (Comment)</option>
+                    <option value="edit">Đồng chỉnh sửa (Edit)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-[#c2c6d6]/30">
                 <button
                   type="button"
                   onClick={() => setIsShareModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-[#424754] hover:bg-gray-100 transition-colors"
+                  className="px-5 py-2.5 rounded-xl text-[13px] font-bold text-[#727785] hover:bg-gray-100 transition-colors"
                 >
-                  Hủy bỏ
+                  Đóng
                 </button>
                 <button
                   type="submit"
                   disabled={sharing || !shareInput.trim()}
-                  className="px-6 py-2.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] disabled:opacity-50 text-white text-[13px] font-bold flex items-center gap-2 shadow-md shadow-[#0058be]/20 transition-all"
+                  className="px-7 py-2.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] disabled:opacity-50 text-white text-[13px] font-bold flex items-center gap-2 shadow-lg shadow-[#0058be]/20 transition-all"
                 >
-                  {sharing ? <Loader2 size={16} className="animate-spin" /> : <Share2 size={16} />}
-                  Chia sẻ
+                  {sharing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  <span>Gửi lời mời chia sẻ</span>
                 </button>
               </div>
             </form>
