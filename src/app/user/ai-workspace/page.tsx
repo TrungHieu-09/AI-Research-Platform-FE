@@ -12,14 +12,6 @@ import { motion, AnimatePresence, Variants } from "framer-motion"
 import { useAuth } from "@/features/auth/auth-context"
 
 /* ─── Data ───────────────────────────────────── */
-const mockDocs = [
-  { id: 1, title: "Attention Is All You Need", authors: "Ashish Vaswani, Noam Shazeer, Niki Parmar" },
-  { id: 2, title: "Language Models are Few-Shot Learners", authors: "Tom B. Brown, Benjamin Mann, Nick Ryder" },
-  { id: 3, title: "Deep Residual Learning for Image Recognition", authors: "Kaiming He, Xiangyu Zhang, Shaoqing Ren" },
-  { id: 4, title: "BERT: Pre-training of Deep Bidirectional Transformers", authors: "Jacob Devlin, Ming-Wei Chang, Kenton Lee" },
-  { id: 5, title: "Generative Adversarial Nets", authors: "Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza" },
-]
-
 const sourceReferences = [
   {
     id: 1, citationNumber: 1, author: "Fowler et al. (2023)",
