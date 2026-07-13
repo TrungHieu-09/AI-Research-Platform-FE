@@ -312,9 +312,17 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
                 return <hr key={`hr-${bIdx}`} className="my-3 border-t border-[#cbd5e1]/80" />;
               }
 
-              // D. Headings (### or #### or bold titles)
-              if (trimmedBlock.startsWith("### ") || trimmedBlock.startsWith("#### ") || (trimmedBlock.startsWith("**") && trimmedBlock.endsWith("**") && trimmedBlock.length < 120 && !trimmedBlock.includes("\n"))) {
-                const isMainTitle = trimmedBlock.startsWith("### ");
+              // D. Headings (### or #### or bold titles or plain document headings like PHẦN 1, TÓM TẮT)
+              const isMarkdownHeading = trimmedBlock.startsWith("### ") || trimmedBlock.startsWith("#### ");
+              const isBoldHeading = trimmedBlock.startsWith("**") && trimmedBlock.endsWith("**") && trimmedBlock.length < 120 && !trimmedBlock.includes("\n");
+              const isPlainDocHeading = trimmedBlock.length < 100 && !trimmedBlock.includes("\n") && (
+                trimmedBlock.match(/^(PHẦN|CHƯƠNG|BÁO CÁO|TÓM TẮT|KHUYẾN NGHỊ|MỤC|ĐỀ XUẤT|SUMMARY|RECOMMENDATION)\s/i) ||
+                trimmedBlock === "Tóm tắt" || trimmedBlock === "Khuyến nghị tiếp theo" ||
+                trimmedBlock.match(/^[A-ZÀ-Ỹ0-9\s:\-\/]{5,}$/)
+              );
+
+              if (isMarkdownHeading || isBoldHeading || isPlainDocHeading) {
+                const isMainTitle = trimmedBlock.startsWith("### ") || trimmedBlock.match(/^(PHẦN|CHƯƠNG|BÁO CÁO|TÓM TẮT|KHUYẾN NGHỊ)/i) || trimmedBlock === "Tóm tắt" || trimmedBlock === "Khuyến nghị tiếp theo";
                 const titleText = trimmedBlock.replace(/^###?\s*/, "").replace(/^\*\*/, "").replace(/\*\*$/, "");
                 return (
                   <div key={`hd-${bIdx}`} className="flex items-center gap-2.5 mt-3 first:mt-0 pt-2 first:pt-0 border-t border-[#e2e8f0]/40 first:border-none">
