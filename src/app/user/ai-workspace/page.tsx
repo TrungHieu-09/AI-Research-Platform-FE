@@ -178,17 +178,22 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
   // 0. Preprocess text before block parsing:
   // Convert lines starting with "* " into "- " for uniform, clean list formatting
   // Convert "#1" or "\n#1" into "[1]" inline citation so they format nicely
-  const normalizedText = text
+  let normalizedText = text
     .replace(/^[ \t]*\*\s+/gm, "- ")
     .replace(/([^\n])\s*\n+[ \t]*(#[0-9]+|\[[0-9,\s]+\])\s*(?=\n|$)/g, "$1 $2")
-    .replace(/(\s|^)#([0-9]+)(?=\s|$|\.|,)/g, "$1[$2]")
-    // Break inline numbered items like "Khuyến Nghị Tiếp Theo 1. Nâng..." or "Tại sao...? 1. Sử dụng..." onto new lines
-    .replace(/([.!?:;\s]|^)(?=(?:\d+\.|\-|\•)\s+[A-ZÀ-Ỹa-zà-ỹ0-9"'(])/g, (match, p1) => {
-      if (p1.endsWith("\n")) return p1;
-      return p1 + "\n";
-    })
-    // Ensure headings/questions right before "\n1. " get a double line break above if stuck inside text
-    .replace(/([.!"')])\s+(?=(?:Tại sao|Lý do|Ví dụ|Tóm lại|Lưu ý|Khuyến [Nn]ghị|Tóm tắt|Đề xuất|[A-ZÀ-Ỹ][^\n.!?]+\?)\s*\n[\d+\.\-\•]\s)/g, "$1\n\n");
+    .replace(/(\s|^)#([0-9]+)(?=\s|$|\.|,)/g, "$1[$2]");
+
+  // 0.a. Unwrap massive multi-sentence paragraphs (> 100 chars with period) accidentally wrapped in outer **bold**
+  normalizedText = normalizedText.replace(/^\*\*([^\n*]{100,}\.[^\n*]*)\*\*$/gm, "$1");
+
+  // 0.b. Break inline numbered items like "1. Item one 2. Item two" onto clean new lines
+  normalizedText = normalizedText.replace(/([^\n])\s+(?=(?:\d+\.|\-|\•)\s+[A-ZÀ-Ỹa-zà-ỹ0-9"'(/**])/g, "$1\n");
+
+  // 0.c. Ensure DOUBLE line break (\n\n) before any section heading/emoji so it separates into Block D (Heading)
+  normalizedText = normalizedText
+    .replace(/([.!?:;)"']|\d|[a-zà-ỹ])\s+(?=(?:###\s*)?(?:[📌💡🛠️📑🚀✨⚠️🔍📊🎯📁👤]|Tóm [Tt]ắt|Khuyến [Nn]ghị [Tt]iếp [Tt]heo|Tại sao cách viết này hiệu quả hơn|Thông [Tt]in [Cc]hung|Đánh [Gg]iá [Kk]ỹ [Nn]ăng|Đề [Xx]uất & [Cc]ải [Tt]hiện)\b)/g, "$1\n\n")
+    // If heading/emoji is stuck right BEFORE body text or before a numbered list item on the exact same line, insert \n\n AFTER the heading:
+    .replace(/((?:###\s*)?(?:[📌💡🛠️📑🚀✨⚠️🔍📊🎯📁👤]\s*[^\n.!?:;]+?[.!?:;]?|Tóm [Tt]ắt|Khuyến [Nn]ghị [Tt]iếp [Tt]heo|Tại sao cách viết này hiệu quả hơn[?]?|Thông [Tt]in [Cc]hung|Đánh [Gg]iá [Kk]ỹ [Nn]ăng|Đề [Xx]uất & [Cc]ải [Tt]hiện))\s+(?=(?:\d+\.|\-|\•|[A-ZÀ-Ỹ][^.!?\n]{15,}))/g, "$1\n\n");
 
   // 1. Separate fenced code blocks first so inner double newlines don't split code blocks
   const codeBlockRegex = /```([\w-]*)\n([\s\S]*?)```/g;
@@ -321,7 +326,7 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
 
               // D. Headings (### or #### or bold titles or plain document headings like PHẦN 1, TÓM TẮT)
               const isMarkdownHeading = trimmedBlock.startsWith("### ") || trimmedBlock.startsWith("#### ");
-              const isBoldHeading = trimmedBlock.startsWith("**") && trimmedBlock.endsWith("**") && trimmedBlock.length < 120 && !trimmedBlock.includes("\n");
+              const isBoldHeading = trimmedBlock.startsWith("**") && trimmedBlock.endsWith("**") && trimmedBlock.length < 90 && !trimmedBlock.includes("\n") && !trimmedBlock.includes(". ");
               const isPlainDocHeading = trimmedBlock.length < 100 && !trimmedBlock.includes("\n") && (
                 trimmedBlock.match(/^(PHẦN|CHƯƠNG|BÁO CÁO|TÓM TẮT|KHUYẾN NGHỊ|MỤC|ĐỀ XUẤT|SUMMARY|RECOMMENDATION)\s/i) ||
                 trimmedBlock === "Tóm tắt" || trimmedBlock === "Khuyến nghị tiếp theo" ||
@@ -384,7 +389,7 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
                           </div>
                         );
                       }
-                      if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
+                      if (trimmed.startsWith("**") && trimmed.endsWith("**") && trimmed.length < 90 && !trimmed.includes(". ")) {
                         return <div key={lIdx} className="font-bold text-[#0f172a] text-[14.5px] mt-1.5">{parseInlineFormatting(trimmed, onCitationClick)}</div>;
                       }
                       if (trimmed.endsWith("?") || trimmed.endsWith(":") || trimmed.match(/^(Khuyến nghị|Tóm tắt|Tại sao|Lý do|Ví dụ|Đề xuất|Phần \d+|Chương \d+)/i)) {
