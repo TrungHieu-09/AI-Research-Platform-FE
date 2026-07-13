@@ -1132,18 +1132,18 @@ function WorkspaceContent() {
             onClick={() => setSelectedCitationModal(null)}
           >
             <motion.div
-              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-[#c2c6d6]"
+              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden border border-[#c2c6d6]/50 flex flex-col max-h-[88vh]"
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               onClick={e => e.stopPropagation()}
             >
-              <div className="px-6 py-4 bg-[#0058be] text-white flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-white/20 rounded text-[12px] font-bold">
+              <div className="px-8 py-5 bg-gradient-to-r from-[#0058be] to-[#1e6be6] text-white flex items-center justify-between shadow-md shrink-0">
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-white/20 rounded-lg text-[13px] font-bold tracking-wide backdrop-blur-md shadow-sm">
                     #{typeof selectedCitationModal === "number" ? selectedCitationModal : selectedCitationModal.citationNumber || "1"}
                   </span>
-                  <h3 className="text-[15px] font-bold truncate max-w-[320px]">
+                  <h3 className="text-[18px] font-bold truncate max-w-[650px] tracking-tight">
                     {typeof selectedCitationModal === "number"
                       ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.title || "Trích dẫn tài liệu")
                       : (selectedCitationModal.title || "Trích dẫn tài liệu")}
@@ -1151,44 +1151,52 @@ function WorkspaceContent() {
                 </div>
                 <button
                   onClick={() => setSelectedCitationModal(null)}
-                  className="p-1 rounded-lg hover:bg-white/10 transition-colors text-white"
+                  className="p-1.5 rounded-xl hover:bg-white/15 transition-colors text-white"
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
               </div>
-              <div className="p-6 flex flex-col gap-4">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#727785]">Tác giả / Nguồn</span>
-                  <p className="text-[14px] font-semibold text-[#121c2a] mt-0.5">
+              <div className="p-8 flex flex-col gap-6 overflow-y-auto">
+                <div className="flex flex-col gap-1.5 bg-[#f8fafc] p-4 rounded-2xl border border-slate-200/80">
+                  <span className="text-[11.5px] font-bold uppercase tracking-wider text-[#727785]">Tác giả / Nguồn tài liệu</span>
+                  <p className="text-[15px] font-bold text-[#121c2a] flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#0058be]" />
                     {typeof selectedCitationModal === "number"
                       ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.author || "Tài liệu hệ thống")
                       : (selectedCitationModal.author || "Tài liệu hệ thống")}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#727785]">Đoạn trích dẫn chi tiết</span>
-                  <div className="mt-1 p-4 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[13.5px] text-[#334155] leading-relaxed italic font-serif">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[12px] font-bold uppercase tracking-wider text-[#0058be] flex items-center gap-1.5">
+                      <span className="w-1.5 h-4 bg-[#0058be] rounded-full" />
+                      Đoạn trích dẫn chi tiết từ nghiên cứu
+                    </span>
+                    <span className="text-[12px] text-slate-400 font-medium italic">Nội dung gốc được AI tổng hợp & đối chiếu</span>
+                  </div>
+                  <div className="p-6 rounded-2xl bg-[#f8fafc] border border-[#e2e8f0] text-[15px] text-[#334155] leading-relaxed italic font-serif shadow-inner max-h-[45vh] overflow-y-auto whitespace-pre-wrap">
                     "{typeof selectedCitationModal === "number"
                       ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.excerpt || "Không có nội dung trích dẫn chi tiết.")
                       : (selectedCitationModal.excerpt || "Không có nội dung trích dẫn chi tiết.")}"
                   </div>
                 </div>
-                <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
-                  <div className="flex gap-1.5">
+                <div className="flex items-center justify-between pt-4 border-t border-[#e2e8f0] mt-2 shrink-0">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-[12.5px] font-semibold text-slate-500 mr-1">Thẻ phân loại:</span>
                     {(typeof selectedCitationModal === "number"
                       ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.tags || ["Tr. 1"])
                       : (selectedCitationModal.tags || ["Tr. 1"])
                     ).map((t: string, i: number) => (
-                      <span key={i} className="px-2 py-0.5 bg-[#eff4ff] text-[#0058be] rounded text-[11px] font-bold">
+                      <span key={i} className="px-3 py-1 bg-[#eff4ff] border border-[#0058be]/20 text-[#0058be] rounded-lg text-[12px] font-bold shadow-2xs">
                         {t}
                       </span>
                     ))}
                   </div>
                   <button
                     onClick={() => setSelectedCitationModal(null)}
-                    className="px-4 py-1.5 rounded-xl bg-[#0058be] text-white text-[13px] font-semibold hover:bg-[#2170e4] transition-colors shadow-sm"
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#0058be] to-[#1e6be6] text-white text-[14px] font-bold hover:shadow-lg hover:shadow-[#0058be]/25 transition-all active:scale-95 cursor-pointer"
                   >
-                    Đóng
+                    Đóng cửa sổ
                   </button>
                 </div>
               </div>
