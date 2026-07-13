@@ -598,32 +598,72 @@ export default function LibraryPage() {
           </div>
 
           {/* Table Header */}
-          <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_90px_160px_130px] gap-3 px-6 py-3.5 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider items-center">
-            <div className="w-[20px]"></div>
-            <div className="w-[24px]"></div>
-            <div>Tiêu đề & Tác giả</div>
-            <div>Năm</div>
-            <div>Bộ sưu tập</div>
-            <div className="text-right">Thao tác</div>
-          </div>
+          {(loadingDocs || filteredDocs.length > 0) && (
+            <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_90px_160px_130px] gap-3 px-6 py-3.5 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider items-center">
+              <div className="w-[20px]"></div>
+              <div className="w-[24px]"></div>
+              <div>Tiêu đề & Tác giả</div>
+              <div>Năm</div>
+              <div>Bộ sưu tập</div>
+              <div className="text-right">Thao tác</div>
+            </div>
+          )}
 
           {/* Table Body */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto flex flex-col">
             {loadingDocs ? (
-              <div className="flex flex-col items-center justify-center h-64 text-[#727785] gap-3">
+              <div className="flex-1 flex flex-col items-center justify-center min-h-[260px] text-[#727785] gap-3">
                 <Loader2 size={28} className="animate-spin text-[#0058be]" />
                 <p className="text-[13px] font-medium">Đang đồng bộ thư viện tài liệu...</p>
               </div>
             ) : filteredDocs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-[#727785] gap-3 px-6 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-[#eff4ff] flex items-center justify-center text-[#0058be] mb-1">
-                  <FolderOpen size={24} />
+              <div className="flex-1 flex items-center justify-center min-h-[380px] p-6 lg:p-10 bg-gradient-to-b from-[#f8f9ff]/40 to-white">
+                <div className="w-full max-w-4xl bg-gradient-to-r from-[#eff4ff]/90 via-white to-[#f8f9ff]/90 border border-[#0058be]/20 rounded-3xl p-8 md:p-10 shadow-sm flex flex-col md:flex-row items-center gap-8 text-left transition-all hover:shadow-md">
+                  {/* Left Icon Badge */}
+                  <div className="relative shrink-0">
+                    <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#0058be] to-[#2563eb] text-white flex items-center justify-center shadow-lg shadow-[#0058be]/25">
+                      <FolderOpen size={44} strokeWidth={1.5} />
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md border-2 border-white">
+                      <Sparkles size={20} />
+                    </div>
+                  </div>
+
+                  {/* Right Content & Actions Horizontal Flow */}
+                  <div className="flex-1 min-w-0 space-y-4">
+                    <div className="space-y-1">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-[#0058be]/10 text-[#0058be] inline-block">
+                        KHÔNG GIAN LÀM VIỆC TRỐNG
+                      </span>
+                      <h3 className="text-2xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                        Chưa có tài liệu nào phù hợp
+                      </h3>
+                    </div>
+
+                    <p className="text-[14px] text-[#424754] leading-relaxed w-full">
+                      Bạn có thể thay đổi từ khóa tìm kiếm hoặc tải lên tài liệu PDF/DOCX mới để bắt đầu nghiên cứu và trích xuất tri thức AI tự động.
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                      <Link 
+                        href="/user/upload" 
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#0058be] hover:bg-[#004ca3] text-white text-[14px] font-bold rounded-2xl shadow-md shadow-[#0058be]/20 transition-all hover:scale-105"
+                      >
+                        <Plus size={18} />
+                        <span>Tải tài liệu PDF/DOCX ngay</span>
+                      </Link>
+                      {(search || activeCol !== "all" || activeTag !== null) && (
+                        <button 
+                          onClick={() => { setSearch(""); setActiveCol("all"); setActiveTag(null); }}
+                          className="inline-flex items-center gap-2 px-5 py-3 bg-white border border-[#c2c6d6]/60 text-[#121c2a] text-[14px] font-bold rounded-2xl hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                          <X size={16} />
+                          <span>Xóa bộ lọc tìm kiếm</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[15px] font-bold text-[#121c2a]">Chưa có tài liệu nào phù hợp</p>
-                <p className="text-[13px] max-w-md">Bạn có thể thay đổi từ khóa tìm kiếm hoặc tải lên tài liệu PDF/DOCX mới để bắt đầu nghiên cứu.</p>
-                <Link href="/user/upload" className="mt-2 px-5 py-2 bg-[#0058be] text-white text-[13px] font-semibold rounded-xl hover:bg-[#004ca3] transition-colors">
-                  Tải tài liệu ngay
-                </Link>
               </div>
             ) : (
               filteredDocs.map((doc) => (
