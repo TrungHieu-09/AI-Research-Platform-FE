@@ -20,17 +20,39 @@ async function request<T>(
   opts: ApiOptions = {}
 ): Promise<T> {
   const token = opts.token ?? (opts.noAuth ? null : getToken())
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData
+
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+
+  // Only set Content-Type to JSON if body is NOT FormData
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json"
+  }
 
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    headers,
+    body: body !== undefined ? (isFormData ? (body as FormData) : JSON.stringify(body)) : undefined,
   })
 
-  const data = await res.json()
+  let data: any = {}
+  const contentType = res.headers.get("content-type")
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      data = await res.json()
+    } catch {
+      data = {}
+    }
+  } else {
+    try {
+      const text = await res.text()
+      data = text ? JSON.parse(text) : {}
+    } catch {
+      data = {}
+    }
+  }
 
   if (!res.ok) {
     // Extract a readable error message from server response
