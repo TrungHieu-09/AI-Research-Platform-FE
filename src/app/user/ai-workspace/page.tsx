@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation"
 import {
   Bell, HelpCircle, ChevronDown, FileText, FlaskConical,
   AlertTriangle, ArrowRightLeft, Paperclip, Send, Sparkles,
-  Layers, Share2, X, Info, CheckCircle2, Code2
+  Layers, Share2, X, Info, CheckCircle2, Code2,
+  Copy, Check, Edit3, Trash2, Download, ExternalLink, MoreVertical, Plus, History
 } from "lucide-react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 import { useAuth } from "@/features/auth/auth-context"
@@ -78,8 +79,40 @@ const msgVariants: Variants = {
   exit: { opacity: 0, y: -8, scale: 0.97, transition: { duration: 0.2 } },
 }
 
+/* ─── Code Block Component with Copy Button ──── */
+function CodeBlock({ lang, content }: { lang: string; content: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="my-3 rounded-xl overflow-hidden border border-[#334155] bg-[#0f172a] shadow-lg w-full transition-all hover:border-[#475569]">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-[#1e293b] border-b border-[#334155] text-white/80 text-[12px] font-mono">
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+          <span className="ml-1.5 font-bold tracking-wider uppercase text-[11px] text-[#94a3b8]">{lang || "CODE"}</span>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#334155]/70 hover:bg-[#475569] text-[#e2e8f0] text-[11px] font-sans font-medium transition-all cursor-pointer border border-white/10"
+        >
+          {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} className="text-[#94a3b8]" />}
+          <span>{copied ? "Đã sao chép" : "Sao chép code"}</span>
+        </button>
+      </div>
+      <pre className="p-4 text-[13px] text-[#f8fafc] font-mono overflow-x-auto leading-relaxed whitespace-pre">
+        <code>{content}</code>
+      </pre>
+    </div>
+  );
+}
+
 /* ─── Rich Formatting & Markdown Renderer ────── */
-function parseInlineFormatting(text: string) {
+function parseInlineFormatting(text: string, onCitationClick?: (num: number) => void) {
   if (!text) return null;
   const parts = text.split(/(\*\*.*?\*\*|`[^`]+`|\[[0-9,\s]+\]|\$[^\$]+\$)/g);
 
@@ -109,8 +142,12 @@ function parseInlineFormatting(text: string) {
           {numbers.map((num, nIdx) => (
             <span
               key={nIdx}
-              className="inline-flex items-center justify-center px-1.5 py-0.2 text-[11px] font-bold bg-[#eff4ff] text-[#0058be] border border-[#0058be]/30 rounded-md hover:bg-[#0058be] hover:text-white transition-all cursor-pointer shadow-sm"
-              title={`Trích dẫn nguồn [${num}]`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onCitationClick) onCitationClick(Number(num));
+              }}
+              className="inline-flex items-center justify-center px-1.5 py-0.5 text-[11px] font-bold bg-[#eff4ff] text-[#0058be] border border-[#0058be]/30 rounded-md hover:bg-[#0058be] hover:text-white transition-all cursor-pointer shadow-sm"
+              title={`Click để xem chi tiết trích dẫn [${num}]`}
             >
               #{num}
             </span>
@@ -122,7 +159,7 @@ function parseInlineFormatting(text: string) {
   });
 }
 
-function renderFormattedContent(text: string) {
+function renderFormattedContent(text: string, onCitationClick?: (num: number) => void) {
   if (!text) return null;
 
   // 1. Separate fenced code blocks first so inner double newlines don't split code blocks
@@ -145,22 +182,7 @@ function renderFormattedContent(text: string) {
     <div className="flex flex-col gap-4 w-full">
       {tokens.map((token, tIdx) => {
         if (token.type === "code") {
-          return (
-            <div key={`code-${tIdx}`} className="my-2 rounded-xl overflow-hidden border border-[#334155] bg-[#0f172a] shadow-md w-full">
-              <div className="flex items-center justify-between px-4 py-2 bg-[#1e293b] border-b border-[#334155] text-white/80 text-[12px] font-mono">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
-                  <span className="ml-1.5 font-bold tracking-wider uppercase text-[11px] text-[#94a3b8]">{token.lang}</span>
-                </div>
-                <Code2 size={14} className="text-[#94a3b8]" />
-              </div>
-              <pre className="p-4 text-[13px] text-[#f8fafc] font-mono overflow-x-auto leading-relaxed whitespace-pre">
-                <code>{token.content}</code>
-              </pre>
-            </div>
-          );
+          return <CodeBlock key={`code-${tIdx}`} lang={token.lang || "code"} content={token.content} />;
         }
 
         // Split markdown chunks by double newlines into blocks
@@ -189,7 +211,7 @@ function renderFormattedContent(text: string) {
                           <tr className="bg-gradient-to-r from-[#f8fafc] to-[#f1f5f9] border-b border-[#cbd5e1]">
                             {headers.map((h, hIdx) => (
                               <th key={hIdx} className="py-3 px-4 text-[13.5px] font-bold text-[#0f172a] tracking-tight">
-                                {parseInlineFormatting(h)}
+                                {parseInlineFormatting(h, onCitationClick)}
                               </th>
                             ))}
                           </tr>
@@ -199,7 +221,7 @@ function renderFormattedContent(text: string) {
                             <tr key={rIdx} className="hover:bg-[#f8fafc]/90 transition-colors">
                               {row.map((cell, cIdx) => (
                                 <td key={cIdx} className="py-3 px-4 text-[13.5px] text-[#334155] leading-relaxed">
-                                  {parseInlineFormatting(cell)}
+                                  {parseInlineFormatting(cell, onCitationClick)}
                                 </td>
                               ))}
                             </tr>
@@ -228,7 +250,7 @@ function renderFormattedContent(text: string) {
                     <div key={`quote-${bIdx}`} className="my-2 flex items-start gap-3 p-4 bg-gradient-to-r from-[#ecfdf5] to-[#f0fdf4] border-l-4 border-[#10b981] rounded-r-xl shadow-sm">
                       <CheckCircle2 size={20} className="text-[#10b981] shrink-0 mt-0.5" />
                       <div className="flex-1 text-[13.5px] text-[#065f46] leading-relaxed font-medium">
-                        {parseInlineFormatting(bodyText || firstLine.replace(/\[!TIP\]\s*/, ""))}
+                        {parseInlineFormatting(bodyText || firstLine.replace(/\[!TIP\]\s*/, ""), onCitationClick)}
                       </div>
                     </div>
                   );
@@ -238,7 +260,7 @@ function renderFormattedContent(text: string) {
                     <div key={`quote-${bIdx}`} className="my-2 flex items-start gap-3 p-4 bg-gradient-to-r from-[#eff6ff] to-[#f8fafc] border-l-4 border-[#3b82f6] rounded-r-xl shadow-sm">
                       <Info size={20} className="text-[#3b82f6] shrink-0 mt-0.5" />
                       <div className="flex-1 text-[13.5px] text-[#1e40af] leading-relaxed font-medium">
-                        {parseInlineFormatting(bodyText || firstLine.replace(/\[!NOTE\]\s*/, ""))}
+                        {parseInlineFormatting(bodyText || firstLine.replace(/\[!NOTE\]\s*/, ""), onCitationClick)}
                       </div>
                     </div>
                   );
@@ -248,14 +270,14 @@ function renderFormattedContent(text: string) {
                     <div key={`quote-${bIdx}`} className="my-2 flex items-start gap-3 p-4 bg-gradient-to-r from-[#fffbeb] to-[#fefce8] border-l-4 border-[#f59e0b] rounded-r-xl shadow-sm">
                       <AlertTriangle size={20} className="text-[#f59e0b] shrink-0 mt-0.5" />
                       <div className="flex-1 text-[13.5px] text-[#92400e] leading-relaxed font-medium">
-                        {parseInlineFormatting(bodyText || firstLine.replace(/\[!.*\]\s*/, ""))}
+                        {parseInlineFormatting(bodyText || firstLine.replace(/\[!.*\]\s*/, ""), onCitationClick)}
                       </div>
                     </div>
                   );
                 }
                 return (
                   <blockquote key={`quote-${bIdx}`} className="my-2 p-4 bg-[#f8fafc] border-l-4 border-[#64748b] rounded-r-xl text-[14px] italic text-[#475569] leading-relaxed shadow-sm">
-                    {parseInlineFormatting(trimmedBlock.replace(/^>\s*/gm, ""))}
+                    {parseInlineFormatting(trimmedBlock.replace(/^>\s*/gm, ""), onCitationClick)}
                   </blockquote>
                 );
               }
@@ -273,7 +295,7 @@ function renderFormattedContent(text: string) {
                   <div key={`hd-${bIdx}`} className="flex items-center gap-2.5 mt-3 first:mt-0 pt-2 first:pt-0 border-t border-[#e2e8f0]/40 first:border-none">
                     <div className={`w-1.5 ${isMainTitle ? "h-5 bg-gradient-to-b from-[#0058be] to-[#2563eb]" : "h-4 bg-[#0058be]"} rounded-full shrink-0 shadow-sm`} />
                     <h4 className={`${isMainTitle ? "text-[16px]" : "text-[14.5px]"} font-bold text-[#0f172a] tracking-tight`}>
-                      {parseInlineFormatting(titleText)}
+                      {parseInlineFormatting(titleText, onCitationClick)}
                     </h4>
                   </div>
                 );
@@ -288,7 +310,7 @@ function renderFormattedContent(text: string) {
                       return (
                         <li key={iIdx} className="flex items-start gap-2.5 text-[14px] text-[#334155] leading-relaxed">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#0058be] mt-2 shrink-0 shadow-[0_0_6px_rgba(0,88,190,0.4)]" />
-                          <span className="flex-1">{parseInlineFormatting(cleanItem)}</span>
+                          <span className="flex-1">{parseInlineFormatting(cleanItem, onCitationClick)}</span>
                         </li>
                       );
                     })}
@@ -306,14 +328,14 @@ function renderFormattedContent(text: string) {
                         return (
                           <div key={lIdx} className="flex items-start gap-2.5 pl-2 my-0.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#0058be] mt-2 shrink-0 shadow-[0_0_6px_rgba(0,88,190,0.4)]" />
-                            <span className="flex-1">{parseInlineFormatting(trimmed.replace(/^([*\-•]|\d+\.)\s*/, ""))}</span>
+                            <span className="flex-1">{parseInlineFormatting(trimmed.replace(/^([*\-•]|\d+\.)\s*/, ""), onCitationClick)}</span>
                           </div>
                         );
                       }
                       if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
-                        return <div key={lIdx} className="font-bold text-[#0f172a] text-[14.5px] mt-1.5">{parseInlineFormatting(trimmed)}</div>;
+                        return <div key={lIdx} className="font-bold text-[#0f172a] text-[14.5px] mt-1.5">{parseInlineFormatting(trimmed, onCitationClick)}</div>;
                       }
-                      return <p key={lIdx}>{parseInlineFormatting(trimmed)}</p>;
+                      return <p key={lIdx}>{parseInlineFormatting(trimmed, onCitationClick)}</p>;
                     })}
                   </div>
                 );
@@ -322,7 +344,7 @@ function renderFormattedContent(text: string) {
               // G. Default Paragraph
               return (
                 <p key={`p-${bIdx}`} className="text-[14px] text-[#334155] leading-relaxed">
-                  {parseInlineFormatting(trimmedBlock)}
+                  {parseInlineFormatting(trimmedBlock, onCitationClick)}
                 </p>
               );
             })}
@@ -340,12 +362,18 @@ function WorkspaceContent() {
   const docId = searchParams.get("docId")
 
   const [input, setInput] = React.useState("")
-  const [messages, setMessages] = React.useState<{ role: string; content: string; attachedFile?: { name: string; size: number } }[]>([])
+  const [messages, setMessages] = React.useState<{ role: string; content: string; attachedFile?: { name: string; size: number; fileUrl?: string } }[]>([])
   const [isTyping, setIsTyping] = React.useState(false)
   const bottomRef = React.useRef<HTMLDivElement>(null)
 
   const [realSourceReferences, setRealSourceReferences] = React.useState<any[]>([])
-  const sessionId = React.useMemo(() => crypto.randomUUID(), [])
+  const [sessionId, setSessionId] = React.useState(() => typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`)
+  const [chatSessions, setChatSessions] = React.useState<any[]>([])
+  const [editingSessionId, setEditingSessionId] = React.useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = React.useState("")
+  const [selectedCitationModal, setSelectedCitationModal] = React.useState<any | null>(null)
+  const [showSessionsSidebar, setShowSessionsSidebar] = React.useState(true)
+
   const [realAttachedDoc, setRealAttachedDoc] = React.useState<{ id: string, title: string } | null>(null)
   const [isDocAttached, setIsDocAttached] = React.useState(false)
 
@@ -354,6 +382,115 @@ function WorkspaceContent() {
   const [uploadedFile, setUploadedFile] = React.useState<{ name: string; size: number; fileUrl: string; fileHash?: string; mimeType: string } | null>(null)
   const [isUploadingFile, setIsUploadingFile] = React.useState(false)
   const [uploadFileProgress, setUploadFileProgress] = React.useState(0)
+
+  const fetchChatSessions = React.useCallback(() => {
+    if (!token) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/sessions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) setChatSessions(data)
+    })
+    .catch(console.error)
+  }, [token]);
+
+  React.useEffect(() => {
+    fetchChatSessions();
+  }, [fetchChatSessions]);
+
+  const loadSessionHistory = async (id: string) => {
+    setSessionId(id);
+    setMessages([]);
+    setRealSourceReferences([]);
+    setUploadedFile(null);
+    if (!token) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/sessions/${id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setMessages(data.map((m: any) => ({
+          role: m.sender ? m.sender.toLowerCase() : "user",
+          content: m.message,
+          attachedFile: m.attachedFile ? { name: m.attachedFile.name, size: m.attachedFile.size || 0, fileUrl: m.attachedFile.url } : undefined
+        })));
+        const allCits: any[] = [];
+        data.forEach((m: any) => {
+          if (m.citations && Array.isArray(m.citations)) {
+            m.citations.forEach((c: any, idx: number) => {
+              allCits.push({
+                id: c.id || idx,
+                citationNumber: allCits.length + 1,
+                author: c.document?.title || "Tài liệu",
+                title: c.document?.title || "Tài liệu đính kèm",
+                excerpt: c.textExcerpt || "",
+                tags: [`Tr. ${c.pageNumber || 1}`]
+              });
+            });
+          }
+        });
+        if (allCits.length > 0) setRealSourceReferences(allCits);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRenameSession = async (id: string, newTitle: string) => {
+    if (!newTitle.trim() || !token) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/sessions/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: newTitle.trim() })
+      });
+      if (res.ok) {
+        setChatSessions(prev => prev.map(s => s.id === id ? { ...s, title: newTitle.trim() } : s));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setEditingSessionId(null);
+    }
+  };
+
+  const handleDeleteSession = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Bạn có chắc chắn muốn xóa cuộc trò chuyện này? Toàn bộ tin nhắn và trích dẫn sẽ bị xóa vĩnh viễn.")) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/sessions/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setChatSessions(prev => prev.filter(s => s.id !== id));
+        if (id === sessionId) {
+          const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`;
+          setSessionId(newId);
+          setMessages([]);
+          setRealSourceReferences([]);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleExportChat = () => {
+    if (messages.length === 0) return;
+    const currentSessionTitle = chatSessions.find(s => s.id === sessionId)?.title || "Cuộc trò chuyện Lumis AI";
+    const content = messages.map(m => `### ${m.role === "user" ? "🧑 Bạn" : "🤖 Lumis AI"}\n${m.content}\n`).join("\n---\n\n");
+    const blob = new Blob([`# ${currentSessionTitle}\nPhiên ID: ${sessionId}\nNgày xuất: ${new Date().toLocaleString('vi-VN')}\n\n---\n\n${content}`], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Lumis-Chat-${sessionId.slice(0, 8)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   React.useEffect(() => {
     if (docId) {
@@ -440,7 +577,7 @@ function WorkspaceContent() {
     setMessages(prev => [...prev, { 
       role: "user", 
       content: userMsg,
-      attachedFile: currentUploadedFile ? { name: currentUploadedFile.name, size: currentUploadedFile.size } : undefined
+      attachedFile: currentUploadedFile ? { name: currentUploadedFile.name, size: currentUploadedFile.size, fileUrl: currentUploadedFile.fileUrl } : undefined
     }])
     setInput("")
     setUploadedFile(null)
@@ -466,6 +603,7 @@ function WorkspaceContent() {
       if (!res.ok) throw new Error(data.error || "Lỗi khi gọi AI");
       
       setMessages(prev => [...prev, { role: "ai", content: data.answer }]);
+      fetchChatSessions();
       
       if (data.citations && data.citations.length > 0) {
         setRealSourceReferences(data.citations.map((c: any, i: number) => ({
@@ -489,18 +627,43 @@ function WorkspaceContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <motion.button
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-[#c2c6d6]/50 rounded-lg text-[13px] font-bold text-[#424754] shadow-sm"
-          whileHover={{ scale: 1.02, boxShadow: "0 4px 16px rgba(0,88,190,0.10)" }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          <Layers size={14} className="text-[#727785]" />
-          Bộ sưu tập: Tài liệu điện toán lượng tử
-          <ChevronDown size={14} className="text-[#727785] ml-1" />
-        </motion.button>
+        <div className="flex items-center gap-3">
+          <motion.button
+            onClick={() => setShowSessionsSidebar(prev => !prev)}
+            className={`flex items-center gap-2 px-3.5 py-2 border rounded-lg text-[13px] font-bold shadow-sm transition-all ${
+              showSessionsSidebar ? "bg-[#eff4ff] border-[#0058be]/40 text-[#0058be]" : "bg-white border-[#c2c6d6]/50 text-[#424754]"
+            }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <History size={15} />
+            <span>{showSessionsSidebar ? "Ẩn lịch sử" : "Lịch sử trò chuyện"}</span>
+          </motion.button>
+
+          <motion.button
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#c2c6d6]/50 rounded-lg text-[13px] font-bold text-[#424754] shadow-sm"
+            whileHover={{ scale: 1.02, boxShadow: "0 4px 16px rgba(0,88,190,0.10)" }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <Layers size={14} className="text-[#727785]" />
+            Bộ sưu tập: Tài liệu điện toán lượng tử
+            <ChevronDown size={14} className="text-[#727785] ml-1" />
+          </motion.button>
+        </div>
 
         <div className="flex items-center gap-2">
+          <motion.button
+            onClick={handleExportChat}
+            disabled={messages.length === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#eff4ff] border border-[#c2c6d6]/50 hover:border-[#0058be]/40 disabled:opacity-40 rounded-lg text-[#0058be] text-[12.5px] font-bold shadow-sm transition-all"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            title="Xuất nội dung cuộc trò chuyện sang file Markdown"
+          >
+            <Download size={14} />
+            <span>Xuất file</span>
+          </motion.button>
+
           {[Bell, HelpCircle].map((Icon, i) => (
             <motion.button
               key={i}
@@ -517,7 +680,97 @@ function WorkspaceContent() {
       {/* ── Main Area ── */}
       <div className="flex-1 overflow-hidden flex">
 
-        {/* Left: Chat */}
+        {/* Sessions History Left Sidebar */}
+        {showSessionsSidebar && (
+          <div className="w-[280px] shrink-0 border-r border-[#c2c6d6]/30 bg-white flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-[#c2c6d6]/20 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  const newId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}`;
+                  setSessionId(newId);
+                  setMessages([]);
+                  setRealSourceReferences([]);
+                  setUploadedFile(null);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-[#0058be] text-white rounded-xl text-[13px] font-bold shadow-sm hover:bg-[#2170e4] transition-all cursor-pointer"
+              >
+                <Plus size={16} />
+                <span>Cuộc trò chuyện mới</span>
+              </button>
+            </div>
+            <div className="px-4 py-2 bg-[#f8fafc] border-b border-[#c2c6d6]/20 text-[11px] font-bold uppercase tracking-wider text-[#727785] flex items-center gap-1.5">
+              <History size={13} />
+              <span>Lịch sử phiên ({chatSessions.length})</span>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2.5 flex flex-col gap-1.5">
+              {chatSessions.map((s: any) => {
+                const isSelected = s.id === sessionId;
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => loadSessionHistory(s.id)}
+                    className={`group relative flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${
+                      isSelected
+                        ? "bg-[#eff4ff] border-[#0058be]/40 text-[#0058be] font-bold shadow-sm"
+                        : "bg-white hover:bg-[#f8fafc] border-transparent hover:border-[#e2e8f0] text-[#334155]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 overflow-hidden flex-1 mr-2">
+                      <Sparkles size={14} className={isSelected ? "text-[#0058be] shrink-0" : "text-[#94a3b8] shrink-0"} />
+                      {editingSessionId === s.id ? (
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={e => setEditingTitle(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") handleRenameSession(s.id, editingTitle);
+                            if (e.key === "Escape") setEditingSessionId(null);
+                          }}
+                          onClick={e => e.stopPropagation()}
+                          autoFocus
+                          className="w-full text-[13px] px-2 py-1 rounded bg-white border border-[#0058be] outline-none text-[#121c2a]"
+                        />
+                      ) : (
+                        <span className="truncate text-[13px] leading-tight">
+                          {s.title || "Cuộc trò chuyện AI"}
+                        </span>
+                      )}
+                    </div>
+                    {editingSessionId !== s.id && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            setEditingSessionId(s.id);
+                            setEditingTitle(s.title || "");
+                          }}
+                          className="p-1 rounded hover:bg-[#e2e8f0] text-[#64748b] hover:text-[#0f172a] transition-colors"
+                          title="Đổi tên"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        <button
+                          onClick={e => handleDeleteSession(s.id, e)}
+                          className="p-1 rounded hover:bg-red-50 text-[#64748b] hover:text-red-500 transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {chatSessions.length === 0 && (
+                <div className="text-center py-8 px-4 text-[#94a3b8] text-[12px]">
+                  Chưa có lịch sử cuộc trò chuyện.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Center: Chat */}
         <div className="flex-1 flex flex-col px-6 md:px-12 pt-8 pb-6 overflow-y-auto max-w-[800px] mx-auto">
 
           {/* Quick Action Buttons */}
@@ -608,7 +861,7 @@ function WorkspaceContent() {
                       <span className="text-[13px] font-bold">Lumis AI</span>
                     </div>
                     <div className="w-full">
-                      {renderFormattedContent(msg.content)}
+                      {renderFormattedContent(msg.content, (num) => setSelectedCitationModal(num))}
                     </div>
                   </motion.div>
                 )
@@ -771,6 +1024,7 @@ function WorkspaceContent() {
             {(realSourceReferences.length > 0 ? realSourceReferences : sourceReferences).map((ref, i) => (
               <motion.div
                 key={ref.id}
+                onClick={() => setSelectedCitationModal(ref)}
                 className="bg-white border border-[#c2c6d6]/40 rounded-xl overflow-hidden shadow-sm cursor-pointer"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -806,6 +1060,82 @@ function WorkspaceContent() {
           </div>
         </motion.div>
       </div>
+
+      {/* ── Citation Detail Modal ── */}
+      <AnimatePresence>
+        {selectedCitationModal !== null && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedCitationModal(null)}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-[#c2c6d6]"
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="px-6 py-4 bg-[#0058be] text-white flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-white/20 rounded text-[12px] font-bold">
+                    #{typeof selectedCitationModal === "number" ? selectedCitationModal : selectedCitationModal.citationNumber || "1"}
+                  </span>
+                  <h3 className="text-[15px] font-bold truncate max-w-[320px]">
+                    {typeof selectedCitationModal === "number"
+                      ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.title || "Trích dẫn tài liệu")
+                      : (selectedCitationModal.title || "Trích dẫn tài liệu")}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCitationModal(null)}
+                  className="p-1 rounded-lg hover:bg-white/10 transition-colors text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-6 flex flex-col gap-4">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#727785]">Tác giả / Nguồn</span>
+                  <p className="text-[14px] font-semibold text-[#121c2a] mt-0.5">
+                    {typeof selectedCitationModal === "number"
+                      ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.author || "Tài liệu hệ thống")
+                      : (selectedCitationModal.author || "Tài liệu hệ thống")}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#727785]">Đoạn trích dẫn chi tiết</span>
+                  <div className="mt-1 p-4 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[13.5px] text-[#334155] leading-relaxed italic font-serif">
+                    "{typeof selectedCitationModal === "number"
+                      ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.excerpt || "Không có nội dung trích dẫn chi tiết.")
+                      : (selectedCitationModal.excerpt || "Không có nội dung trích dẫn chi tiết.")}"
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-[#e2e8f0]">
+                  <div className="flex gap-1.5">
+                    {(typeof selectedCitationModal === "number"
+                      ? (realSourceReferences.concat(sourceReferences).find(r => r.citationNumber === selectedCitationModal || r.id === selectedCitationModal)?.tags || ["Tr. 1"])
+                      : (selectedCitationModal.tags || ["Tr. 1"])
+                    ).map((t: string, i: number) => (
+                      <span key={i} className="px-2 py-0.5 bg-[#eff4ff] text-[#0058be] rounded text-[11px] font-bold">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setSelectedCitationModal(null)}
+                    className="px-4 py-1.5 rounded-xl bg-[#0058be] text-white text-[13px] font-semibold hover:bg-[#2170e4] transition-colors shadow-sm"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
