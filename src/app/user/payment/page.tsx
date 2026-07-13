@@ -2,316 +2,345 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
+import { motion } from "framer-motion"
+import { useAuth } from "@/features/auth/auth-context"
+import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import {
+  Sparkles, CheckCircle2, ArrowRight, Clock, CheckCircle, XCircle,
+  Receipt, Shield, Cpu, Cloud, RefreshCw, Loader2, AlertCircle
+} from "lucide-react"
 
-/* ─── Animated Number ─────────────────────── */
-function AnimatedNumber({ value, decimals = 0 }: { value: number; decimals?: number }) {
-  const ref = React.useRef<HTMLSpanElement>(null)
-  const inView = useInView(ref, { once: true })
-  const motionVal = useMotionValue(0)
-  const spring = useSpring(motionVal, { damping: 28, stiffness: 70 })
-  const [display, setDisplay] = React.useState("0")
-  React.useEffect(() => { if (inView) motionVal.set(value) }, [inView, value, motionVal])
-  React.useEffect(() => spring.on("change", v => setDisplay(v.toFixed(decimals))), [spring, decimals])
-  return <span ref={ref}>{display}</span>
-}
+export default function PaymentOverviewPage() {
+  const { user, token, refreshProfile } = useAuth()
+  const isPremium = user?.tier === "PREMIUM"
 
-/* ─── Animated Progress Bar ───────────────── */
-function AnimatedBar({ pct, color = "#004191" }: { pct: number; color?: string }) {
-  const ref = React.useRef<HTMLDivElement>(null)
-  const inView = useInView(ref, { once: true })
+  const [loadingStats, setLoadingStats] = React.useState(true)
+  const [aiLimit, setAiLimit] = React.useState<{ queriesToday: number; limit: number; remaining: number; tier: string } | null>(null)
+  const [receipts, setReceipts] = React.useState<any[]>([])
+  const [error, setError] = React.useState<string | null>(null)
+
+  const fetchData = React.useCallback(async () => {
+    if (!token) return
+    setLoadingStats(true)
+    setError(null)
+    try {
+      const [limitData, receiptsData] = await Promise.all([
+        api.get<any>("/api/ai/limit").catch(() => null),
+        api.get<any[]>("/api/payments/receipts").catch(() => [])
+      ])
+
+      if (limitData) setAiLimit(limitData)
+      if (Array.isArray(receiptsData)) setReceipts(receiptsData)
+    } catch (e: any) {
+      setError("Không tải được chi tiết hạn ngạch và hóa đơn.")
+    } finally {
+      setLoadingStats(false)
+    }
+  }, [token])
+
+  React.useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
   return (
-    <div ref={ref} className="w-full bg-[#dfe9fc] rounded-full h-2">
-      <motion.div
-        className="h-2 rounded-full"
-        style={{ backgroundColor: color }}
-        initial={{ width: 0 }}
-        animate={inView ? { width: `${pct}%` } : {}}
-        transition={{ duration: 0.9, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      />
-    </div>
-  )
-}
-
-/* ─── Plan Card ───────────────────────────── */
-function PlanCard({
-  children,
-  featured,
-  delay,
-}: {
-  children: React.ReactNode
-  featured?: boolean
-  delay?: number
-}) {
-  return (
-    <motion.div
-      className={cn(
-        "rounded-xl p-6 flex flex-col",
-        featured
-          ? "bg-[#f4f8ff] border-2 border-[#004191] relative shadow-[0px_8px_24px_rgba(0,65,145,0.12)] scale-[1.02]"
-          : "bg-white border border-[#c2c6d6]/30 shadow-sm"
-      )}
-      initial={{ opacity: 0, y: 28 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: delay ?? 0, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={
-        featured
-          ? { boxShadow: "0px 16px 48px rgba(0,65,145,0.22)", scale: 1.035 }
-          : { y: -4, boxShadow: "0px 8px 32px rgba(0,65,145,0.10)", borderColor: "rgba(0,65,145,0.3)" }
-      }
-      whileTap={{ scale: 0.98 }}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-export default function PaymentManagementPage() {
-  return (
-    <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-20">
-      {/* Page Header */}
-      <motion.div
-        className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      >
+    <div className="max-w-6xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
+      {/* Title Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <motion.h2
-            className="font-semibold text-[24px] md:text-[32px] tracking-[-0.02em] text-[#121c2a]"
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.05, duration: 0.45 }}
-          >
-            Quản lý thanh toán
-          </motion.h2>
-          <motion.p
-            className="font-normal text-[14px] text-[#424753] mt-1"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15, duration: 0.4 }}
-          >
-            Quản lý khả năng AI, gói lưu trữ và thông tin thanh toán của bạn.
-          </motion.p>
-        </div>
-      </motion.div>
-
-      {/* Current Plans Overview */}
-      <div className="mb-10">
-        <motion.h3
-          className="font-medium text-[18px] text-[#121c2a] mb-4"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.35 }}
-        >
-          Gói hiện tại
-        </motion.h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* AI Package */}
-          <motion.div
-            className="bg-[#f8f9ff] rounded-xl border border-[#c2c6d6]/30 p-6 flex flex-col justify-between"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.45 }}
-            whileHover={{ boxShadow: "0 6px 24px rgba(0,65,145,0.09)", borderColor: "rgba(0,65,145,0.2)" }}
-          >
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex items-center gap-2 text-[#121c2a]">
-                <motion.div
-                  className="w-8 h-8 rounded-lg bg-[#e0e7ff] flex items-center justify-center text-[#004191]"
-                  whileHover={{ scale: 1.15, rotate: 8 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <span className="material-symbols-outlined text-[18px]">psychology</span>
-                </motion.div>
-                <span className="font-semibold text-[15px] tracking-wide uppercase">Gói AI</span>
-              </div>
-              <span className="px-2.5 py-1 bg-[#dfe9fc] text-[#004191] rounded-md font-medium text-[11px] uppercase tracking-wider">
-                Gói Miễn phí
-              </span>
-            </div>
-            <div className="mb-3 flex justify-between items-end">
-              <span className="font-medium text-[24px] leading-[1.3] text-[#004191]">
-                <AnimatedNumber value={105} /> <span className="font-normal text-[14px] text-[#424753]">Truy vấn</span>
-              </span>
-              <span className="font-normal text-[14px] text-[#424753]">trên 500 / tháng</span>
-            </div>
-            <AnimatedBar pct={21} />
-          </motion.div>
-
-          {/* Storage Package */}
-          <motion.div
-            className="bg-[#f8f9ff] rounded-xl border border-[#c2c6d6]/30 p-6 flex flex-col justify-between"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.32, duration: 0.45 }}
-            whileHover={{ boxShadow: "0 6px 24px rgba(0,65,145,0.09)", borderColor: "rgba(0,65,145,0.2)" }}
-          >
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex items-center gap-2 text-[#121c2a]">
-                <motion.div
-                  className="w-8 h-8 rounded-lg bg-[#e0e7ff] flex items-center justify-center text-[#004191]"
-                  whileHover={{ scale: 1.15, rotate: 8 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <span className="material-symbols-outlined text-[18px]">cloud</span>
-                </motion.div>
-                <span className="font-semibold text-[15px] tracking-wide uppercase">Gói lưu trữ</span>
-              </div>
-              <span className="px-2.5 py-1 bg-[#dfe9fc] text-[#004191] rounded-md font-medium text-[11px] uppercase tracking-wider">
-                Gói Miễn phí
-              </span>
-            </div>
-            <div className="mb-3 flex justify-between items-end">
-              <span className="font-medium text-[24px] leading-[1.3] text-[#004191]">
-                <AnimatedNumber value={2.1} decimals={1} /> <span className="font-normal text-[14px] text-[#424753]">GB</span>
-              </span>
-              <span className="font-normal text-[14px] text-[#424753]">trên 5 GB</span>
-            </div>
-            <AnimatedBar pct={42} />
-          </motion.div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-1" style={{ fontFamily: "Geist, sans-serif" }}>
+              Quản Lý Gói Tài Khoản & Hóa Đơn
+            </h1>
+            <button
+              onClick={() => { refreshProfile(); fetchData(); }}
+              disabled={loadingStats}
+              className="p-2 text-[#0058be] hover:bg-[#eff4ff] rounded-xl transition-colors disabled:opacity-50"
+              title="Làm mới"
+            >
+              <RefreshCw size={18} className={cn(loadingStats && "animate-spin")} />
+            </button>
+          </div>
+          <p className="text-[#424754] font-medium text-[14px]">
+            Theo dõi dung lượng truy vấn RAG trong ngày, nâng cấp tài khoản `PREMIUM` hoặc xem lại lịch sử giao dịch.
+          </p>
         </div>
       </div>
 
-      {/* Upgrade Options */}
-      <div>
-        <motion.h3
-          className="font-medium text-[18px] text-[#121c2a] mb-4"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38, duration: 0.35 }}
-        >
-          Nâng cấp không gian làm việc
-        </motion.h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Top Banner: Active Plan & Daily Quota */}
+      <div className={cn(
+        "rounded-3xl p-8 border shadow-sm transition-all flex flex-col md:flex-row items-center justify-between gap-8",
+        isPremium
+          ? "bg-gradient-to-br from-amber-50 via-[#fffbeb] to-white border-amber-300 shadow-amber-500/5"
+          : "bg-gradient-to-br from-[#eff4ff] via-[#f8f9ff] to-white border-[#0058be]/30"
+      )}>
+        <div className="space-y-3 flex-1">
+          <div className="flex items-center gap-2.5">
+            <span className={cn(
+              "px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1",
+              isPremium ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-[#0058be] text-white"
+            )}>
+              <Sparkles size={13} className={cn(isPremium && "text-amber-600")} />
+              {isPremium ? "GÓI PREMIUM (AI PRO)" : "GÓI EXPLORER (FREE)"}
+            </span>
+            <span className="text-[12px] font-bold text-[#727785]">
+              Tài khoản: <strong className="text-[#121c2a]">{user?.email}</strong>
+            </span>
+          </div>
 
-          {/* Plan 1: Basic */}
-          <PlanCard delay={0.42}>
-            <div className="mb-4">
-              <h4 className="font-semibold text-[18px] text-[#121c2a]">Cơ bản</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">Công cụ cần thiết cho nhà nghiên cứu cá nhân.</p>
-            </div>
-            <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">0₫</span>
-              <span className="text-[14px] text-[#424753]">/tháng</span>
-            </div>
-            <div className="space-y-3 mb-8 flex-1">
-              {["500 truy vấn AI / tháng", "Lưu trữ đám mây 5 GB", "Hỗ trợ cơ bản"].map(f => (
-                <div key={f} className="flex items-center gap-2 text-[13px] text-[#424753]">
-                  <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                  {f}
-                </div>
-              ))}
-            </div>
-            <button className="w-full bg-[#f1f5f9] text-[#424753] font-semibold text-[13px] py-2.5 rounded-lg border border-[#c2c6d6]/40 cursor-not-allowed">
-              Gói hiện tại
-            </button>
-          </PlanCard>
+          <h2 className="text-2xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+            {isPremium
+              ? "Quyền Lực AI Nghiên Cứu Vô Giới Hạn"
+              : "Trải Nghiệm Khám Phá Học Thuật Tiêu Chuẩn"}
+          </h2>
 
-          {/* Plan 2: Storage Pro */}
-          <PlanCard delay={0.5}>
-            <div className="mb-4">
-              <h4 className="font-semibold text-[18px] text-[#121c2a]">Lưu trữ Pro</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">Cho nhu cầu quản lý dữ liệu và tài liệu lớn.</p>
-            </div>
-            <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">125.000₫</span>
-              <span className="text-[14px] text-[#424753]">/tháng</span>
-            </div>
-            <div className="space-y-3 mb-8 flex-1">
-              <div className="flex items-center gap-2 text-[13px] text-[#424753]">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                500 truy vấn AI / tháng
-              </div>
-              <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Lưu trữ đám mây 100 GB
-              </div>
-              <div className="flex items-center gap-2 text-[13px] text-[#424753]">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                Hỗ trợ ưu tiên
-              </div>
-            </div>
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Link href="/user/payment/checkout?plan=storage" className="w-full bg-white text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
-                Nâng cấp lưu trữ
-              </Link>
-            </motion.div>
-          </PlanCard>
-
-          {/* Plan 3: AI Pro */}
-          <PlanCard delay={0.58}>
-            <div className="mb-4">
-              <h4 className="font-semibold text-[18px] text-[#121c2a]">AI Pro</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">Mở khóa phân tích và tổng hợp AI nâng cao.</p>
-            </div>
-            <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">250.000₫</span>
-              <span className="text-[14px] text-[#424753]">/tháng</span>
-            </div>
-            <div className="space-y-3 mb-8 flex-1">
-              <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Truy vấn AI không giới hạn
-              </div>
-              <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Mô hình nâng cao (GPT-4)
-              </div>
-              <div className="flex items-center gap-2 text-[13px] text-[#424753]">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                Lưu trữ đám mây 5 GB
-              </div>
-            </div>
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Link href="/user/payment/checkout?plan=ai" className="w-full bg-white text-[#004191] border border-[#004191] font-semibold text-[13px] py-2.5 rounded-lg hover:bg-[#f0f7ff] transition-colors text-center block">
-                Nâng cấp AI
-              </Link>
-            </motion.div>
-          </PlanCard>
-
-          {/* Plan 4: Ultimate */}
-          <PlanCard featured delay={0.66}>
-            {/* Badge */}
-            <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-3">
-              <motion.span
-                className="bg-[#004191] text-white text-[10px] font-bold uppercase tracking-wider py-1 px-3 rounded-full shadow-md inline-block"
-                animate={{ scale: [1, 1.08, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              >
-                Giá trị nhất
-              </motion.span>
-            </div>
-            <div className="mb-4">
-              <h4 className="font-semibold text-[18px] text-[#004191]">Ultimate</h4>
-              <p className="text-[13px] text-[#424753] mt-1 h-10">Không gian làm việc nghiên cứu toàn diện.</p>
-            </div>
-            <div className="mb-6">
-              <span className="font-bold text-[32px] text-[#121c2a]">300.000₫</span>
-              <span className="text-[14px] text-[#424753]">/tháng</span>
-            </div>
-            <div className="space-y-3 mb-8 flex-1">
-              <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Truy vấn &amp; Mô hình AI không giới hạn
-              </div>
-              <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">rocket_launch</span>
-                Lưu trữ đám mây 100 GB
-              </div>
-              <div className="flex items-center gap-2 text-[13px] text-[#121c2a] font-medium">
-                <span className="material-symbols-outlined text-[16px] text-[#004191]">star</span>
-                Hỗ trợ chuyên dụng 24/7
-              </div>
-            </div>
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Link href="/user/payment/checkout?plan=ultimate" className="w-full bg-gradient-to-br from-[#004191] to-[#0051d6] text-white font-semibold text-[13px] py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-md text-center block">
-                Nâng cấp lên Ultimate
-              </Link>
-            </motion.div>
-          </PlanCard>
+          <p className="text-[14px] text-[#424754] leading-relaxed max-w-2xl">
+            {isPremium
+              ? "Bạn có toàn quyền truy vấn AI không giới hạn số câu hỏi RAG mỗi ngày, ưu tiên truy xuất vector độ trễ thấp và sử dụng các mô hình Gemini 2.5 Pro & Flash cao nhất."
+              : "Gói tiêu chuẩn cho phép bạn tải tài liệu học tập và trải nghiệm hỏi đáp RAG với giới hạn 10 - 15 câu hỏi mỗi ngày. Nâng cấp ngay để mở khóa tiềm năng vô tận."}
+          </p>
         </div>
+
+        {/* Quota Progress Card */}
+        <div className="bg-white rounded-2xl p-6 border border-[#c2c6d6]/40 shadow-sm min-w-[280px] w-full md:w-auto shrink-0 space-y-4">
+          <div className="flex justify-between items-center text-[13px] font-bold text-[#121c2a]">
+            <span className="flex items-center gap-1.5 text-[#0058be]">
+              <Cpu size={16} /> Hạn ngạch AI hôm nay
+            </span>
+            <span className="text-purple-700 font-mono">
+              {loadingStats ? "..." : aiLimit ? `${aiLimit.queriesToday} / ${aiLimit.limit === 99999 ? "∞" : aiLimit.limit}` : "0 / 15"}
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full bg-[#dfe9fc] rounded-full h-2.5 overflow-hidden">
+            <div
+              className={cn("h-full rounded-full transition-all duration-700", isPremium ? "bg-amber-500" : "bg-[#0058be]")}
+              style={{
+                width: aiLimit && aiLimit.limit !== 99999 && aiLimit.limit > 0
+                  ? `${Math.min(100, (aiLimit.queriesToday / aiLimit.limit) * 100)}%`
+                  : isPremium ? "100%" : "25%"
+              }}
+            />
+          </div>
+
+          <div className="flex justify-between items-center text-[12px] text-[#727785] pt-1">
+            <span>Còn lại: <strong className="text-[#121c2a] font-mono">{aiLimit ? (aiLimit.limit === 99999 ? "Vô giới hạn" : aiLimit.remaining) : "..."}</strong> lượt hỏi</span>
+            <span>Chu kỳ: <strong>24 giờ (UTC)</strong></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Upgrade Options Section */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+            Các Gói Nâng Cấp Không Gian Làm Việc
+          </h3>
+          <p className="text-[13px] text-[#727785]">Lựa chọn gói linh hoạt theo tiến độ đồ án và nhu cầu nghiên cứu học thuật của bạn</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
+          {/* Free Card */}
+          <div className="bg-white rounded-3xl p-7 border border-[#c2c6d6]/40 shadow-sm flex flex-col justify-between h-full space-y-6">
+            <div className="space-y-4">
+              <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#f8f9ff] text-[#424754] border border-[#c2c6d6]/40">
+                STARTER PLAN
+              </span>
+              <div>
+                <h4 className="text-xl font-bold text-[#121c2a]">Explorer (Miễn phí)</h4>
+                <p className="text-[13px] text-[#727785] mt-1">Dành cho sinh viên làm quen hệ thống.</p>
+              </div>
+              <div className="flex items-baseline gap-1 pt-2">
+                <span className="text-4xl font-extrabold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>0₫</span>
+                <span className="text-[#727785] text-[13px] font-medium">/ vĩnh viễn</span>
+              </div>
+              <div className="space-y-3 pt-2 border-t border-[#c2c6d6]/30">
+                {[
+                  "10 - 15 lượt hỏi RAG / ngày",
+                  "Lưu trữ đám mây 5 GB",
+                  "Truy xuất vector cơ bản",
+                  "Hỗ trợ cộng đồng diễn đàn"
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2.5 text-[13px] text-[#424754]">
+                    <CheckCircle2 size={16} className="text-[#727785] shrink-0" />
+                    <span>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              disabled
+              className="w-full py-3 rounded-2xl bg-gray-100 text-[#727785] font-bold text-[13px] cursor-not-allowed"
+            >
+              {!isPremium ? "✔ Gói Hiện Tại Của Bạn" : "Gói Tiêu Chuẩn"}
+            </button>
+          </div>
+
+          {/* AI Pro Card */}
+          <div className={cn(
+            "rounded-3xl p-7 border-2 flex flex-col justify-between h-full space-y-6 relative shadow-xl transform md:-translate-y-2 transition-all",
+            isPremium ? "bg-amber-50/40 border-amber-400" : "bg-white border-[#0058be]"
+          )}>
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#0058be] text-white px-4 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider shadow-sm">
+              PHỔ BIẾN NHẤT
+            </div>
+
+            <div className="space-y-4">
+              <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#eff4ff] text-[#0058be]">
+                AI PROFESSIONAL
+              </span>
+              <div>
+                <h4 className="text-xl font-bold text-[#0058be]">AI Pro (Gói Tháng)</h4>
+                <p className="text-[13px] text-[#727785] mt-1">Dành cho sinh viên làm khóa luận & đồ án tốt nghiệp.</p>
+              </div>
+              <div className="flex items-baseline gap-1 pt-2">
+                <span className="text-4xl font-extrabold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>250.000₫</span>
+                <span className="text-[#727785] text-[13px] font-medium">/ tháng</span>
+              </div>
+              <div className="space-y-3 pt-2 border-t border-[#c2c6d6]/30">
+                {[
+                  "Truy vấn RAG không giới hạn lượt hỏi",
+                  "Mô hình Gemini 2.5 Pro & Flash cao cấp nhất",
+                  "Lưu trữ đám mây 100 GB",
+                  "Truy xuất vector độ trễ thấp (< 500ms)",
+                  "Hỗ trợ kỹ thuật ưu tiên 24/7"
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2.5 text-[13px] text-[#121c2a] font-medium">
+                    <CheckCircle2 size={16} className="text-[#0058be] shrink-0" />
+                    <span>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {isPremium ? (
+              <button disabled className="w-full py-3.5 rounded-2xl bg-amber-500 text-white font-bold text-[14px] shadow-md cursor-default flex items-center justify-center gap-1.5">
+                <Sparkles size={16} /> Bạn Đang Sử Dụng Gói Này
+              </button>
+            ) : (
+              <Link
+                href="/user/payment/checkout?plan=ai"
+                className="w-full py-3.5 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[14px] shadow-lg shadow-[#0058be]/20 transition-all text-center block"
+              >
+                Nâng Cấp AI Pro Ngay
+              </Link>
+            )}
+          </div>
+
+          {/* Ultimate Card */}
+          <div className="bg-white rounded-3xl p-7 border border-[#c2c6d6]/40 hover:border-[#0058be]/50 shadow-sm flex flex-col justify-between h-full space-y-6 transition-all">
+            <div className="space-y-4">
+              <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-700">
+                ANNUAL SAVINGS
+              </span>
+              <div>
+                <h4 className="text-xl font-bold text-[#121c2a]">Ultimate (Gói Năm)</h4>
+                <p className="text-[13px] text-[#727785] mt-1">Nghiên cứu trọn năm không lo ngắt quãng.</p>
+              </div>
+              <div className="flex items-baseline gap-1 pt-2">
+                <span className="text-4xl font-extrabold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>490.000₫</span>
+                <span className="text-[#727785] text-[13px] font-medium">/ 1 năm (Tiết kiệm 80%)</span>
+              </div>
+              <div className="space-y-3 pt-2 border-t border-[#c2c6d6]/30">
+                {[
+                  "Trọn vẹn quyền lợi gói AI Pro suốt 365 ngày",
+                  "Lưu trữ đám mây 500 GB",
+                  "Bảo chứng ưu tiên RAG không nghẽn giờ cao điểm",
+                  "Chia sẻ không gian làm việc nhóm nghiên cứu"
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center gap-2.5 text-[13px] text-[#424754]">
+                    <CheckCircle2 size={16} className="text-purple-600 shrink-0" />
+                    <span>{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Link
+              href="/user/payment/checkout?plan=ultimate"
+              className="w-full py-3 rounded-2xl bg-[#f8f9ff] hover:bg-[#eff4ff] text-[#0058be] border border-[#0058be]/30 font-bold text-[14px] transition-all text-center block"
+            >
+              Đăng Ký Gói Ultimate
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Transaction History Section */}
+      <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 p-7 shadow-sm space-y-6">
+        <div className="flex items-center justify-between pb-4 border-b border-[#c2c6d6]/30">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center">
+              <Receipt size={20} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                Lịch Sử Giao Dịch & Hóa Đơn
+              </h3>
+              <p className="text-[13px] text-[#727785]">Các đơn hàng chuyển khoản nâng cấp đã tạo trên tài khoản của bạn</p>
+            </div>
+          </div>
+        </div>
+
+        {loadingStats ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-3 text-[#727785]">
+            <Loader2 size={32} className="animate-spin text-[#0058be]" />
+            <p className="text-[13px] font-semibold">Đang truy xuất lịch sử giao dịch từ máy chủ...</p>
+          </div>
+        ) : receipts.length === 0 ? (
+          <div className="py-14 text-center text-[#727785] space-y-2">
+            <Receipt size={36} className="mx-auto text-[#c2c6d6]" />
+            <p className="text-[15px] font-bold text-[#121c2a]">Bạn chưa có hóa đơn thanh toán nào</p>
+            <p className="text-[13px]">Khi bạn đăng ký nâng cấp gói AI Pro hoặc Ultimate, hóa đơn sẽ tự động hiển thị tại đây.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#f8f9ff] border-b border-[#c2c6d6]/40 text-[#727785] text-[11px] font-extrabold uppercase tracking-wider">
+                  <th className="py-3.5 px-5">Mã Giao Dịch</th>
+                  <th className="py-3.5 px-5">Gói Đăng Ký</th>
+                  <th className="py-3.5 px-5">Số Tiền</th>
+                  <th className="py-3.5 px-5">Nội Dung Chuyển Khoản</th>
+                  <th className="py-3.5 px-5">Trạng Thái</th>
+                  <th className="py-3.5 px-5 text-right">Ngày Tạo</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#c2c6d6]/30 text-[13px]">
+                {receipts.map((rec) => (
+                  <tr key={rec.id} className="hover:bg-[#f8f9ff]/70 transition-colors">
+                    <td className="py-4 px-5 font-mono font-bold text-[#121c2a]">
+                      {rec.id.slice(0, 8)}...
+                    </td>
+                    <td className="py-4 px-5 font-bold text-[#0058be]">
+                      {rec.planId === "PREMIUM_MONTHLY" ? "AI Pro (1 Tháng)" : rec.planId === "PREMIUM_YEARLY" ? "Ultimate (1 Năm)" : rec.planId}
+                    </td>
+                    <td className="py-4 px-5 font-bold text-[#121c2a]">
+                      {Number(rec.amount || 0).toLocaleString("vi-VN")}₫
+                    </td>
+                    <td className="py-4 px-5 font-mono text-[12px] text-red-600 font-bold">
+                      {rec.transferContent}
+                    </td>
+                    <td className="py-4 px-5">
+                      <span className={cn(
+                        "px-2.5 py-1 rounded-lg text-[11px] font-extrabold inline-flex items-center gap-1",
+                        rec.status === "COMPLETED" ? "bg-green-100 text-green-700" : rec.status === "FAILED" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"
+                      )}>
+                        {rec.status === "COMPLETED" ? <CheckCircle size={12} /> : rec.status === "FAILED" ? <XCircle size={12} /> : <Clock size={12} />}
+                        {rec.status === "COMPLETED" ? "Đã xác nhận" : rec.status === "FAILED" ? "Thất bại/Hủy" : "Chờ thanh toán"}
+                      </span>
+                    </td>
+                    <td className="py-4 px-5 text-right text-[#727785] font-medium">
+                      {new Date(rec.createdAt).toLocaleDateString("vi-VN")} {new Date(rec.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

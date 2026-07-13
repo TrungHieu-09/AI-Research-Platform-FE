@@ -27,6 +27,8 @@ interface AuthContextValue {
   verifyResetOtp: (email: string, otpCode: string) => Promise<void>
   resetPassword: (email: string, otpCode: string, password: string) => Promise<void>
   updateProfile: (data: { name: string }) => Promise<void>
+  refreshProfile: () => Promise<void>
+  upgradeTierToPremium: () => void
   logout: () => void
 }
 
@@ -142,6 +144,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token])
 
+  const refreshProfile = React.useCallback(async () => {
+    if (!token) return
+    try {
+      const res = await api.get<{ user: any }>("/api/users/me")
+      if (res && res.user) {
+        const updatedAuthUser: AuthUser = { ...res.user, initials: makeInitials(res.user.name || "User") }
+        setUser(updatedAuthUser)
+        saveSession(token, updatedAuthUser)
+      }
+    } catch (e) {
+      // ignore silently if session expired
+    }
+  }, [token])
+
+  const upgradeTierToPremium = React.useCallback(() => {
+    if (!user || !token) return
+    const updatedUser: AuthUser = { ...user, tier: "PREMIUM" }
+    setUser(updatedUser)
+    saveSession(token, updatedUser)
+  }, [user, token])
+
   const logout = React.useCallback(() => {
     clearSession()
     setToken(null)
@@ -150,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router])
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, forgotPassword, verifyResetOtp, resetPassword, updateProfile, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, forgotPassword, verifyResetOtp, resetPassword, updateProfile, refreshProfile, upgradeTierToPremium, logout }}>
       {children}
     </AuthContext.Provider>
   )

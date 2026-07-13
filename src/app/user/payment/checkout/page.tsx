@@ -1,174 +1,355 @@
 "use client"
 
 import * as React from "react"
-import { useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { useAuth } from "@/features/auth/auth-context"
+import { api } from "@/lib/api"
+import { Loader2, CheckCircle2, Copy, Check, ArrowLeft, ShieldCheck, Sparkles, AlertTriangle } from "lucide-react"
 
-const PLANS = {
+const PLAN_INFO: Record<string, { planId: "PREMIUM_MONTHLY" | "PREMIUM_YEARLY"; name: string; priceText: string; features: string[] }> = {
   storage: {
-    name: "Lưu trữ Pro",
-    price: "125.000",
-    features: ["Lưu trữ đám mây 100 GB", "500 truy vấn AI / tháng", "Hỗ trợ ưu tiên"]
+    planId: "PREMIUM_MONTHLY",
+    name: "Lưu trữ Pro (Cloud & AI)",
+    priceText: "125.000",
+    features: ["Lưu trữ đám mây 100 GB", "Hỗ trợ RAG Vector chuẩn xác", "Hỗ trợ ưu tiên 24/7"]
   },
   ai: {
-    name: "AI Pro",
-    price: "250.000",
-    features: ["Truy vấn AI không giới hạn", "Mô hình nâng cao (GPT-4)", "Lưu trữ đám mây 5 GB"]
+    planId: "PREMIUM_MONTHLY",
+    name: "AI Pro (Gói Tháng)",
+    priceText: "250.000",
+    features: ["Truy vấn AI không giới hạn lượt hỏi", "Mở khóa mô hình cao cấp Gemini 2.5 Pro & Flash", "Lưu trữ đám mây 100 GB", "RAG siêu chính xác với ngữ cảnh toàn tài liệu"]
   },
   ultimate: {
-    name: "Ultimate",
-    price: "300.000",
-    features: ["Truy vấn và mô hình AI không giới hạn", "Lưu trữ đám mây 100 GB", "Hỗ trợ chuyên dụng 24/7"]
+    planId: "PREMIUM_YEARLY",
+    name: "Ultimate (Gói Năm Vô Giới Hạn)",
+    priceText: "490.000",
+    features: ["Truy vấn & Mô hình AI không giới hạn trọn năm", "Lưu trữ đám mây 500 GB", "Hỗ trợ kỹ thuật chuyên dụng 24/7", "Không gian làm việc nhóm & nghiên cứu chuyên sâu"]
   }
 }
 
 function CheckoutContent() {
   const searchParams = useSearchParams()
-  const planId = searchParams.get("plan") as keyof typeof PLANS
-  const plan = PLANS[planId]
+  const router = useRouter()
+  const { user, token, refreshProfile, upgradeTierToPremium } = useAuth()
 
-  // If no plan is selected or invalid plan, show error or redirect
-  if (!plan) {
+  const planParam = (searchParams.get("plan") || "ai") as keyof typeof PLAN_INFO
+  const planObj = PLAN_INFO[planParam] || PLAN_INFO.ai
+
+  const [loadingOrder, setLoadingOrder] = useState(true)
+  const [orderData, setOrderData] = useState<any | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const [copiedAccount, setCopiedAccount] = useState(false)
+  const [copiedContent, setCopiedContent] = useState(false)
+
+  const [confirming, setConfirming] = useState(false)
+  const [confirmedSuccess, setConfirmedSuccess] = useState(false)
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
+
+  // Fetch Order / Checkout on mount
+  useEffect(() => {
+    let isMounted = true
+    async function initOrder() {
+      if (!token) return
+      setLoadingOrder(true)
+      setError(null)
+      try {
+        const res = await api.post<any>("/api/payments/checkout", { planId: planObj.planId })
+        if (isMounted && res) {
+          setOrderData(res)
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err.message || "Không thể khởi tạo đơn hàng thanh toán.")
+        }
+      } finally {
+        if (isMounted) setLoadingOrder(false)
+      }
+    }
+    initOrder()
+    return () => { isMounted = false }
+  }, [token, planObj.planId])
+
+  const copyToClipboard = (text: string, type: "account" | "content") => {
+    navigator.clipboard.writeText(text)
+    if (type === "account") {
+      setCopiedAccount(true)
+      setTimeout(() => setCopiedAccount(false), 2000)
+    } else {
+      setCopiedContent(true)
+      setTimeout(() => setCopiedContent(false), 2000)
+    }
+  }
+
+  const handleConfirmPayment = async (isSandbox = false) => {
+    if (!orderData?.orderId || !token) return
+    setConfirming(true)
+    setToastMsg(null)
+    try {
+      const res = await api.post<any>("/api/payments/confirm", { orderId: orderData.orderId })
+      if (res && res.success) {
+        setConfirmedSuccess(true)
+        upgradeTierToPremium()
+        await refreshProfile()
+      }
+    } catch (err: any) {
+      setToastMsg(err.message || "Xác nhận thanh toán chưa thành công. Vui lòng kiểm tra lại nội dung chuyển khoản.")
+    } finally {
+      setConfirming(false)
+    }
+  }
+
+  if (loadingOrder) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center py-20">
-        <span className="material-symbols-outlined text-[48px] text-[#c2c6d6] mb-4">error</span>
-        <h2 className="text-[20px] font-semibold mb-2 text-[#121c2a]">Gói được chọn không hợp lệ</h2>
-        <Link href="/user/payment" className="text-[#004191] hover:underline font-medium text-[14px]">
-          Quay lại Quản lý thanh toán
+      <div className="flex-1 flex flex-col items-center justify-center py-28 space-y-4">
+        <Loader2 size={42} className="animate-spin text-[#0058be]" />
+        <p className="text-[15px] font-bold text-[#121c2a]">Đang tạo cổng thanh toán và mã VietQR động...</p>
+      </div>
+    )
+  }
+
+  if (error || !orderData) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-20 text-center space-y-4 max-w-md mx-auto">
+        <div className="w-16 h-16 rounded-3xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+          <AlertTriangle size={32} />
+        </div>
+        <h2 className="text-xl font-bold text-[#121c2a]">Lỗi khởi tạo thanh toán</h2>
+        <p className="text-[14px] text-[#424754]">{error || "Không lấy được thông tin đơn hàng."}</p>
+        <Link
+          href="/user/payment"
+          className="px-6 py-2.5 rounded-2xl bg-[#0058be] text-white font-bold text-[14px] shadow-md hover:bg-[#004ca3] transition-colors"
+        >
+          Quay lại chọn gói
         </Link>
       </div>
     )
   }
 
-  const transferCode = `PAY LUMIS ${planId.toUpperCase()}`
+  if (confirmedSuccess) {
+    return (
+      <div className="max-w-xl mx-auto py-16 px-6 text-center animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-white rounded-[32px] p-10 border border-green-200 shadow-2xl shadow-green-500/10 space-y-6">
+          <div className="w-20 h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto shadow-md">
+            <CheckCircle2 size={44} />
+          </div>
+          <div className="space-y-2">
+            <span className="text-[12px] font-extrabold text-green-700 uppercase tracking-wider bg-green-50 px-3 py-1 rounded-full border border-green-200">
+              TRANSACTION VERIFIED
+            </span>
+            <h2 className="text-3xl font-extrabold text-[#121c2a] tracking-tight pt-2" style={{ fontFamily: "Geist, sans-serif" }}>
+              Nâng Cấp Tài Khoản Thành Công!
+            </h2>
+            <p className="text-[14px] text-[#424754] leading-relaxed pt-1">
+              Hệ thống đã xác nhận thanh toán của bạn cho gói <strong className="text-[#0058be]">{planObj.name}</strong>. Toàn bộ hạn ngạch hỏi đáp RAG và mô hình cao cấp đã được mở khóa.
+            </p>
+          </div>
+
+          <div className="p-4 bg-[#f8f9ff] rounded-2xl border border-[#c2c6d6]/40 flex items-center justify-between text-[13px] font-semibold text-[#121c2a]">
+            <span>Trạng thái tài khoản:</span>
+            <span className="text-amber-600 font-extrabold flex items-center gap-1.5 bg-amber-50 px-3 py-1 rounded-xl border border-amber-200">
+              <Sparkles size={14} /> PREMIUM TIER
+            </span>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row gap-3">
+            <Link
+              href="/user/ai-workspace"
+              className="flex-1 py-3.5 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[14px] shadow-lg shadow-[#0058be]/20 transition-all text-center flex items-center justify-center gap-2"
+            >
+              <Sparkles size={16} /> Mở Trợ Lý AI Ngay
+            </Link>
+            <Link
+              href="/user/payment"
+              className="flex-1 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[14px] transition-all text-center"
+            >
+              Xem Lịch Sử Giao Dịch
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const { amount, transferContent, qrCodeUrl, paymentInstructions } = orderData
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-6 flex items-center gap-3">
-        <Link href="/user/payment" className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-[#424753] transition-colors">
-          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Toast */}
+      {toastMsg && (
+        <div className="fixed top-20 right-6 z-50 animate-in fade-in slide-in-from-top-5 duration-300">
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl bg-red-50 border border-red-200 text-red-700 text-[13px] font-semibold max-w-sm">
+            <AlertTriangle className="shrink-0" size={18} />
+            <span>{toastMsg}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Link href="/user/payment" className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[#f8f9ff] border border-[#c2c6d6]/40 hover:bg-[#eff4ff] text-[#121c2a] transition-colors">
+          <ArrowLeft size={18} />
         </Link>
-        <h2 className="font-semibold text-[24px] md:text-[28px] tracking-[-0.02em] text-[#121c2a]">Thanh toán an toàn</h2>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+            Cổng Thanh Toán & Xác Nhận Đơn Hàng
+          </h1>
+          <p className="text-[13px] text-[#727785]">Mã đơn hàng: <span className="font-mono font-bold text-[#0058be]">{orderData.orderId}</span></p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Order Summary */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-[#f8f9ff] rounded-xl border border-[#c2c6d6]/30 p-6">
-            <h3 className="font-semibold text-[16px] text-[#121c2a] mb-4">Tóm tắt đơn hàng</h3>
-            
-            <div className="flex justify-between items-start mb-4 pb-4 border-b border-[#c2c6d6]/30">
-              <div>
-                <h4 className="font-medium text-[15px] text-[#004191]">Gói {plan.name}</h4>
-                <p className="text-[13px] text-[#424753] mt-1">Đăng ký hàng tháng</p>
-              </div>
-              <div className="text-right">
-                <span className="font-bold text-[18px] text-[#121c2a]">{plan.price}₫</span>
-                <span className="text-[13px] text-[#424753]">/tháng</span>
-              </div>
+          <div className="bg-[#f8f9ff] rounded-3xl border border-[#c2c6d6]/40 p-7 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-[#c2c6d6]/30 pb-4">
+              <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#0058be] bg-[#eff4ff] px-3 py-1 rounded-full">
+                SUBSCRIPTION PLAN
+              </span>
+              <span className="text-[12px] font-bold text-green-700 bg-green-100 px-2.5 py-0.5 rounded-lg">
+                ● Đang chờ chuyển khoản
+              </span>
             </div>
 
-            <div className="space-y-3 mb-6">
-              {plan.features.map((feature, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-[13px] text-[#424753]">
-                  <span className="material-symbols-outlined text-[16px] text-[#004191]">check_circle</span>
-                  {feature}
+            <div>
+              <h3 className="text-xl font-bold text-[#121c2a]">{planObj.name}</h3>
+              <p className="text-[13px] text-[#727785] mt-0.5">Kích hoạt tự động sau khi đối soát</p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {planObj.features.map((feat, idx) => (
+                <div key={idx} className="flex items-start gap-2.5 text-[13px] text-[#424754] font-medium">
+                  <CheckCircle2 size={16} className="text-[#0058be] shrink-0 mt-0.5" />
+                  <span>{feat}</span>
                 </div>
               ))}
             </div>
 
-            <div className="bg-white rounded-lg p-4 border border-[#c2c6d6]/30">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[14px] text-[#424753]">Tổng phụ</span>
-                <span className="font-medium text-[14px] text-[#121c2a]">{plan.price}₫</span>
+            <div className="bg-white rounded-2xl p-5 border border-[#c2c6d6]/40 space-y-3">
+              <div className="flex justify-between items-center text-[13px] text-[#727785]">
+                <span>Giá trị gói học thuật:</span>
+                <span className="font-bold text-[#121c2a]">{(amount || 0).toLocaleString("vi-VN")}₫</span>
               </div>
-              <div className="flex justify-between items-center mb-4 pb-4 border-b border-dashed border-[#c2c6d6]/50">
-                <span className="text-[14px] text-[#424753]">Thuế (0%)</span>
-                <span className="font-medium text-[14px] text-[#121c2a]">0₫</span>
+              <div className="flex justify-between items-center text-[13px] text-[#727785]">
+                <span>Phí giao dịch VietQR:</span>
+                <span className="font-bold text-green-600">Miễn phí (0₫)</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-[16px] text-[#121c2a]">Tổng thanh toán</span>
-                <span className="font-bold text-[24px] text-[#004191]">{plan.price}₫</span>
+              <div className="pt-3 border-t border-[#c2c6d6]/30 flex justify-between items-center">
+                <span className="text-[15px] font-bold text-[#121c2a]">Tổng cần thanh toán:</span>
+                <span className="text-2xl font-extrabold text-[#0058be]" style={{ fontFamily: "Geist, sans-serif" }}>
+                  {(amount || 0).toLocaleString("vi-VN")}₫
+                </span>
               </div>
+            </div>
+
+            <div className="p-4 bg-[#eff4ff] rounded-2xl border border-[#0058be]/20 text-[12px] text-[#121c2a] flex items-center gap-2 font-medium">
+              <ShieldCheck size={18} className="text-[#0058be] shrink-0" />
+              <span>Giao dịch được mã hóa an toàn và bảo chứng bởi hệ thống tự động kiểm tra VietQR.</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Banking Information */}
+        {/* Right Column: QR Code & Bank Details */}
         <div className="lg:col-span-7">
-          <div className="bg-white rounded-xl border border-[#c2c6d6]/30 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[#c2c6d6]/20">
-              <div className="w-10 h-10 rounded-full bg-[#f0f7ff] flex items-center justify-center text-[#004191]">
-                <span className="material-symbols-outlined text-[20px]">account_balance</span>
+          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 p-7 shadow-sm space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-[#c2c6d6]/30">
+              <div className="w-10 h-10 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center font-bold">
+                <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
               </div>
               <div>
-                <h3 className="font-semibold text-[18px] text-[#121c2a]">Chuyển khoản ngân hàng</h3>
-                <p className="text-[13px] text-[#424753]">Quét mã QR hoặc chuyển khoản thủ công</p>
+                <h3 className="font-bold text-[18px] text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                  Chuyển khoản VietQR tự động
+                </h3>
+                <p className="text-[13px] text-[#727785]">Quét mã bằng ứng dụng ngân hàng hoặc Momo/ZaloPay bất kỳ</p>
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              {/* QR Code Mock */}
-              <div className="w-full md:w-[220px] shrink-0 flex flex-col items-center">
-                <div className="w-[200px] h-[200px] bg-[#f8f9ff] border-2 border-dashed border-[#004191]/30 rounded-xl flex flex-col items-center justify-center mb-3">
-                  <span className="material-symbols-outlined text-[48px] text-[#004191]/40 mb-2">qr_code_2</span>
-                  <span className="text-[12px] text-[#424753] font-medium text-center px-4">VietQR / Momo<br/>Quét để thanh toán</span>
-                </div>
-                <p className="text-[12px] text-[#424753] text-center">Mở ứng dụng ngân hàng của bạn để quét mã QR này.</p>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              {/* QR Box */}
+              <div className="md:col-span-5 flex flex-col items-center justify-center bg-[#f8f9ff] p-5 rounded-3xl border border-[#c2c6d6]/40">
+                {qrCodeUrl ? (
+                  <img
+                    src={qrCodeUrl}
+                    alt="VietQR Compact"
+                    className="w-48 h-48 rounded-2xl shadow-md border border-white bg-white object-contain"
+                  />
+                ) : (
+                  <div className="w-48 h-48 bg-gray-100 rounded-2xl flex items-center justify-center text-[#727785] text-[12px]">
+                    Không tải được mã QR
+                  </div>
+                )}
+                <p className="text-[12px] font-bold text-[#0058be] mt-3 flex items-center gap-1">
+                  <Sparkles size={14} /> Tự động điền số tiền & nội dung
+                </p>
               </div>
 
               {/* Manual Bank Details */}
-              <div className="flex-1 w-full space-y-4">
+              <div className="md:col-span-7 space-y-4">
                 <div>
-                  <p className="text-[12px] text-[#727785] mb-1 uppercase font-semibold tracking-wider">Tên ngân hàng</p>
-                  <div className="font-medium text-[15px] text-[#121c2a] bg-[#f8f9ff] p-3 rounded-lg border border-[#c2c6d6]/30 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px] text-[#004191]">account_balance</span>
-                    Vietcombank (VCB)
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-[12px] text-[#727785] mb-1 uppercase font-semibold tracking-wider">Số tài khoản</p>
-                  <div className="font-medium text-[15px] text-[#121c2a] bg-[#f8f9ff] p-3 rounded-lg border border-[#c2c6d6]/30 flex justify-between items-center group cursor-pointer hover:border-[#004191]/50 transition-colors">
-                    <span className="tracking-widest">1023 4567 890</span>
-                    <span className="material-symbols-outlined text-[18px] text-[#004191] opacity-60 group-hover:opacity-100 transition-opacity">content_copy</span>
+                  <label className="text-[11px] font-extrabold uppercase text-[#727785] block mb-1">Ngân hàng thụ hưởng</label>
+                  <div className="p-3 bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl text-[14px] font-bold text-[#121c2a]">
+                    {paymentInstructions?.bankName || "Vietcombank (VCB)"}
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[12px] text-[#727785] mb-1 uppercase font-semibold tracking-wider">Chủ tài khoản</p>
-                  <div className="font-medium text-[15px] text-[#121c2a] bg-[#f8f9ff] p-3 rounded-lg border border-[#c2c6d6]/30">
-                    LUMIS RESEARCH PLATFORM
+                  <label className="text-[11px] font-extrabold uppercase text-[#727785] block mb-1">Số tài khoản</label>
+                  <div
+                    onClick={() => copyToClipboard(paymentInstructions?.accountNumber || "1234567890", "account")}
+                    className="p-3 bg-[#f8f9ff] hover:bg-[#eff4ff] border border-[#c2c6d6]/40 hover:border-[#0058be] rounded-xl text-[15px] font-mono font-bold text-[#121c2a] flex items-center justify-between cursor-pointer transition-colors"
+                  >
+                    <span>{paymentInstructions?.accountNumber || "1234567890"}</span>
+                    {copiedAccount ? <Check size={16} className="text-green-600" /> : <Copy size={16} className="text-[#727785]" />}
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-[12px] text-[#ba1a1a] mb-1 uppercase font-semibold tracking-wider">Nội dung chuyển khoản (Quan trọng)</p>
-                  <div className="font-mono font-bold text-[16px] text-[#ba1a1a] bg-[#fff5f5] p-3 rounded-lg border border-[#ba1a1a]/20 flex justify-between items-center group cursor-pointer hover:border-[#ba1a1a]/50 transition-colors">
-                    <span>{transferCode}</span>
-                    <span className="material-symbols-outlined text-[18px] text-[#ba1a1a] opacity-60 group-hover:opacity-100 transition-opacity">content_copy</span>
+                  <label className="text-[11px] font-extrabold uppercase text-[#727785] block mb-1">Chủ tài khoản</label>
+                  <div className="p-3 bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl text-[14px] font-bold text-[#121c2a]">
+                    {paymentInstructions?.accountName || "CONG TY LUMIS EDTECH"}
                   </div>
-                  <p className="text-[11px] text-[#ba1a1a] mt-1.5 flex items-start gap-1">
-                    <span className="material-symbols-outlined text-[14px]">info</span>
-                    Bạn phải nhập chính xác nội dung này để chúng tôi có thể xác minh thanh toán của bạn.
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-extrabold uppercase text-red-600 block mb-1">
+                    Nội dung chuyển khoản (Bắt buộc ghi đúng)
+                  </label>
+                  <div
+                    onClick={() => copyToClipboard(transferContent || "", "content")}
+                    className="p-3.5 bg-red-50 hover:bg-red-100/70 border border-red-300 rounded-xl text-[15px] font-mono font-extrabold text-red-700 flex items-center justify-between cursor-pointer transition-colors shadow-sm"
+                  >
+                    <span>{transferContent}</span>
+                    {copiedContent ? <Check size={18} className="text-green-600" /> : <Copy size={18} className="text-red-600" />}
+                  </div>
+                  <p className="text-[11px] text-[#727785] mt-1 italic">
+                    💡 Click để sao chép nội dung. Hệ thống dùng mã này để xác thực tự động.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="mt-8 pt-6 border-t border-[#c2c6d6]/30 flex flex-col sm:flex-row gap-3">
-              <button className="flex-1 bg-gradient-to-br from-[#004191] to-[#0051d6] text-white font-semibold text-[14px] py-3 rounded-lg hover:opacity-90 transition-opacity shadow-md flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                Tôi đã hoàn tất chuyển khoản
+            {/* Action buttons */}
+            <div className="pt-6 border-t border-[#c2c6d6]/30 space-y-3">
+              <button
+                onClick={() => handleConfirmPayment(false)}
+                disabled={confirming}
+                className="w-full py-3.5 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[14px] shadow-lg shadow-[#0058be]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {confirming ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
+                <span>Tôi Đã Hoàn Tất Chuyển Khoản (Kiểm Tra Ngay)</span>
               </button>
-              <Link href="/user/payment" className="flex-1 bg-white text-[#424753] border border-[#c2c6d6] font-semibold text-[14px] py-3 rounded-lg hover:bg-[#f8f9ff] transition-colors text-center flex items-center justify-center">
-                Hủy
-              </Link>
-            </div>
 
-            <div className="mt-4 text-center">
-              <p className="text-[12px] text-[#727785]">Tài khoản của bạn sẽ được nâng cấp trong vòng 5-10 phút sau khi chuyển khoản thành công.</p>
+              <button
+                onClick={() => handleConfirmPayment(true)}
+                disabled={confirming}
+                className="w-full py-3 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-extrabold text-[13px] transition-all flex items-center justify-center gap-2"
+                title="Sử dụng cho môi trường kiểm thử/đồ án môn học để bỏ qua bước ngân hàng thực tế"
+              >
+                <Sparkles size={16} className="text-amber-600" />
+                <span>Giả Lập Chuyển Khoản Thành Công (Sandbox Đồ Án)</span>
+              </button>
             </div>
           </div>
         </div>
@@ -180,7 +361,7 @@ function CheckoutContent() {
 export default function CheckoutPage() {
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-20">
-      <React.Suspense fallback={<div className="p-8 text-center text-[#424753]">Đang tải chi tiết thanh toán...</div>}>
+      <React.Suspense fallback={<div className="p-12 text-center text-[#727785] font-bold">Đang chuẩn bị trang thanh toán...</div>}>
         <CheckoutContent />
       </React.Suspense>
     </div>
