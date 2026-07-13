@@ -969,54 +969,73 @@ export default function LibraryPage() {
 
       {/* ── Modal 1: Create Collection Modal ── */}
       {isCreateColModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#c2c6d6]/40">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-[#0058be]">
-                <FolderOpen size={20} />
-                <h3 className="text-[18px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Tạo Bộ sưu tập mới</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-8 md:p-9 shadow-2xl border border-[#c2c6d6]/40 flex flex-col">
+            <div className="flex items-center justify-between pb-5 border-b border-[#c2c6d6]/30 mb-6 shrink-0">
+              <div className="flex items-center gap-3 text-[#0058be]">
+                <div className="p-3 bg-[#eff4ff] rounded-2xl">
+                  <FolderPlus size={24} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Tạo Bộ sưu tập mới</h3>
+                  <p className="text-[13px] text-[#727785] font-medium">Tổ chức tài liệu, bài giảng và nghiên cứu theo chủ đề chuyên sâu</p>
+                </div>
               </div>
-              <button onClick={() => setIsCreateColModalOpen(false)} className="p-1 text-[#727785] hover:text-[#121c2a]">
-                <X size={18} />
+              <button onClick={() => setIsCreateColModalOpen(false)} className="p-2.5 text-[#727785] hover:text-[#121c2a] hover:bg-gray-100 rounded-xl transition-colors">
+                <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleCreateCollection} className="space-y-4">
+
+            <form onSubmit={handleCreateCollection} className="space-y-6">
               <div>
-                <label className="block text-[12px] font-bold text-[#424754] uppercase mb-1.5">Tên bộ sưu tập *</label>
+                <label className="block text-[13px] font-extrabold text-[#424754] uppercase tracking-wider mb-2.5">
+                  Tên bộ sưu tập <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={newColName}
                   onChange={(e) => setNewColName(e.target.value)}
-                  placeholder="Ví dụ: Đồ án Khóa luận tốt nghiệp 2026..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#c2c6d6]/60 text-[14px] outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/10 transition-all"
+                  placeholder="Ví dụ: Đồ án Khóa luận tốt nghiệp AI 2026, Nghiên cứu NLP..."
+                  className="w-full px-5 py-3.5 rounded-2xl border border-[#c2c6d6]/60 text-[15px] font-semibold text-[#121c2a] outline-none focus:border-[#0058be] focus:ring-4 focus:ring-[#0058be]/10 transition-all bg-[#f8f9ff]/50"
                 />
               </div>
+
               <div>
-                <label className="block text-[12px] font-bold text-[#424754] uppercase mb-1.5">Mô tả chi tiết</label>
+                <label className="block text-[13px] font-extrabold text-[#424754] uppercase tracking-wider mb-2.5">
+                  Mô tả chi tiết & Mục đích bộ sưu tập
+                </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={newColDesc}
                   onChange={(e) => setNewColDesc(e.target.value)}
-                  placeholder="Thêm mô tả về chủ đề nghiên cứu hoặc mục đích của bộ sưu tập..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-[#c2c6d6]/60 text-[14px] outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/10 transition-all resize-none"
+                  placeholder="Thêm mô tả về chủ đề nghiên cứu, mục tiêu học tập hoặc các câu hỏi cần giải quyết..."
+                  className="w-full px-5 py-3.5 rounded-2xl border border-[#c2c6d6]/60 text-[15px] text-[#121c2a] outline-none focus:border-[#0058be] focus:ring-4 focus:ring-[#0058be]/10 transition-all resize-none bg-[#f8f9ff]/50 leading-relaxed"
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
+
+              <div className="bg-[#eff4ff]/60 border border-[#0058be]/20 rounded-2xl p-4.5 flex items-start gap-3">
+                <Sparkles size={18} className="text-[#0058be] shrink-0 mt-0.5" />
+                <p className="text-[13px] text-[#424754] leading-relaxed font-medium">
+                  <strong>Mẹo Lumis AI:</strong> Sau khi tạo bộ sưu tập, bạn có thể dễ dàng thêm nhiều tài liệu cùng lúc và sử dụng trợ lý AI Workspace để tổng hợp kiến thức liên tệp.
+                </p>
+              </div>
+
+              <div className="flex justify-end items-center gap-3.5 pt-4 border-t border-[#c2c6d6]/30 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsCreateColModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl text-[13px] font-semibold text-[#424754] hover:bg-gray-100 transition-colors"
+                  className="px-6 py-3 rounded-2xl text-[14px] font-bold text-[#727785] hover:bg-gray-100 hover:text-[#121c2a] transition-colors"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={creatingCol || !newColName.trim()}
-                  className="px-6 py-2.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] disabled:opacity-50 text-white text-[13px] font-bold flex items-center gap-2 shadow-md shadow-[#0058be]/20 transition-all"
+                  className="px-8 py-3 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] disabled:opacity-50 text-white text-[14px] font-extrabold flex items-center gap-2.5 shadow-lg shadow-[#0058be]/25 hover:shadow-xl hover:scale-[1.01] transition-all"
                 >
-                  {creatingCol ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                  Tạo ngay
+                  {creatingCol ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} strokeWidth={2.5} />}
+                  <span>Tạo Bộ sưu tập ngay</span>
                 </button>
               </div>
             </form>
@@ -1027,7 +1046,7 @@ export default function LibraryPage() {
       {/* ── Modal 2: Add Document to Collection Modal ── */}
       {isAddToColModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-7 shadow-2xl border border-[#c2c6d6]/40 flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl border border-[#c2c6d6]/40 flex flex-col max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between pb-4 border-b border-[#c2c6d6]/30 mb-5 shrink-0">
               <div className="flex items-center gap-2.5 text-[#0058be]">
                 <div className="p-2.5 bg-[#eff4ff] rounded-2xl">
@@ -1187,7 +1206,7 @@ export default function LibraryPage() {
       {/* ── Modal 3: Share Document Modal ── */}
       {isShareModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-7 shadow-2xl border border-[#c2c6d6]/40 flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl border border-[#c2c6d6]/40 flex flex-col max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between pb-4 border-b border-[#c2c6d6]/30 mb-5 shrink-0">
               <div className="flex items-center gap-2.5 text-[#0058be]">
                 <div className="p-2.5 bg-[#eff4ff] rounded-2xl">
