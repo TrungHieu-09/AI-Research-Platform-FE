@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   Search, ChevronDown, Upload, List, LayoutGrid,
   FolderOpen, Plus, Tag, X, FileText, Check, Sparkles,
-  MoreVertical, Calendar, Hash, Users, BookOpen, Download, Trash2
+  MoreVertical, Calendar, Hash, Users, BookOpen, Download, Trash2, Eye
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
@@ -399,9 +399,29 @@ export default function LibraryPage() {
                   <span className="truncate">{doc.collection}</span>
                 </div>
                 <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-1">
-                  <button className="p-1.5 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors" title="Tải xuống">
-                    <Download size={16} />
-                  </button>
+                  {doc.raw?.fileUrl && (
+                    <a
+                      href={doc.raw.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors"
+                      title="Xem tài liệu"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Eye size={16} />
+                    </a>
+                  )}
+                  {doc.raw?.fileUrl && (
+                    <a
+                      href={doc.raw.fileUrl}
+                      download
+                      className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors"
+                      title="Tải xuống"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Download size={16} />
+                    </a>
+                  )}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -426,6 +446,17 @@ export default function LibraryPage() {
               <h3 className="text-[15px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Chi tiết tài liệu</h3>
             </div>
             <div className="flex items-center gap-1">
+              {selectedDocDetails?.raw?.fileUrl && (
+                <a
+                  href={selectedDocDetails.raw.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-xl transition-colors"
+                  title="Xem tài liệu"
+                >
+                  <Eye size={16} />
+                </a>
+              )}
               {selectedDocDetails && (
                 <button 
                   onClick={() => handleDeleteDocument(selectedDocDetails.id)}
