@@ -657,7 +657,13 @@ export default function LibraryPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-[14px] font-bold text-[#121c2a] truncate hover:text-[#0058be] transition-colors">{doc.title}</p>
+                        <Link 
+                          href={`/user/documents/${doc.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[14px] font-bold text-[#121c2a] truncate hover:text-[#0058be] hover:underline transition-colors"
+                        >
+                          {doc.title}
+                        </Link>
                         <span className="text-[9px] font-bold text-[#727785] bg-gray-100 px-1.5 py-0.5 rounded shrink-0">{doc.type}</span>
                       </div>
                       <p className="text-[12px] text-[#727785] truncate">{doc.authors}</p>
@@ -784,14 +790,14 @@ export default function LibraryPage() {
               </div>
 
               {/* Action Buttons inside Inspector */}
-              <div className="grid grid-cols-2 gap-2.5 mb-6">
+              <div className="grid grid-cols-2 gap-2.5 mb-3">
                 <button
                   onClick={() => {
                     setTargetDocIdForCol(selectedDocDetails.id)
                     setSelectedColForAdd(collections[0]?.id || "")
                     setIsAddToColModalOpen(true)
                   }}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#eff4ff] hover:bg-[#dee9fc] text-[#0058be] font-bold text-[12px] rounded-xl transition-colors"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#eff4ff] hover:bg-[#dee9fc] text-[#0058be] font-bold text-[12px] rounded-xl transition-colors cursor-pointer"
                 >
                   <FolderPlus size={15} /> Thêm vào bộ
                 </button>
@@ -800,10 +806,18 @@ export default function LibraryPage() {
                     setShareDocId(selectedDocDetails.id)
                     setIsShareModalOpen(true)
                   }}
-                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#eff4ff] hover:bg-[#dee9fc] text-[#0058be] font-bold text-[12px] rounded-xl transition-colors"
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#eff4ff] hover:bg-[#dee9fc] text-[#0058be] font-bold text-[12px] rounded-xl transition-colors cursor-pointer"
                 >
                   <Share2 size={15} /> Chia sẻ
                 </button>
+              </div>
+              <div className="mb-6">
+                <Link
+                  href={`/user/documents/${selectedDocDetails.id}`}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[13px] rounded-xl shadow-sm transition-all hover:scale-[1.01]"
+                >
+                  <BookOpen size={16} /> Xem trang chi tiết & Thảo luận
+                </Link>
               </div>
 
               {/* Metadata Grid */}

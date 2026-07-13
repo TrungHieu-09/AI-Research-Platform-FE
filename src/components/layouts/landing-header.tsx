@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown
+  Wallet, Settings, LogOut, Search, ChevronDown, MessageSquare
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
@@ -17,6 +17,12 @@ const appNavLinks = [
     href: "/user/library",
     icon: BookOpen,
     activePrefix: "/user/library",
+  },
+  {
+    name: "Diễn đàn",
+    href: "/user/forum",
+    icon: MessageSquare,
+    activePrefix: "/user/forum",
   },
   {
     name: "Không gian AI",
