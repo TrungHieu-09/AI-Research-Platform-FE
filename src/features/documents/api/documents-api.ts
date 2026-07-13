@@ -1,4 +1,4 @@
-import { apiFetch, getAccessToken } from "@/lib/api/client"
+import { apiFetch, getAccessToken, getAuthUser } from "@/lib/api/client"
 
 import type {
   AuditLog,
@@ -30,6 +30,7 @@ export interface RequestUploadUrlResponse {
 export interface CreateDocumentRequest {
   title: string
   description?: string
+  filename?: string
   subjectId: string
   visibility: DocumentVisibility
   fileUrl: string
@@ -44,7 +45,10 @@ export interface GetDocumentsQuery {
   status?: DocumentStatus
   search?: string
   page?: number
+  pageSize?: number
   limit?: number
+  ownerId?: string
+  visibility?: DocumentVisibility
 }
 
 export interface ModerateDocumentRequest {
@@ -78,6 +82,20 @@ function buildQueryString(query: object = {}) {
 
   const queryString = searchParams.toString()
   return queryString ? `?${queryString}` : ""
+}
+
+function getAdminHeaders(includeUserId = false): HeadersInit {
+  const user = getAuthUser()
+  const role = user?.role?.toUpperCase()
+  const headers: Record<string, string> = {
+    "x-user-role": role === "ADMIN" ? "ADMIN" : role || "ADMIN",
+  }
+
+  if (includeUserId && user?.id) {
+    headers["x-user-id"] = user.id
+  }
+
+  return headers
 }
 
 function isDocumentLike(value: unknown) {
@@ -164,6 +182,9 @@ export function getDocuments(query?: GetDocumentsQuery) {
 export function getAdminDocuments(query?: GetDocumentsQuery) {
   return apiFetch<DocumentRecord[] | PaginatedDocuments>(
     `${DOCUMENT_ENDPOINTS.adminList}${buildQueryString(query)}`,
+    {
+      headers: getAdminHeaders(),
+    },
   )
 }
 
@@ -174,6 +195,7 @@ export function getDocument(id: string) {
 export function moderateDocument(id: string, payload: ModerateDocumentRequest) {
   return apiFetch<MessageResponse>(DOCUMENT_ENDPOINTS.moderate(id), {
     method: "POST",
+    headers: getAdminHeaders(true),
     body: JSON.stringify(payload),
   })
 }

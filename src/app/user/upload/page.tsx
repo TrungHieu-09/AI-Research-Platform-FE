@@ -4,6 +4,11 @@ import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/features/auth/auth-context"
+import {
+  createDocument,
+  requestDocumentUploadUrl,
+  uploadFileToPresignedUrl,
+} from "@/features/documents/api/documents-api"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -44,7 +49,14 @@ function getMimeIcon(mimeType: string): string {
   return "insert_drive_file"
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+const BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "")
+
+async function calculateFileHash(file: File) {
+  const buffer = await file.arrayBuffer()
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("")
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -168,52 +180,57 @@ export default function UploadDocumentPage() {
     setUploadProgress(0)
 
     try {
-      const formData = new FormData()
-      formData.append("file", selectedFile)
-      formData.append("title", title.trim())
-      formData.append("description", description.trim())
-      formData.append("subjectId", subjectId)
-      formData.append("visibility", visibility)
+      setUploadProgress(10)
 
-      // Use XMLHttpRequest so we can track real upload progress
-      const result = await new Promise<{ document: UploadedDoc; fileUrl: string; message: string }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
+      const fileHash = await calculateFileHash(selectedFile)
+      setUploadProgress(25)
 
-        xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) {
-            const pct = Math.round((e.loaded / e.total) * 85) // 85% for upload phase
-            setUploadProgress(pct)
-          }
-        })
-
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText)
-              setUploadProgress(100)
-              resolve(data)
-            } catch {
-              reject(new Error("Phản hồi không hợp lệ từ máy chủ."))
-            }
-          } else {
-            try {
-              const errData = JSON.parse(xhr.responseText)
-              reject(new Error(errData.error ?? `Lỗi máy chủ (${xhr.status})`))
-            } catch {
-              reject(new Error(`Lỗi máy chủ (${xhr.status})`))
-            }
-          }
-        })
-
-        xhr.addEventListener("error", () => reject(new Error("Lỗi kết nối. Vui lòng thử lại.")))
-        xhr.addEventListener("abort", () => reject(new Error("Tải lên bị hủy.")))
-
-        xhr.open("POST", `${BASE_URL}/api/documents/upload`)
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`)
-        xhr.send(formData)
+      const uploadResponse = await requestDocumentUploadUrl({
+        filename: selectedFile.name,
+        fileHash,
+        fileSize: selectedFile.size,
+        mimeType: selectedFile.type || "application/octet-stream",
       })
 
-      setUploadedDoc(result.document)
+      setUploadProgress(45)
+
+      if (uploadResponse.document) {
+        setUploadedDoc(uploadResponse.document as UploadedDoc)
+        setUploadProgress(100)
+        setUploadStatus("success")
+        return
+      }
+
+      const uploadUrl = uploadResponse.uploadUrl ?? uploadResponse.url
+      const fileUrl =
+        uploadResponse.fileUrl ??
+        uploadResponse.publicUrl
+
+      if (!fileUrl) {
+        throw new Error("Backend chưa trả về fileUrl cho tài liệu.")
+      }
+
+      if (uploadUrl && !uploadResponse.deduplicated && !uploadResponse.isDuplicate) {
+        await uploadFileToPresignedUrl(uploadUrl, selectedFile)
+      }
+
+      setUploadProgress(75)
+
+      const document = await createDocument({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        filename: selectedFile.name,
+        subjectId,
+        visibility,
+        fileUrl,
+        fileHash,
+        fileSize: selectedFile.size,
+        mimeType: selectedFile.type || "application/octet-stream",
+        pageCount: 1,
+      })
+
+      setUploadedDoc(document as UploadedDoc)
+      setUploadProgress(100)
       setUploadStatus("success")
     } catch (err: any) {
       setErrorMessage(err.message ?? "Tải lên thất bại. Vui lòng thử lại.")

@@ -1,6 +1,8 @@
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "")
 const ACCESS_TOKEN_KEY = "lumis_access_token"
 const AUTH_USER_KEY = "lumis_auth_user"
+const CURRENT_ACCESS_TOKEN_KEY = "lumis_token"
+const CURRENT_AUTH_USER_KEY = "lumis_user"
 
 export type AuthRole = "STUDENT" | "ADMIN"
 export type AuthTier = "FREE" | "PREMIUM"
@@ -63,12 +65,17 @@ function extractErrorMessage(value: unknown): string | null {
 export function setAccessToken(token: string) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(ACCESS_TOKEN_KEY, token)
+    window.localStorage.setItem(CURRENT_ACCESS_TOKEN_KEY, token)
   }
 }
 
 export function setAuthUser(user: AuthUser) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+    window.localStorage.setItem(CURRENT_AUTH_USER_KEY, JSON.stringify({
+      ...user,
+      initials: makeInitials(user.name),
+    }))
   }
 }
 
@@ -79,13 +86,13 @@ export function setAuthSession(token: string, user: AuthUser) {
 
 export function getAccessToken() {
   if (typeof window === "undefined") return null
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY)
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY) ?? window.localStorage.getItem(CURRENT_ACCESS_TOKEN_KEY)
 }
 
 export function getAuthUser() {
   if (typeof window === "undefined") return null
 
-  const rawUser = window.localStorage.getItem(AUTH_USER_KEY)
+  const rawUser = window.localStorage.getItem(AUTH_USER_KEY) ?? window.localStorage.getItem(CURRENT_AUTH_USER_KEY)
   if (!rawUser) return null
 
   try {
@@ -104,8 +111,20 @@ export function clearAuthSession() {
   if (typeof window !== "undefined") {
     window.localStorage.removeItem(ACCESS_TOKEN_KEY)
     window.localStorage.removeItem(AUTH_USER_KEY)
+    window.localStorage.removeItem(CURRENT_ACCESS_TOKEN_KEY)
+    window.localStorage.removeItem(CURRENT_AUTH_USER_KEY)
     window.localStorage.removeItem("lumis_auth")
   }
+}
+
+function makeInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
 }
 
 export async function apiFetch<T>(

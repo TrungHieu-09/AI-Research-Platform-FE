@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  BookOpen, Brain, HardDrive,
+  BookOpen, Brain, HardDrive, MessageSquareText,
   Wallet, Settings, LogOut, Search, ChevronDown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -23,6 +23,12 @@ const appNavLinks = [
     href: "/user/ai-workspace",
     icon: Brain,
     activePrefix: "/user/ai-workspace",
+  },
+  {
+    name: "Forum",
+    href: "/user/forum",
+    icon: MessageSquareText,
+    activePrefix: "/user/forum",
   },
 ]
 

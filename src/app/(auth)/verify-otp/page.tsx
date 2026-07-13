@@ -2,14 +2,12 @@
 
 import { Suspense, useState } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 
-import { setAuthUser } from "@/components/layouts/landing-header"
 import { verifyOtp } from "@/features/auth/api/auth-api"
 import { getDefaultRouteByRole } from "@/lib/api/client"
 
 function VerifyOtpContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") ?? ""
   const [otpCode, setOtpCode] = useState("")
@@ -24,21 +22,7 @@ function VerifyOtpContent() {
       setErrorMessage("")
 
       const response = await verifyOtp({ email, otpCode })
-      const initials = response.user.name
-        .split(" ")
-        .filter(Boolean)
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
-
-      setAuthUser({
-        name: response.user.name,
-        email: response.user.email,
-        initials,
-        role: response.user.role === "ADMIN" ? "admin" : "user",
-      })
-      router.push(getDefaultRouteByRole(response.user.role))
+      window.location.assign(getDefaultRouteByRole(response.user.role))
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Xác thực OTP thất bại.")
     } finally {

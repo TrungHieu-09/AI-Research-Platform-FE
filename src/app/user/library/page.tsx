@@ -89,7 +89,7 @@ export default function LibraryPage() {
   const [docs, setDocs] = React.useState<any[]>([])
 
   React.useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/documents`, {
+    fetch("/api/documents", {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     })
     .then(res => res.json())

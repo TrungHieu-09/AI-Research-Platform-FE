@@ -1,11 +1,11 @@
 // ─── API client helper ─────────────────────────────────────────────────────
-// All calls go to the backend server (NEXT_PUBLIC_API_URL)
-
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+// In local dev, keep requests relative (`/api/...`) so Next rewrites proxy them to BACKEND_URL.
+// Setting NEXT_PUBLIC_API_URL makes the browser call the backend directly and requires BE CORS.
+const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "")
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null
-  return localStorage.getItem("lumis_token")
+  return localStorage.getItem("lumis_token") ?? localStorage.getItem("lumis_access_token")
 }
 
 type ApiOptions = {

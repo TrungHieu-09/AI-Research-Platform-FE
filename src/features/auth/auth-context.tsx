@@ -46,19 +46,24 @@ function makeInitials(name: string) {
 function saveSession(token: string, user: AuthUser) {
   localStorage.setItem("lumis_token", token)
   localStorage.setItem("lumis_user", JSON.stringify(user))
+  // Keep compatibility with older API helpers still used by some feature modules.
+  localStorage.setItem("lumis_access_token", token)
+  localStorage.setItem("lumis_auth_user", JSON.stringify(user))
 }
 
 function clearSession() {
   localStorage.removeItem("lumis_token")
   localStorage.removeItem("lumis_user")
+  localStorage.removeItem("lumis_access_token")
+  localStorage.removeItem("lumis_auth_user")
   // Legacy key cleanup
   localStorage.removeItem("lumis_auth")
 }
 
 function loadSession(): { token: string; user: AuthUser } | null {
   try {
-    const token = localStorage.getItem("lumis_token")
-    const raw = localStorage.getItem("lumis_user")
+    const token = localStorage.getItem("lumis_token") ?? localStorage.getItem("lumis_access_token")
+    const raw = localStorage.getItem("lumis_user") ?? localStorage.getItem("lumis_auth_user")
     if (!token || !raw) return null
     return { token, user: JSON.parse(raw) }
   } catch {

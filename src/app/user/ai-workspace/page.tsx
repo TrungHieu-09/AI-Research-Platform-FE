@@ -88,7 +88,7 @@ function WorkspaceContent() {
 
   React.useEffect(() => {
     if (docId) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/documents/${docId}`, {
+      fetch(`/api/documents/${docId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
       .then(res => res.json())
@@ -114,7 +114,7 @@ function WorkspaceContent() {
     setIsTyping(true)
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/chat`, {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
