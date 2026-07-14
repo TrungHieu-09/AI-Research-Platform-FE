@@ -9,6 +9,8 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 import { useAuth } from "@/features/auth/auth-context"
+import { sendChatMessage } from "@/features/ai/api/ai-api"
+import type { ChatCitation, ChatScope } from "@/features/ai/types"
 
 /* ─── Data ───────────────────────────────────── */
 const mockDocs = [
@@ -47,6 +49,49 @@ const quickActions = [
   { Icon: ArrowRightLeft, label: "So sánh\nBài báo", color: "text-[#a16207]", bg: "bg-[#fefce8]", hoverBg: "hover:bg-[#fef9c3]" },
 ]
 
+type WorkspaceScope = Extract<ChatScope, "SINGLE_DOCUMENT" | "SUBJECT">
+
+interface SourceReference {
+  id: string | number
+  citationNumber: number
+  author: string
+  title: string
+  excerpt: string
+  tags: string[]
+}
+
+function mapCitationToReference(citation: ChatCitation, index: number): SourceReference {
+  const extendedCitation = citation as ChatCitation & {
+    documentTitle?: unknown
+    excerpt?: unknown
+  }
+  const documentTitle =
+    typeof extendedCitation.documentTitle === "string" && extendedCitation.documentTitle.trim()
+      ? extendedCitation.documentTitle
+      : citation.documentId
+        ? `Tài liệu ${citation.documentId.slice(0, 8)}`
+        : "Nguồn tài liệu"
+
+  const excerpt =
+    typeof citation.textExcerpt === "string" && citation.textExcerpt.trim()
+      ? citation.textExcerpt
+      : typeof extendedCitation.excerpt === "string" && extendedCitation.excerpt.trim()
+        ? extendedCitation.excerpt
+        : "AI trả về trích dẫn từ tài liệu nhưng chưa có đoạn nội dung kèm theo."
+
+  return {
+    id: `${citation.documentId ?? "citation"}-${citation.pageNumber ?? index}-${index}`,
+    citationNumber: index + 1,
+    author: documentTitle,
+    title: documentTitle,
+    excerpt,
+    tags: [
+      citation.pageNumber ? `Trang ${citation.pageNumber}` : "RAG source",
+      citation.paragraphIndex ? `Đoạn ${citation.paragraphIndex}` : "Forum document",
+    ],
+  }
+}
+
 /* ─── Typing Dots ────────────────────────────── */
 function TypingDots() {
   return (
@@ -81,10 +126,11 @@ function WorkspaceContent() {
   const [isTyping, setIsTyping] = React.useState(false)
   const bottomRef = React.useRef<HTMLDivElement>(null)
 
-  const [realSourceReferences, setRealSourceReferences] = React.useState<any[]>([])
-  const sessionId = React.useMemo(() => crypto.randomUUID(), [])
+  const [realSourceReferences, setRealSourceReferences] = React.useState<SourceReference[]>([])
+  const [sessionId, setSessionId] = React.useState(() => crypto.randomUUID())
   const [realAttachedDoc, setRealAttachedDoc] = React.useState<{ id: string, title: string } | null>(null)
   const [isDocAttached, setIsDocAttached] = React.useState(false)
+  const [chatScope, setChatScope] = React.useState<WorkspaceScope>("SUBJECT")
 
   React.useEffect(() => {
     if (docId) {
@@ -96,6 +142,7 @@ function WorkspaceContent() {
         if (data.id) {
           setRealAttachedDoc({ id: data.id, title: data.title })
           setIsDocAttached(true)
+          setChatScope("SINGLE_DOCUMENT")
         }
       })
       .catch(console.error)
@@ -111,32 +158,38 @@ function WorkspaceContent() {
     const userMsg = input
     setMessages(prev => [...prev, { role: "user", content: userMsg }])
     setInput("")
+
+    if (!isDocAttached || !realAttachedDoc) {
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "ai",
+          content: "Vui lòng mở AI Workspace từ một tài liệu Forum để Lumis có documentId làm ngữ cảnh RAG. Ví dụ: /user/ai-workspace?docId=<documentId>.",
+        },
+      ])
+      return
+    }
+
     setIsTyping(true)
     
     try {
-      const res = await fetch("/api/ai/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          message: userMsg,
-          sessionId,
-          documentId: (isDocAttached && realAttachedDoc) ? realAttachedDoc.id : undefined,
-          scope: (isDocAttached && realAttachedDoc) ? "SINGLE_DOCUMENT" : "GLOBAL"
-        })
-      });
+      const data = await sendChatMessage({
+        message: userMsg,
+        sessionId,
+        documentId: realAttachedDoc.id,
+        scope: chatScope,
+      })
       
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Lỗi khi gọi AI");
+      if (data.sessionId) {
+        setSessionId(data.sessionId)
+      }
       
-      setMessages(prev => [...prev, { role: "ai", content: data.answer }]);
+      setMessages(prev => [...prev, { role: "ai", content: data.answer || data.message || "AI chưa trả về nội dung." }]);
       
       if (data.citations && data.citations.length > 0) {
-        setRealSourceReferences(data.citations.map((c: any, i: number) => ({
-          id: i, citationNumber: c.index, author: c.documentTitle, title: c.documentTitle, excerpt: c.excerpt, tags: [`Tr. ${c.pageNumber}`]
-        })));
+        setRealSourceReferences(data.citations.map((citation, index) => mapCitationToReference(citation, index)))
+      } else {
+        setRealSourceReferences([])
       }
     } catch (err: any) {
       setMessages(prev => [...prev, { role: "ai", content: `❌ Lỗi: ${err.message}` }]);
@@ -306,12 +359,43 @@ function WorkspaceContent() {
                 >
                   <FileText size={14} className="text-[#0058be]" />
                   <span className="text-[12px] font-semibold text-[#121c2a] truncate max-w-[300px]">{realAttachedDoc.title}</span>
-                  <button onClick={() => setIsDocAttached(false)} className="text-[#727785] hover:text-red-500 ml-1 transition-colors">
+                  <button
+                    onClick={() => {
+                      setIsDocAttached(false)
+                      setChatScope("SUBJECT")
+                    }}
+                    className="text-[#727785] hover:text-red-500 ml-1 transition-colors"
+                  >
                     <X size={12} />
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
+            {realAttachedDoc ? (
+              <div className="flex items-center gap-2 self-start rounded-xl border border-[#c2c6d6]/40 bg-white px-2 py-1 shadow-sm">
+                {([
+                  ["SINGLE_DOCUMENT", "Tài liệu này"],
+                  ["SUBJECT", "Cả môn học"],
+                ] as const).map(([scope, label]) => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => setChatScope(scope)}
+                    className={`rounded-lg px-3 py-1.5 text-[12px] font-bold transition ${
+                      chatScope === scope
+                        ? "bg-[#0058be] text-white shadow-sm"
+                        : "text-[#727785] hover:bg-[#eff4ff] hover:text-[#0058be]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="self-start rounded-xl border border-dashed border-[#c2c6d6]/70 bg-white/70 px-3 py-2 text-[12px] font-semibold text-[#727785]">
+                Mở từ Forum với <span className="text-[#0058be]">?docId=...</span> để hỏi AI theo tài liệu hoặc môn học.
+              </div>
+            )}
 
             <div className="bg-white border border-[#c2c6d6]/50 rounded-2xl shadow-sm p-3 flex flex-col focus-within:border-[#0058be]/40 focus-within:shadow-[0_0_0_3px_rgba(0,88,190,0.08)] transition-all">
               <textarea
@@ -378,7 +462,7 @@ function WorkspaceContent() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
-            {(realSourceReferences.length > 0 ? realSourceReferences : sourceReferences).map((ref, i) => (
+            {realSourceReferences.length > 0 ? realSourceReferences.map((ref, i) => (
               <motion.div
                 key={ref.id}
                 className="bg-white border border-[#c2c6d6]/40 rounded-xl overflow-hidden shadow-sm cursor-pointer"
@@ -412,7 +496,17 @@ function WorkspaceContent() {
                   </div>
                 </div>
               </motion.div>
-            ))}
+            )) : (
+              <div className="rounded-2xl border border-dashed border-[#c2c6d6]/70 bg-white/70 p-5 text-center">
+                <Sparkles size={22} className="mx-auto mb-3 text-[#0058be]/50" />
+                <p className="text-[13px] font-semibold text-[#424754]">
+                  Nguồn tham khảo sẽ xuất hiện sau khi AI trả lời bằng dữ liệu RAG.
+                </p>
+                <p className="mt-1 text-[12px] text-[#727785]">
+                  Không hiển thị citation mock để tránh nhầm với dữ liệu thật.
+                </p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
