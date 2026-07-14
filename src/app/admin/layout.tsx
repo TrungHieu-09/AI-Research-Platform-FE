@@ -12,7 +12,7 @@ export default function AdminLayout({
       <AdminSidebar />
       <div className="flex-1 lg:ml-72 flex flex-col transition-all duration-300 min-h-screen">
         {/* Sleek Admin Top Header */}
-        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-[#c2c6d6]/40 px-6 md:px-8 flex items-center justify-between">
+        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-[#c2c6d6]/40 pl-16 pr-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#eff4ff] border border-[#0058be]/20 text-[#0058be] text-[11px] font-bold tracking-wider uppercase">
               <Sparkles size={12} />

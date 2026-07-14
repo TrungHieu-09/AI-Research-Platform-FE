@@ -1,559 +1,400 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { motion, AnimatePresence, useMotionValue, useSpring, useInView, Variants } from "framer-motion"
+import { motion } from "framer-motion"
 import {
-  Search, HardDrive, FileText, FileType2, AlignLeft,
-  MoreVertical, Trash2, Download, Share2, Sparkles,
-  TrendingUp, Clock, CloudUpload, RefreshCw, ChevronRight,
-  AlertCircle, CheckCircle2, Zap, ArrowUpRight,
+  FileText,
+  Trash2,
+  HardDrive,
+  AlertTriangle,
+  FolderOpen,
+  FolderPlus,
+  RefreshCw,
+  TrendingUp,
+  CloudUpload,
+  Database,
+  Loader2,
+  CheckCircle2,
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/features/auth/auth-context"
 
-/* ─── Animation Variants ─────────────────────── */
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] } }),
-}
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  visible: (i = 0) => ({ opacity: 1, transition: { delay: i * 0.08, duration: 0.4 } }),
-}
+export default function StoragePage() {
+  const { user, token } = useAuth()
+  const isPremium = user?.tier === "PREMIUM"
+  const totalCapGB = isPremium ? 100 : 5 // 100 GB for Premium, 5 GB for Free
 
-/* ─── Animated Number ────────────────────────── */
-function AnimatedNumber({ value, decimals = 0 }: { value: number; decimals?: number }) {
-  const ref = React.useRef<HTMLSpanElement>(null)
-  const inView = useInView(ref, { once: true })
-  const motionVal = useMotionValue(0)
-  const spring = useSpring(motionVal, { damping: 30, stiffness: 80 })
-  const [display, setDisplay] = React.useState("0")
-  React.useEffect(() => { if (inView) motionVal.set(value) }, [inView, value, motionVal])
-  React.useEffect(() => spring.on("change", v => setDisplay(v.toFixed(decimals))), [spring, decimals])
-  return <span ref={ref}>{display}</span>
-}
+  const [documents, setDocuments] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([])
+  const [deleting, setDeleting] = React.useState(false)
+  const [toastMessage, setToastMessage] = React.useState<{ text: string; type: "success" | "error" } | null>(null)
 
-/* ─── Mock Data ─────────────────────────────── */
-const storageBreakdown = [
-  { label: "PDF", gb: 45.2, color: "#e55858", pct: 70.4 },
-  { label: "DOCX", gb: 15.1, color: "#0058be", pct: 23.5 },
-  { label: "TXT", gb: 4.5, color: "#f59e0b", pct: 7.0 },
-]
+  const showToast = (text: string, type: "success" | "error" = "success") => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 3500)
+  }
 
-const totalUsed = 64.8
-const totalCap = 128
-const usedPct = Math.round((totalUsed / totalCap) * 100)
-
-const fileTypeCards = [
-  {
-    id: "pdf",
-    label: "PDF Docs",
-    count: "1,284 documents",
-    icon: FileText,
-    iconColor: "text-[#e55858]",
-    iconBg: "bg-[#fff1f1]",
-    size: "45.2 GB",
-    trend: "+12 this week",
-  },
-  {
-    id: "docx",
-    label: "DOCX Files",
-    count: "456 documents",
-    icon: FileType2,
-    iconColor: "text-[#0058be]",
-    iconBg: "bg-[#eff4ff]",
-    size: "15.1 GB",
-    trend: "+3 this week",
-  },
-  {
-    id: "txt",
-    label: "Plain Text",
-    count: "2,891 notes",
-    icon: AlignLeft,
-    iconColor: "text-[#f59e0b]",
-    iconBg: "bg-[#fffbeb]",
-    size: "4.5 GB",
-    trend: "+128 this week",
-  },
-]
-
-const largestFiles = [
-  { name: "Genome_Sequencing_2024_Full.pdf", type: "PDF", size: "2.4 GB", modified: "2 days ago" },
-  { name: "Climate_Data_Aggregation_v2.docx", type: "DOCX", size: "840 MB", modified: "5 days ago" },
-  { name: "Neural_Network_Architectures_Review.pdf", type: "PDF", size: "620 MB", modified: "1 week ago" },
-  { name: "Quantum_Computing_Lecture_Series.pdf", type: "PDF", size: "510 MB", modified: "1 week ago" },
-  { name: "BioInformatics_Dataset_2023.txt", type: "TXT", size: "380 MB", modified: "2 weeks ago" },
-  { name: "Protein_Folding_Simulation_Raw.docx", type: "DOCX", size: "295 MB", modified: "3 weeks ago" },
-]
-
-const recentUploads = [
-  { name: "Thesis_Proposal_Draft_1.txt", size: "12 KB", time: "2 hours ago" },
-  { name: "Astro_Physics_Survey_Results.pdf", size: "18.5 MB", time: "Yesterday" },
-  { name: "ML_Conference_Notes_NeurIPS.docx", size: "4.2 MB", time: "2 days ago" },
-  { name: "Epigenetics_Review_2024.pdf", size: "7.8 MB", time: "3 days ago" },
-]
-
-/* ─── Helpers ─────────────────────────────── */
-function fileTypeIcon(type: string) {
-  if (type === "PDF") return { icon: FileText, color: "text-[#e55858]", bg: "bg-[#fff1f1]" }
-  if (type === "DOCX") return { icon: FileType2, color: "text-[#0058be]", bg: "bg-[#eff4ff]" }
-  return { icon: AlignLeft, color: "text-[#f59e0b]", bg: "bg-[#fffbeb]" }
-}
-
-/* ─── File Row Dropdown ─────────────────────── */
-function FileRowMenu() {
-  const [open, setOpen] = React.useState(false)
-  const ref = React.useRef<HTMLDivElement>(null)
+  const fetchDocuments = React.useCallback(async () => {
+    if (!token) return
+    setLoading(true)
+    setError(null)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const res = await fetch(`${baseUrl}/api/documents`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data && Array.isArray(data.items)) {
+          setDocuments(data.items)
+        } else {
+          setDocuments([])
+        }
+      } else {
+        setError("Không tải được danh sách tài liệu từ máy chủ.")
+      }
+    } catch (e) {
+      setError("Lỗi kết nối máy chủ khi truy xuất lưu trữ.")
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
 
   React.useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    fetchDocuments()
+  }, [fetchDocuments])
+
+  // Calculate real storage metrics from live documents
+  const stats = React.useMemo(() => {
+    let pdfCount = 0, docxCount = 0, txtCount = 0
+    let pdfBytes = 0, docxBytes = 0, txtBytes = 0
+
+    documents.forEach((doc) => {
+      // Estimate or use real fileSize (defaulting to ~500 KB per doc if missing)
+      const sizeBytes = Number(doc.fileSize || (doc.content ? doc.content.length * 2 : 512000))
+      const mime = (doc.mimeType || "").toLowerCase()
+
+      if (mime.includes("pdf")) {
+        pdfCount++
+        pdfBytes += sizeBytes
+      } else if (mime.includes("word") || mime.includes("document") || mime.includes("docx")) {
+        docxCount++
+        docxBytes += sizeBytes
+      } else {
+        txtCount++
+        txtBytes += sizeBytes
+      }
+    })
+
+    const totalBytes = pdfBytes + docxBytes + txtBytes
+    const totalMB = totalBytes / (1024 * 1024)
+    const totalGB = totalMB / 1024
+    const usedPct = Math.min(100, Math.max(documents.length > 0 ? 1 : 0, Math.round((totalGB / totalCapGB) * 100)))
+
+    const pdfMB = pdfBytes / (1024 * 1024)
+    const docxMB = docxBytes / (1024 * 1024)
+    const txtMB = txtBytes / (1024 * 1024)
+
+    return {
+      pdfCount, docxCount, txtCount,
+      pdfMB: pdfMB.toFixed(1), docxMB: docxMB.toFixed(1), txtMB: txtMB.toFixed(1),
+      totalMB: totalMB.toFixed(2),
+      totalGB: totalGB < 0.01 && documents.length > 0 ? "< 0.01" : totalGB.toFixed(2),
+      usedPct,
+      breakdown: [
+        { label: "PDF Documents", count: `${pdfCount} tệp`, mb: pdfMB.toFixed(1), color: "bg-red-500", textColor: "text-red-600", bgLight: "bg-red-50" },
+        { label: "Word / DOCX", count: `${docxCount} tệp`, mb: docxMB.toFixed(1), color: "bg-[#0058be]", textColor: "text-[#0058be]", bgLight: "bg-[#eff4ff]" },
+        { label: "Ghi chú & Text", count: `${txtCount} tệp`, mb: txtMB.toFixed(1), color: "bg-amber-500", textColor: "text-amber-600", bgLight: "bg-amber-50" },
+      ]
     }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [])
+  }, [documents, totalCapGB])
+
+  // Sort by estimated/real size descending for "Largest files"
+  const largestFiles = React.useMemo(() => {
+    return [...documents].sort((a, b) => {
+      const sizeA = Number(a.fileSize || (a.content ? a.content.length * 2 : 512000))
+      const sizeB = Number(b.fileSize || (b.content ? b.content.length * 2 : 512000))
+      return sizeB - sizeA
+    }).slice(0, 10).map((doc) => {
+      const sizeBytes = Number(doc.fileSize || (doc.content ? doc.content.length * 2 : 512000))
+      const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2)
+      const mime = (doc.mimeType || "").toLowerCase()
+      let iconColor = "text-gray-500"
+      let iconBg = "bg-gray-100"
+      let badgeText = "TXT"
+      if (mime.includes("pdf")) { iconColor = "text-red-500"; iconBg = "bg-red-50"; badgeText = "PDF" }
+      else if (mime.includes("word") || mime.includes("document")) { iconColor = "text-[#0058be]"; iconBg = "bg-[#eff4ff]"; badgeText = "DOCX" }
+
+      return {
+        id: doc.id,
+        name: doc.title || "Tài liệu không tên",
+        sizeMB,
+        type: badgeText,
+        iconColor,
+        iconBg,
+        date: new Date(doc.createdAt).toLocaleDateString("vi-VN")
+      }
+    })
+  }, [documents])
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === largestFiles.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(largestFiles.map(f => f.id))
+    }
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0 || !token) return
+    if (!window.confirm(`Bạn có chắc muốn xóa vĩnh viễn ${selectedIds.length} tệp đã chọn khỏi hệ thống?`)) return
+    setDeleting(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      await Promise.all(selectedIds.map(id =>
+        fetch(`${baseUrl}/api/documents/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ))
+      showToast(`Đã xóa thành công ${selectedIds.length} tài liệu khỏi lưu trữ đám mây!`, "success")
+      setSelectedIds([])
+      fetchDocuments()
+    } catch (e) {
+      showToast("Lỗi khi xóa tài liệu trên máy chủ.", "error")
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="p-1.5 rounded-xl text-[#727785] hover:bg-[#f0f4ff] hover:text-[#0058be] transition-colors"
-      >
-        <MoreVertical size={16} />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-20 w-44 bg-white border border-[#c2c6d6]/50 rounded-2xl shadow-xl shadow-black/8 py-1 overflow-hidden">
-          {[
-            { icon: Download, label: "Tải xuống" },
-            { icon: Share2, label: "Chia sẻ" },
-            { icon: Trash2, label: "Xóa", danger: true },
-          ].map(({ icon: Icon, label, danger }) => (
-            <button
-              key={label}
-              className={cn(
-                "flex items-center gap-2.5 w-full px-4 py-2.5 text-[13px] font-medium transition-colors",
-                danger
-                  ? "text-red-500 hover:bg-red-50"
-                  : "text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be]"
-              )}
-            >
-              <Icon size={14} />
-              {label}
-            </button>
-          ))}
+    <div className="max-w-6xl mx-auto space-y-10 pb-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Toast */}
+      {toastMessage && (
+        <div className={cn(
+          "fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl border flex items-center gap-3 text-white font-semibold text-[13px] animate-in slide-in-from-bottom-2",
+          toastMessage.type === "success" ? "bg-green-600 border-green-500" : "bg-red-600 border-red-500"
+        )}>
+          <CheckCircle2 size={18} />
+          <span>{toastMessage.text}</span>
         </div>
       )}
-    </div>
-  )
-}
 
-/* ─── Main Page ─────────────────────────────── */
-export default function StoragePage() {
-  const [search, setSearch] = React.useState("")
-  const [activeFilter, setActiveFilter] = React.useState<"all" | "PDF" | "DOCX" | "TXT">("all")
-
-  const filtered = largestFiles.filter((f) => {
-    const matchSearch = f.name.toLowerCase().includes(search.toLowerCase())
-    const matchFilter = activeFilter === "all" || f.type === activeFilter
-    return matchSearch && matchFilter
-  })
-
-  return (
-    <div className="flex-1 overflow-y-auto bg-[#f8f9ff]">
-      <div className="max-w-[1200px] mx-auto px-6 md:px-8 py-8 pb-20">
-
-        {/* ── Page Header ── */}
-        <motion.div
-          className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8"
-          initial="hidden" animate="visible" variants={fadeUp}
-        >
-          <div>
-            <motion.div
-              className="flex items-center gap-1.5 text-[#0058be] text-[11px] font-bold uppercase tracking-wider mb-1.5"
-              variants={fadeUp} custom={0}
+      {/* Title & Refresh Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-1" style={{ fontFamily: "Geist, sans-serif" }}>
+              Quản Lý Lưu Trữ Đám Mây
+            </h1>
+            <button
+              onClick={fetchDocuments}
+              disabled={loading}
+              className="p-2 text-[#0058be] hover:bg-[#eff4ff] rounded-xl transition-colors disabled:opacity-50"
+              title="Làm mới đồng bộ"
             >
-              <HardDrive size={12} />
-              LƯU TRỮ ĐÁM MÂY
-            </motion.div>
-            <motion.h1
-              className="text-[28px] font-bold text-[#121c2a] tracking-tight leading-none mb-2"
-              style={{ fontFamily: "Geist, sans-serif" }}
-              variants={fadeUp} custom={1}
-            >
-              Lưu trữ
-            </motion.h1>
-            <motion.p className="text-[14px] text-[#424754]" variants={fadeUp} custom={2}>
-              Quản lý tệp nghiên cứu, theo dõi dung lượng và tối ưu hóa không gian lưu trữ.
-            </motion.p>
+              <RefreshCw size={18} className={cn(loading && "animate-spin")} />
+            </button>
           </div>
+          <p className="text-[#424754] font-medium text-[14px]">
+            Theo dõi dung lượng thực tế, quản lý phân bổ tài liệu PDF/DOCX và dọn dẹp các tệp lớn trong không gian học tập.
+          </p>
+        </div>
 
-          {/* Search */}
-          <motion.div
-            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-[#c2c6d6]/50 bg-white shadow-sm w-full sm:w-[300px] focus-within:border-[#0058be]/40 focus-within:shadow-[0_0_0_3px_rgba(0,88,190,0.08)] transition-all"
-            variants={fadeUp} custom={3}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/user/upload"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[13px] shadow-md transition-all hover:scale-105"
           >
-            <Search size={15} className="text-[#727785] shrink-0" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm tệp nghiên cứu..."
-              className="flex-1 bg-transparent text-[14px] text-[#121c2a] placeholder:text-[#727785] outline-none"
-            />
-          </motion.div>
-        </motion.div>
+            <CloudUpload size={17} />
+            <span>Tải tài liệu mới</span>
+          </Link>
+          {!isPremium && (
+            <Link
+              href="/user/payment"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-[13px] shadow-md transition-all hover:scale-105"
+            >
+              <Sparkles size={16} />
+              <span>Nâng 100 GB</span>
+            </Link>
+          )}
+        </div>
+      </div>
 
-        {/* ── Storage Usage Card ── */}
-        <motion.div
-          className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-6 shadow-sm mb-6"
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.5 }}
-          whileHover={{ boxShadow: "0 8px 32px rgba(0,88,190,0.10)" }}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+      {/* Main Storage Capacity Overview Card */}
+      <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 p-8 shadow-sm space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[#c2c6d6]/30">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center shrink-0 shadow-inner">
+              <HardDrive size={30} strokeWidth={1.75} />
+            </div>
             <div>
-              <p className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-1">
-                TỔNG LƯU TRỮ
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span
-                  className="text-[36px] font-bold text-[#0058be] leading-none"
-                  style={{ fontFamily: "Geist, sans-serif" }}
-                >
-                  <AnimatedNumber value={totalUsed} decimals={1} /> GB
-                </span>
-                <span className="text-[16px] text-[#424754] font-medium">
-                  trên {totalCap} GB
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-[12px] text-[#727785]"><AnimatedNumber value={usedPct} />% đã dùng</p>
-                <p className="text-[12px] text-[#424754] font-medium">{totalCap - totalUsed} GB trống</p>
-              </div>
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-                <Link
-                  href="/user/payment"
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl text-[13px] font-semibold transition-all shadow-md shadow-[#0058be]/20 whitespace-nowrap"
-                >
-                  <ArrowUpRight size={15} />
-                  Nâng cấp gói
-                </Link>
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Multi-segment progress bar */}
-          <div className="w-full h-3 bg-[#f0f4ff] rounded-full overflow-hidden flex mb-3.5">
-            {storageBreakdown.map((seg, i) => (
-              <motion.div
-                key={seg.label}
-                className="h-full"
-                style={{ backgroundColor: seg.color }}
-                initial={{ width: 0 }}
-                animate={{ width: `${seg.pct}%` }}
-                transition={{ delay: 0.4 + i * 0.12, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              />
-            ))}
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-            {storageBreakdown.map((seg, i) => (
-              <motion.div
-                key={seg.label}
-                className="flex items-center gap-1.5"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 + i * 0.1 }}
-              >
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
-                <span className="text-[12px] text-[#424754] font-medium">
-                  {seg.label} ({seg.gb} GB)
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── File Type Cards ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {fileTypeCards.map((card, i) => {
-            const Icon = card.icon
-            return (
-              <motion.div
-                key={card.id}
-                className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-5 shadow-sm cursor-pointer"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + i * 0.1, duration: 0.45 }}
-                whileHover={{ y: -4, boxShadow: "0 12px 36px rgba(0,88,190,0.12)", borderColor: "rgba(0,88,190,0.25)" }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <motion.div
-                  className={cn("w-11 h-11 rounded-2xl flex items-center justify-center mb-4", card.iconBg)}
-                  whileHover={{ scale: 1.12, rotate: 6 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <Icon size={22} className={card.iconColor} />
-                </motion.div>
-                <h3
-                  className="text-[17px] font-bold text-[#121c2a] mb-0.5"
-                  style={{ fontFamily: "Geist, sans-serif" }}
-                >
-                  {card.label}
-                </h3>
-                <p className="text-[13px] text-[#727785] mb-3">{card.count}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[14px] font-bold text-[#0058be]">{card.size}</span>
-                  <span className="text-[11px] text-[#727785] bg-[#f8f9ff] border border-[#c2c6d6]/40 px-2 py-1 rounded-md">
-                    {card.trend}
-                  </span>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {/* ── Optimization Banner ── */}
-        <motion.div
-          className="bg-gradient-to-r from-[#0058be] to-[#316bf3] rounded-3xl p-6 mb-8 relative overflow-hidden"
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.35, duration: 0.5 }}
-          whileHover={{ scale: 1.005 }}
-        >
-          <motion.div
-            className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"
-            animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute right-24 bottom-0 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none"
-            animate={{ scale: [1, 1.25, 1], opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          />
-
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
-              <Sparkles size={22} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-[16px] font-bold text-white mb-1" style={{ fontFamily: "Geist, sans-serif" }}>
-                Cơ hội tối ưu hóa
-              </h3>
-              <p className="text-[13px] text-white/80 leading-relaxed">
-                Lumis AI đã tìm thấy <span className="font-semibold text-white">4.2 GB</span> bài báo nghiên cứu trùng lặp trong thư viện của bạn. Gộp chúng lại để giải phóng dung lượng.
-              </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <button className="flex items-center gap-1.5 text-[13px] font-semibold text-white/90 hover:text-white underline underline-offset-2 transition-colors whitespace-nowrap">
-                Xem lại trùng lặp
-                <ChevronRight size={14} />
-              </button>
-              <button className="flex items-center gap-1.5 px-4 py-2.5 bg-white text-[#0058be] rounded-2xl text-[13px] font-bold hover:bg-[#eff4ff] transition-colors shadow-md whitespace-nowrap">
-                <Zap size={14} />
-                Dọn dẹp tự động
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-5 pt-4 border-t border-white/15 relative z-10">
-            {[
-              { icon: CheckCircle2, label: "Trùng lặp tìm thấy", value: "4.2 GB" },
-              { icon: TrendingUp, label: "Dung lượng tiết kiệm", value: "6.5%" },
-              { icon: RefreshCw, label: "Lần quét cuối", value: "2 giờ trước" },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="flex items-center gap-2">
-                <Icon size={14} className="text-white/70" />
-                <span className="text-[12px] text-white/70">{label}:</span>
-                <span className="text-[12px] font-semibold text-white">{value}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* ── Main Grid: Files + Sidebar ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-
-          {/* Largest Files Table */}
-          <div className="bg-white border border-[#c2c6d6]/40 rounded-3xl shadow-sm overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-5 border-b border-[#c2c6d6]/30">
-              <div>
-                <h2 className="text-[16px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-                  Tệp lớn nhất
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                  {loading ? "Đang đồng bộ..." : `${stats.totalMB} MB Đã Sử Dụng`}
                 </h2>
-                <p className="text-[13px] text-[#727785] mt-0.5">
-                  Các tệp chiếm nhiều không gian lưu trữ nhất
-                </p>
+                <span className={cn(
+                  "px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider",
+                  isPremium ? "bg-amber-100 text-amber-800 border border-amber-300" : "bg-blue-100 text-blue-800"
+                )}>
+                  {isPremium ? "PREMIUM 100 GB" : "FREE 5 GB"}
+                </span>
               </div>
-              {/* Filter chips */}
-              <div className="flex items-center gap-1 bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl p-1 w-fit">
-                {(["all", "PDF", "DOCX", "TXT"] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setActiveFilter(f)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all",
-                      activeFilter === f
-                        ? "bg-[#0058be] text-white shadow-sm"
-                        : "text-[#424754] hover:text-[#0058be]"
-                    )}
-                  >
-                    {f === "all" ? "Tất cả" : f}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Col headers */}
-            <div className="grid grid-cols-[minmax(0,1fr)_80px_100px_40px] gap-4 px-6 py-3 bg-[#f8f9ff]/60 border-b border-[#c2c6d6]/20 text-[11px] font-bold text-[#727785] uppercase tracking-wider">
-              <div>Tên tệp</div>
-              <div>Loại</div>
-              <div>Kích thước</div>
-              <div />
-            </div>
-
-            <div className="divide-y divide-[#c2c6d6]/20">
-              <AnimatePresence mode="popLayout">
-              {filtered.map((file, i) => {
-                const { icon: Icon, color, bg } = fileTypeIcon(file.type)
-                return (
-                  <motion.div
-                    key={file.name}
-                    className="grid grid-cols-[minmax(0,1fr)_80px_100px_40px] gap-4 px-6 py-4 hover:bg-[#f8f9ff] transition-colors items-center"
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 16 }}
-                    transition={{ delay: i * 0.05, duration: 0.3 }}
-                    whileHover={{ backgroundColor: "#f8f9ff" }}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", bg)}>
-                        <Icon size={16} className={color} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-semibold text-[#121c2a] truncate">{file.name}</p>
-                        <p className="text-[11px] text-[#727785]">{file.modified}</p>
-                      </div>
-                    </div>
-                    <span className="text-[12px] font-medium text-[#727785] bg-[#f8f9ff] border border-[#c2c6d6]/40 px-2 py-1 rounded-md w-fit">
-                      {file.type}
-                    </span>
-                    <span className="text-[13px] font-semibold text-[#424754]">{file.size}</span>
-                    <FileRowMenu />
-                  </motion.div>
-                )
-              })}
-              </AnimatePresence>
-
-              {filtered.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <AlertCircle size={32} className="text-[#c2c6d6] mb-3" />
-                  <p className="text-[14px] font-medium text-[#727785]">Không có tệp nào khớp với tìm kiếm của bạn</p>
-                </div>
-              )}
+              <p className="text-[13px] text-[#727785] mt-1">
+                Tổng dung lượng đã cấp phát: <strong className="text-[#121c2a] font-mono">{totalCapGB} GB</strong> ({documents.length} tài liệu đang lưu trữ)
+              </p>
             </div>
           </div>
 
-          {/* Right sidebar */}
-          <div className="flex flex-col gap-4">
-            {/* Recently Uploaded */}
-            <div className="bg-white border border-[#c2c6d6]/40 rounded-3xl shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[#c2c6d6]/30">
-                <h3 className="text-[15px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-                  Tải lên gần đây
-                </h3>
-                <Link
-                  href="/user/upload"
-                  className="flex items-center gap-1 text-[12px] font-semibold text-[#0058be] hover:underline"
-                >
-                  Tải lên <CloudUpload size={13} />
-                </Link>
-              </div>
-              <div className="divide-y divide-[#c2c6d6]/20">
-                {recentUploads.map((f, i) => {
-                  const ext = f.name.endsWith(".pdf") ? "PDF" : f.name.endsWith(".docx") ? "DOCX" : "TXT"
-                  const { icon: Icon, color, bg } = fileTypeIcon(ext)
-                  return (
-                    <motion.div
-                      key={f.name}
-                      className="flex items-center gap-3 px-5 py-4 hover:bg-[#f8f9ff] transition-colors"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + i * 0.08 }}
-                    >
-                      <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center shrink-0", bg)}>
-                        <Icon size={16} className={color} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-[#121c2a] truncate">{f.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <Clock size={11} className="text-[#727785] shrink-0" />
-                          <span className="text-[11px] text-[#727785]">{f.time}</span>
-                          <span className="text-[11px] text-[#727785]">• {f.size}</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Cloud Sync Card */}
-            <div className="bg-gradient-to-br from-[#eff4ff] to-[#f8f9ff] border border-[#0058be]/15 rounded-3xl p-5 shadow-sm">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-[#0058be]/10 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={18} className="text-[#0058be]" />
-                </div>
-                <div>
-                  <h4 className="text-[14px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-                    Đồng bộ đám mây
-                  </h4>
-                  <p className="text-[12px] text-[#424754] mt-0.5 leading-relaxed">
-                    Được đồng bộ bảo mật với kho lưu trữ của tổ chức. Lần đồng bộ cuối:{" "}
-                    <span className="font-medium text-[#0058be]">5 phút trước</span>.
-                  </p>
-                </div>
-              </div>
-              <div className="w-full h-1.5 bg-[#0058be]/10 rounded-full overflow-hidden">
-                <div className="h-full bg-[#0058be] rounded-full" style={{ width: "51%" }} />
-              </div>
-              <div className="flex justify-between mt-1.5">
-                <span className="text-[11px] text-[#727785]">Đã đồng bộ</span>
-                <span className="text-[11px] font-medium text-[#0058be]">51% dung lượng</span>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white border border-[#c2c6d6]/40 rounded-3xl p-5 shadow-sm">
-              <h4 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider mb-3">
-                Thao tác nhanh
-              </h4>
-              <div className="flex flex-col gap-1">
-                {[
-                  { icon: Download, label: "Xuất tất cả tệp" },
-                  { icon: RefreshCw, label: "Quét tệp trùng lặp" },
-                  { icon: Trash2, label: "Làm sạch thùng rác", danger: true },
-                ].map(({ icon: Icon, label, danger }) => (
-                  <button
-                    key={label}
-                    className={cn(
-                      "flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors text-left",
-                      danger
-                        ? "text-red-500 hover:bg-red-50"
-                        : "text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be]"
-                    )}
-                  >
-                    <Icon size={15} className="shrink-0" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="text-left md:text-right">
+            <span className="text-3xl font-extrabold text-[#0058be] font-mono">{stats.usedPct}%</span>
+            <p className="text-[12px] text-[#727785] font-medium">Tỷ lệ sử dụng không gian</p>
           </div>
         </div>
+
+        {/* Multi-color Storage Bar */}
+        <div className="space-y-3">
+          <div className="w-full h-4 bg-[#f0f4ff] rounded-full overflow-hidden flex p-0.5 shadow-inner">
+            <div
+              className="h-full bg-red-500 rounded-l-full transition-all duration-700"
+              style={{ width: `${documents.length > 0 ? Math.max(4, (Number(stats.pdfMB) / Number(stats.totalMB || 1)) * stats.usedPct) : 0}%` }}
+              title={`PDF: ${stats.pdfMB} MB`}
+            />
+            <div
+              className="h-full bg-[#0058be] transition-all duration-700"
+              style={{ width: `${documents.length > 0 ? Math.max(4, (Number(stats.docxMB) / Number(stats.totalMB || 1)) * stats.usedPct) : 0}%` }}
+              title={`DOCX: ${stats.docxMB} MB`}
+            />
+            <div
+              className="h-full bg-amber-500 rounded-r-full transition-all duration-700"
+              style={{ width: `${documents.length > 0 ? Math.max(2, (Number(stats.txtMB) / Number(stats.totalMB || 1)) * stats.usedPct) : 0}%` }}
+              title={`Ghi chú: ${stats.txtMB} MB`}
+            />
+          </div>
+
+          {/* Breakdown cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            {stats.breakdown.map((item, idx) => (
+              <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-[#f8f9ff] border border-[#c2c6d6]/30">
+                <div className="flex items-center gap-3">
+                  <div className={cn("w-3.5 h-3.5 rounded-full shrink-0", item.color)} />
+                  <div>
+                    <p className="text-[13px] font-bold text-[#121c2a]">{item.label}</p>
+                    <p className="text-[11px] text-[#727785] font-medium">{item.count}</p>
+                  </div>
+                </div>
+                <span className="text-[13px] font-mono font-bold text-[#121c2a]">{item.mb} MB</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Largest Files Table Section */}
+      <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 p-8 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#c2c6d6]/30">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center">
+              <Database size={20} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                Danh Sách Tài Liệu Trong Bộ Nhớ
+              </h3>
+              <p className="text-[13px] text-[#727785]">Top tài liệu lưu trữ trong không gian làm việc của bạn</p>
+            </div>
+          </div>
+
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              disabled={deleting}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] shadow transition-all disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              <span>Xóa ({selectedIds.length}) tệp đã chọn</span>
+            </button>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="py-16 flex flex-col items-center justify-center gap-3 text-[#727785]">
+            <Loader2 size={32} className="animate-spin text-[#0058be]" />
+            <p className="text-[13px] font-medium">Đang kiểm tra tệp tin thực tế từ máy chủ...</p>
+          </div>
+        ) : largestFiles.length === 0 ? (
+          <div className="py-16 text-center text-[#727785] space-y-3">
+            <FolderOpen size={40} className="mx-auto text-[#c2c6d6]" />
+            <p className="text-[16px] font-bold text-[#121c2a]">Bạn chưa tải lên tài liệu nào</p>
+            <p className="text-[13px] max-w-md mx-auto">Tải lên các bài giảng PDF, khóa luận DOCX hoặc ghi chú để bắt đầu nghiên cứu và hỏi đáp AI.</p>
+            <Link href="/user/upload" className="inline-flex items-center gap-2 px-6 py-3 bg-[#0058be] text-white font-bold text-[13px] rounded-2xl mt-2 hover:bg-[#004ca3] transition-colors">
+              <CloudUpload size={17} />
+              <span>Tải tài liệu ngay</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#f8f9ff] border-b border-[#c2c6d6]/40 text-[#727785] text-[11px] font-extrabold uppercase tracking-wider">
+                  <th className="py-3.5 px-5 w-[40px]">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length === largestFiles.length && largestFiles.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-[#c2c6d6] text-[#0058be] focus:ring-[#0058be]"
+                    />
+                  </th>
+                  <th className="py-3.5 px-5">Tên Tài Liệu</th>
+                  <th className="py-3.5 px-5">Định Dạng</th>
+                  <th className="py-3.5 px-5">Dung Lượng</th>
+                  <th className="py-3.5 px-5 text-right">Ngày Tải Lên</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#c2c6d6]/30 text-[13px]">
+                {largestFiles.map((f) => (
+                  <tr key={f.id} className="hover:bg-[#f8f9ff]/70 transition-colors">
+                    <td className="py-4 px-5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(f.id)}
+                        onChange={() => toggleSelect(f.id)}
+                        className="w-4 h-4 rounded border-[#c2c6d6] text-[#0058be] focus:ring-[#0058be]"
+                      />
+                    </td>
+                    <td className="py-4 px-5 font-bold text-[#121c2a] max-w-[300px] truncate">
+                      <Link href={`/user/ai-workspace?docId=${f.id}`} className="hover:text-[#0058be] transition-colors flex items-center gap-2.5">
+                        <FileText size={16} className={f.iconColor} />
+                        <span className="truncate">{f.name}</span>
+                      </Link>
+                    </td>
+                    <td className="py-4 px-5">
+                      <span className={cn("px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase", f.iconBg, f.iconColor)}>
+                        {f.type}
+                      </span>
+                    </td>
+                    <td className="py-4 px-5 font-mono font-bold text-[#121c2a]">
+                      {f.sizeMB} MB
+                    </td>
+                    <td className="py-4 px-5 text-right text-[#727785] font-medium">
+                      {f.date}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
