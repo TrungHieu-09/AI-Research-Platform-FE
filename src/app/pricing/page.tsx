@@ -28,6 +28,17 @@ export default function PricingPage() {
     // If PREMIUM, check receipts to differentiate PRO (monthly) vs ULTIMATE (yearly)
     const checkPremiumPlan = async () => {
       try {
+        const demoPlan = localStorage.getItem("lumis_demo_plan");
+        if (demoPlan === "ULTIMATE") {
+          setCurrentPlan("ULTIMATE");
+          setLoading(false);
+          return;
+        } else if (demoPlan === "PRO") {
+          setCurrentPlan("PRO");
+          setLoading(false);
+          return;
+        }
+
         const receipts = await api.get<any[]>("/api/payments/receipts").catch(() => []);
         if (Array.isArray(receipts) && receipts.length > 0) {
            const completed = receipts.filter(r => r.status === "COMPLETED")

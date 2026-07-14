@@ -153,7 +153,7 @@ export default function DocumentsPage() {
           </p>
         </div>
         <Link 
-          href="/user/upload?visibility=PUBLIC"
+          href="/admin/documents/upload"
           className="bg-[#0058be] hover:bg-[#2170e4] text-white px-6 py-2.5 rounded-2xl font-bold shadow-md shadow-[#0058be]/20 transition-all flex items-center gap-2 w-fit text-[14px]"
         >
           <Plus size={18} />
@@ -169,7 +169,7 @@ export default function DocumentsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && { setCurrentPage: (p: any) => 1, fetchDocuments: () => fetchDocuments() }}
+            onKeyDown={(e) => { if (e.key === "Enter") { setCurrentPage(1); fetchDocuments(); } }}
             placeholder="Tìm kiếm theo tiêu đề tài liệu, tên hoặc email tác giả..."
             className="w-full pl-10 pr-4 py-2.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] font-medium text-[#121c2a] outline-none focus:border-[#0058be] transition-all"
           />
@@ -219,7 +219,7 @@ export default function DocumentsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[850px]">
               <thead>
                 <tr className="bg-[#f8f9ff] border-b border-[#c2c6d6]/40 text-[#727785] text-[11px] font-extrabold uppercase tracking-wider">
                   <th className="py-4 px-6">Tài liệu & Tác giả</th>
@@ -238,7 +238,7 @@ export default function DocumentsPage() {
                           <FileText size={18} />
                         </div>
                         <div className="min-w-0">
-                          <Link href={`/user/documents/${doc.id}`} className="font-bold text-[#121c2a] hover:text-[#0058be] transition-colors line-clamp-1">
+                          <Link href={`/admin/documents/${doc.id}`} className="font-bold text-[#121c2a] hover:text-[#0058be] transition-colors line-clamp-1">
                             {doc.title}
                           </Link>
                           <p className="text-[12px] text-[#727785] truncate">
@@ -285,9 +285,9 @@ export default function DocumentsPage() {
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
-                          href={`/user/documents/${doc.id}`}
+                          href={`/admin/documents/${doc.id}`}
                           className="p-2 bg-[#eff4ff] text-[#0058be] hover:bg-[#dee9fc] rounded-xl transition-colors"
-                          title="Xem toàn văn & bình luận"
+                          title="Xem chi tiết & kiểm duyệt tài liệu"
                         >
                           <Eye size={15} />
                         </Link>
@@ -348,45 +348,45 @@ export default function DocumentsPage() {
 
       {/* Reject Modal */}
       {selectedDocForReject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 w-full max-w-md space-y-4 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 sm:p-8 w-full max-w-lg space-y-5 relative">
             <button
               onClick={() => setSelectedDocForReject(null)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors p-2"
             >
               <X size={20} />
             </button>
 
             <div>
-              <h3 className="text-xl font-bold text-red-700" style={{ fontFamily: "Geist, sans-serif" }}>
+              <h3 className="text-xl sm:text-2xl font-bold text-red-700" style={{ fontFamily: "Geist, sans-serif" }}>
                 Từ chối kiểm duyệt tài liệu
               </h3>
-              <p className="text-[13px] text-[#727785] mt-1">
+              <p className="text-[13px] sm:text-[14px] text-[#727785] mt-1.5">
                 Tài liệu: <strong className="text-[#121c2a]">{selectedDocForReject.title}</strong>
               </p>
             </div>
 
             <div>
-              <label className="text-[12px] font-bold text-[#424754] block mb-1.5">Lý do từ chối (Gửi đến sinh viên)</label>
+              <label className="text-[13px] font-bold text-[#424754] block mb-2">Lý do từ chối (Gửi đến sinh viên)</label>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Ví dụ: Vi phạm bản quyền, định dạng mờ, không đúng chủ đề môn học..."
-                className="w-full h-28 p-3 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] outline-none focus:border-red-500 transition-colors resize-none"
+                className="w-full h-32 p-3.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] sm:text-[14px] outline-none focus:border-red-500 transition-colors resize-none"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setSelectedDocForReject(null)}
-                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[13px]"
+                className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[13px] sm:text-[14px] transition-colors"
               >
                 Hủy
               </button>
               <button
                 onClick={() => handleModerate(selectedDocForReject.id, "REJECTED", rejectionReason)}
                 disabled={!rejectionReason.trim()}
-                className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] shadow-md disabled:opacity-40"
+                className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] sm:text-[14px] shadow-md transition-all disabled:opacity-40"
               >
                 Xác nhận Từ chối
               </button>

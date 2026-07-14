@@ -166,6 +166,7 @@ export default function UsersPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { setCurrentPage(1); fetchUsers(); } }}
             placeholder="Tìm kiếm theo tên hoặc địa chỉ email sinh viên..."
             className="w-full pl-10 pr-4 py-2.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] font-medium text-[#121c2a] outline-none focus:border-[#0058be] transition-all"
           />
@@ -215,7 +216,7 @@ export default function UsersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[850px]">
               <thead>
                 <tr className="bg-[#f8f9ff] border-b border-[#c2c6d6]/40 text-[#727785] text-[11px] font-extrabold uppercase tracking-wider">
                   <th className="py-4 px-6">Tài khoản & Email</th>
@@ -316,114 +317,114 @@ export default function UsersPage() {
 
       {/* Edit User Modal */}
       {isEditModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 w-full max-w-md space-y-5 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 sm:p-8 w-full max-w-[620px] max-h-[90vh] overflow-y-auto space-y-6 relative">
             <button
               onClick={() => setIsEditModalOpen(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors p-2"
             >
               <X size={20} />
             </button>
 
             <div>
-              <span className="text-[11px] font-extrabold text-[#0058be] uppercase tracking-wider bg-[#eff4ff] px-2.5 py-1 rounded-full">
+              <span className="text-[11px] font-extrabold text-[#0058be] uppercase tracking-wider bg-[#eff4ff] px-3 py-1 rounded-full">
                 ADMIN PRIVILEGES
               </span>
-              <h3 className="text-xl font-bold text-[#121c2a] mt-2" style={{ fontFamily: "Geist, sans-serif" }}>
+              <h3 className="text-xl sm:text-2xl font-bold text-[#121c2a] mt-3 font-sans">
                 Điều chỉnh quyền tài khoản
               </h3>
-              <p className="text-[13px] text-[#727785] mt-1">
+              <p className="text-[13px] sm:text-[14px] text-[#727785] mt-1.5 font-sans">
                 Tài khoản: <strong className="text-[#121c2a]">{selectedUser.name} ({selectedUser.email})</strong>
               </p>
             </div>
 
-            <div className="space-y-4 pt-2">
+            <div className="space-y-5 pt-1">
               {/* Role setting */}
               <div>
-                <label className="text-[12px] font-bold text-[#424754] block mb-1.5">Vai trò hệ thống (Role)</label>
-                <div className="grid grid-cols-2 gap-2.5">
+                <label className="text-[13px] sm:text-[14px] font-bold text-[#424754] block mb-2 font-sans">Vai trò hệ thống (Role)</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={() => handleUpdateUser(selectedUser.id, { role: "STUDENT" })}
                     disabled={updating || selectedUser.role === "STUDENT"}
                     className={cn(
-                      "py-2.5 rounded-xl font-bold text-[13px] border transition-all flex items-center justify-center gap-1.5",
-                      selectedUser.role === "STUDENT" ? "bg-[#0058be] text-white border-[#0058be]" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
+                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
+                      selectedUser.role === "STUDENT" ? "bg-[#0058be] text-white border-[#0058be] shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
                     )}
                   >
-                    Sinh viên
+                    <span>Sinh viên</span>
                   </button>
                   <button
                     onClick={() => handleUpdateUser(selectedUser.id, { role: "ADMIN" })}
                     disabled={updating || selectedUser.role === "ADMIN"}
                     className={cn(
-                      "py-2.5 rounded-xl font-bold text-[13px] border transition-all flex items-center justify-center gap-1.5",
+                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
                       selectedUser.role === "ADMIN" ? "bg-purple-600 text-white border-purple-600 shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
                     )}
                   >
-                    <Shield size={14} /> Quản trị viên
+                    <Shield size={16} className="shrink-0" /> <span>Quản trị viên</span>
                   </button>
                 </div>
               </div>
 
               {/* Tier setting */}
               <div>
-                <label className="text-[12px] font-bold text-[#424754] block mb-1.5">Gói tài khoản AI (Tier)</label>
-                <div className="grid grid-cols-2 gap-2.5">
+                <label className="text-[13px] sm:text-[14px] font-bold text-[#424754] block mb-2 font-sans">Gói tài khoản AI (Tier)</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={() => handleUpdateUser(selectedUser.id, { tier: "FREE" })}
                     disabled={updating || selectedUser.tier === "FREE"}
                     className={cn(
-                      "py-2.5 rounded-xl font-bold text-[13px] border transition-all flex items-center justify-center gap-1.5",
-                      selectedUser.tier === "FREE" ? "bg-gray-700 text-white border-gray-700" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
+                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
+                      selectedUser.tier === "FREE" ? "bg-gray-700 text-white border-gray-700 shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
                     )}
                   >
-                    FREE (Tiêu chuẩn)
+                    <span>FREE (Tiêu chuẩn)</span>
                   </button>
                   <button
                     onClick={() => handleUpdateUser(selectedUser.id, { tier: "PREMIUM" })}
                     disabled={updating || selectedUser.tier === "PREMIUM"}
                     className={cn(
-                      "py-2.5 rounded-xl font-bold text-[13px] border transition-all flex items-center justify-center gap-1.5",
+                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
                       selectedUser.tier === "PREMIUM" ? "bg-amber-500 text-white border-amber-500 shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
                     )}
                   >
-                    <Crown size={14} /> PREMIUM (Vô giới hạn)
+                    <Crown size={16} className="shrink-0" /> <span>PREMIUM (Vô giới hạn)</span>
                   </button>
                 </div>
               </div>
 
               {/* Status setting */}
               <div>
-                <label className="text-[12px] font-bold text-[#424754] block mb-1.5">Trạng thái khóa / mở khóa</label>
-                <div className="grid grid-cols-2 gap-2.5">
+                <label className="text-[13px] sm:text-[14px] font-bold text-[#424754] block mb-2 font-sans">Trạng thái khóa / mở khóa</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={() => handleUpdateUser(selectedUser.id, { status: "ACTIVE" })}
                     disabled={updating || selectedUser.status === "ACTIVE"}
                     className={cn(
-                      "py-2.5 rounded-xl font-bold text-[13px] border transition-all flex items-center justify-center gap-1.5",
-                      selectedUser.status === "ACTIVE" ? "bg-green-600 text-white border-green-600" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
+                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
+                      selectedUser.status === "ACTIVE" ? "bg-green-600 text-white border-green-600 shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
                     )}
                   >
-                    <UserCheck size={14} /> Hoạt động
+                    <UserCheck size={16} className="shrink-0" /> <span>Hoạt động</span>
                   </button>
                   <button
                     onClick={() => handleUpdateUser(selectedUser.id, { status: "SUSPENDED" })}
                     disabled={updating || selectedUser.status === "SUSPENDED"}
                     className={cn(
-                      "py-2.5 rounded-xl font-bold text-[13px] border transition-all flex items-center justify-center gap-1.5",
+                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
                       selectedUser.status === "SUSPENDED" ? "bg-red-600 text-white border-red-600 shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
                     )}
                   >
-                    <UserX size={14} /> Khóa tài khoản
+                    <UserX size={16} className="shrink-0" /> <span>Khóa tài khoản</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="pt-3 flex justify-end">
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[13px] transition-colors"
+                className="px-6 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[14px] transition-colors"
               >
                 Đóng
               </button>

@@ -177,6 +177,7 @@ export default function SubjectsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { fetchSubjects(); } }}
             placeholder="Tìm kiếm môn học theo tên (ví dụ: Toán cao cấp, AI, Mạng máy tính...)"
             className="w-full pl-10 pr-4 py-2.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] font-medium text-[#121c2a] outline-none focus:border-[#0058be] transition-all"
           />
@@ -271,68 +272,68 @@ export default function SubjectsPage() {
 
       {/* Create Subject Modal */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 w-full max-w-md space-y-5 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 sm:p-8 w-full max-w-[560px] max-h-[90vh] overflow-y-auto space-y-6 relative">
             <button
               onClick={() => setIsCreateModalOpen(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors p-2"
             >
               <X size={20} />
             </button>
 
             <div>
-              <span className="text-[11px] font-extrabold text-[#0058be] uppercase tracking-wider bg-[#eff4ff] px-2.5 py-1 rounded-full">
+              <span className="text-[11px] font-extrabold text-[#0058be] uppercase tracking-wider bg-[#eff4ff] px-3 py-1 rounded-full">
                 ACADEMIC TAXONOMY
               </span>
-              <h3 className="text-xl font-bold text-[#121c2a] mt-2" style={{ fontFamily: "Geist, sans-serif" }}>
+              <h3 className="text-xl sm:text-2xl font-bold text-[#121c2a] mt-3 font-sans">
                 Khởi tạo Môn học / Học phần
               </h3>
-              <p className="text-[13px] text-[#727785] mt-1">
+              <p className="text-[13px] sm:text-[14px] text-[#727785] mt-1.5 font-sans">
                 Thêm môn học mới để sinh viên phân loại tài liệu tải lên chính xác.
               </p>
             </div>
 
-            <form onSubmit={handleCreateSubject} className="space-y-4 pt-1">
+            <form onSubmit={handleCreateSubject} className="space-y-4 pt-1 font-sans">
               <div>
-                <label className="text-[12px] font-bold text-[#424754] block mb-1.5">Tên môn học <span className="text-red-500">*</span></label>
+                <label className="text-[13px] sm:text-[14px] font-bold text-[#424754] block mb-2">Tên môn học <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   required
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Ví dụ: Trí tuệ nhân tạo, Cấu trúc dữ liệu..."
-                  className="w-full px-4 py-2.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] font-medium text-[#121c2a] outline-none focus:border-[#0058be] transition-colors"
+                  className="w-full px-4 py-3 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[14px] font-medium text-[#121c2a] outline-none focus:border-[#0058be] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[12px] font-bold text-[#424754] block mb-1.5">Mã học phần (Khung chương trình) <span className="text-red-500">*</span></label>
+                <label className="text-[13px] sm:text-[14px] font-bold text-[#424754] block mb-2">Mã học phần (Khung chương trình) <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   required
                   value={newCode}
                   onChange={(e) => setNewCode(e.target.value)}
                   placeholder="Ví dụ: AI302, CSD201, SDN302..."
-                  className="w-full px-4 py-2.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] font-bold text-[#0058be] outline-none focus:border-[#0058be] transition-colors uppercase"
+                  className="w-full px-4 py-3 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[14px] font-bold text-[#0058be] outline-none focus:border-[#0058be] transition-colors uppercase"
                 />
-                <p className="text-[11px] text-[#727785] mt-1">Mã học phần phải là duy nhất trên toàn hệ thống.</p>
+                <p className="text-[12px] text-[#727785] mt-1.5">Mã học phần phải là duy nhất trên toàn hệ thống.</p>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3">
+              <div className="flex justify-end gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[13px]"
+                  className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[14px] transition-colors"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={creating || !newName.trim() || !newCode.trim()}
-                  className="px-6 py-2.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[13px] shadow-md disabled:opacity-40 flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[14px] shadow-md disabled:opacity-40 flex items-center gap-2 transition-all"
                 >
                   {creating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                  Xác nhận Tạo
+                  <span>Xác nhận Tạo</span>
                 </button>
               </div>
             </form>

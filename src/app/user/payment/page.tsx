@@ -26,18 +26,28 @@ const listItemVariants = {
 };
 
 export default function PaymentOverviewPage() {
-  const { user, token, refreshProfile } = useAuth()
+  const { user, token, refreshProfile, resetTierToFree } = useAuth()
   const isPremium = user?.tier === "PREMIUM"
 
   const [loadingStats, setLoadingStats] = React.useState(true)
   const [aiLimit, setAiLimit] = React.useState<{ queriesToday: number; limit: number; remaining: number; tier: string } | null>(null)
   const [receipts, setReceipts] = React.useState<any[]>([])
   const [error, setError] = React.useState<string | null>(null)
+  const [isDemoPremium, setIsDemoPremium] = React.useState(false)
+  const [demoPlanName, setDemoPlanName] = React.useState<string | null>(null)
 
   // Progress animation state
   const [progressWidth, setProgressWidth] = React.useState(0)
 
   const fetchData = React.useCallback(async () => {
+    if (typeof window !== "undefined") {
+      setIsDemoPremium(localStorage.getItem("lumis_demo_premium") === "true")
+      const plan = localStorage.getItem("lumis_demo_plan")
+      if (plan === "ULTIMATE") setDemoPlanName("Ultimate (Gói Năm)")
+      else if (plan === "PRO") setDemoPlanName("AI Pro (Gói Tháng)")
+      else setDemoPlanName(null)
+    }
+
     if (!token) return
     setLoadingStats(true)
     setError(null)
@@ -70,6 +80,16 @@ export default function PaymentOverviewPage() {
   React.useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  const handleResetDemo = () => {
+    resetTierToFree()
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("lumis_demo_plan")
+      setIsDemoPremium(false)
+      setDemoPlanName(null)
+    }
+    fetchData()
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-16">
@@ -116,14 +136,21 @@ export default function PaymentOverviewPage() {
               : "bg-gradient-to-br from-[#EFF6FF] via-[#F8FAFC] to-white border-[#BFDBFE]"
           )}
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
             <span className={cn(
               "px-4 py-1.5 rounded-full text-[12px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm",
               isPremium ? "bg-[#3B82F6] text-white" : "bg-[#2563EB] text-white"
             )}>
               <Sparkles size={14} className="text-white" />
-              {isPremium ? "GÓI PREMIUM (AI PRO)" : "GÓI EXPLORER (FREE)"}
+              {isPremium ? (demoPlanName ? `GÓI PREMIUM (${demoPlanName.toUpperCase()})` : "GÓI PREMIUM (AI PRO)") : "GÓI EXPLORER (FREE)"}
             </span>
+
+            {isPremium && isDemoPremium && (
+              <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300 inline-flex items-center gap-1">
+                <Sparkles size={12} className="text-amber-600" />
+                SANDBOX DEMO MODE
+              </span>
+            )}
           </div>
 
           <h2 className="text-[28px] font-bold text-[#111827] mb-3 leading-tight" style={{ fontFamily: "Geist, sans-serif" }}>
@@ -138,23 +165,48 @@ export default function PaymentOverviewPage() {
               : "Gói tiêu chuẩn cho phép bạn tải tài liệu học tập và trải nghiệm hỏi đáp RAG với giới hạn 10 - 15 câu hỏi mỗi ngày. Nâng cấp để mở khóa tiềm năng vô tận, không lo gián đoạn."}
           </p>
           
-          <div className="flex items-center justify-between pt-6 border-t border-[#E5E7EB]/70">
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-[#E5E7EB]/70">
             <div className="flex flex-col">
               <span className="text-[12px] text-[#6B7280] font-medium uppercase tracking-wider mb-1">Tài khoản hiện tại</span>
               <span className="text-[14px] font-bold text-[#1F2937]">{user?.email}</span>
             </div>
 
-            {!isPremium && (
-              <Link href="/pricing">
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-3 rounded-xl text-[14px] font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-2"
-                >
-                  <Sparkles size={16} /> Nâng Cấp Ngay
-                </motion.button>
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+              {!isPremium ? (
+                <Link href="/pricing">
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-3 rounded-xl text-[14px] font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-2"
+                  >
+                    <Sparkles size={16} /> Nâng Cấp Ngay
+                  </motion.button>
+                </Link>
+              ) : (
+                <>
+                  {isDemoPremium && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={handleResetDemo}
+                      className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold text-[13px] transition-all flex items-center gap-1.5 shadow-sm"
+                      title="Đặt lại tài khoản về gói Free để test lại luồng thanh toán từ đầu"
+                    >
+                      <RefreshCw size={14} className="text-amber-700" /> Đặt Lại Gói Free (Test)
+                    </motion.button>
+                  )}
+                  <Link href="/user/ai-workspace">
+                    <motion.button 
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold shadow-md shadow-blue-500/20 transition-all flex items-center gap-2"
+                    >
+                      <Sparkles size={15} /> Mở Trợ Lý AI
+                    </motion.button>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </motion.div>
 

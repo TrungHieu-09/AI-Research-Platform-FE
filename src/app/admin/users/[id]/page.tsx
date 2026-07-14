@@ -323,9 +323,9 @@ export default function UserDetailPage() {
       {/* Modal 1: Edit Profile */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto flex min-h-screen items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-[540px] shadow-2xl border border-[#c2c6d6]/40 my-8 shrink-0 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-lg sm:max-w-xl shadow-2xl border border-[#c2c6d6]/40 my-8 shrink-0 animate-in fade-in zoom-in-95 duration-200 space-y-5">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
                 Chỉnh sửa hồ sơ người dùng
               </h3>
               <button
@@ -333,49 +333,49 @@ export default function UserDetailPage() {
                 onClick={() => setIsEditModalOpen(false)}
                 className="p-2 text-[#727785] hover:text-[#121c2a] rounded-xl"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
-                <label className="block text-[13px] font-bold text-[#424754] mb-1.5">Họ và tên</label>
+                <label className="block text-[13px] font-bold text-[#424754] mb-2">Họ và tên</label>
                 <input
                   type="text"
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-2xl px-4 py-2.5 text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none"
+                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-xl px-4 py-3 text-[13px] sm:text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none transition-colors"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-[13px] font-bold text-[#424754] mb-1.5">Số điện thoại</label>
+              <div>
+                <label className="block text-[13px] font-bold text-[#424754] mb-2">Số điện thoại</label>
                 <input
                   type="text"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-2xl px-4 py-2.5 text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none"
+                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-xl px-4 py-3 text-[13px] sm:text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-[13px] font-bold text-[#424754] mb-1.5">Địa điểm / Cơ sở</label>
+                <label className="block text-[13px] font-bold text-[#424754] mb-2">Địa điểm / Cơ sở</label>
                 <input
                   type="text"
                   value={editLocation}
                   onChange={(e) => setEditLocation(e.target.value)}
-                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-2xl px-4 py-2.5 text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none"
+                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-xl px-4 py-3 text-[13px] sm:text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-[13px] font-bold text-[#424754] mb-1.5">Giới thiệu ngắn (Bio)</label>
+                <label className="block text-[13px] font-bold text-[#424754] mb-2">Giới thiệu ngắn (Bio)</label>
                 <textarea
                   rows={3}
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
-                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-2xl px-4 py-2.5 text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none"
+                  className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/50 rounded-xl px-4 py-3 text-[13px] sm:text-[14px] text-[#121c2a] focus:border-[#0058be] outline-none transition-colors resize-none"
                 />
               </div>
 
@@ -383,13 +383,13 @@ export default function UserDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-5 py-2.5 rounded-2xl border border-[#c2c6d6]/50 text-[#424754] font-bold text-[13px] hover:bg-gray-50 transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[13px] sm:text-[14px] transition-colors"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-2xl font-bold text-[13px] shadow-md transition-all"
+                  className="px-6 py-2.5 bg-[#0058be] hover:bg-[#2170e4] text-white rounded-xl font-bold text-[13px] sm:text-[14px] shadow-md transition-all"
                 >
                   Lưu thay đổi
                 </button>
@@ -402,20 +402,20 @@ export default function UserDetailPage() {
       {/* Modal 2: Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto flex min-h-screen items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-[440px] shadow-2xl border border-[#c2c6d6]/40 my-8 shrink-0 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-red-50 text-red-600 rounded-2xl">
-                <AlertTriangle size={24} />
+          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-lg shadow-2xl border border-[#c2c6d6]/40 my-8 shrink-0 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="p-3 bg-red-50 text-red-600 rounded-2xl shrink-0">
+                <AlertTriangle size={26} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                <h3 className="text-xl font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
                   Xác nhận xóa tài khoản
                 </h3>
-                <p className="text-[12px] text-[#727785]">Hành động này không thể hoàn tác</p>
+                <p className="text-[13px] text-[#727785] mt-0.5">Hành động này không thể hoàn tác</p>
               </div>
             </div>
 
-            <p className="text-[14px] text-[#424754] mb-6 leading-relaxed">
+            <p className="text-[14px] sm:text-[15px] text-[#424754] mb-6 leading-relaxed">
               Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản <span className="font-bold text-[#121c2a]">{user.name}</span> ({user.email}) khỏi hệ thống không?
             </p>
 
@@ -423,16 +423,16 @@ export default function UserDetailPage() {
               <button
                 type="button"
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="px-5 py-2.5 rounded-2xl border border-[#c2c6d6]/50 text-[#424754] font-bold text-[13px] hover:bg-gray-50 transition-all"
+                className="px-5 py-2.5 rounded-2xl border border-[#c2c6d6]/50 text-[#424754] font-bold text-[13px] sm:text-[14px] hover:bg-gray-50 transition-all"
               >
                 Hủy bỏ
               </button>
               <button
                 type="button"
                 onClick={handleDeleteAccount}
-                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-[13px] shadow-md transition-all flex items-center gap-1.5"
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-[13px] sm:text-[14px] shadow-md transition-all flex items-center gap-2"
               >
-                <Trash2 size={15} />
+                <Trash2 size={16} />
                 <span>Xóa vĩnh viễn</span>
               </button>
             </div>

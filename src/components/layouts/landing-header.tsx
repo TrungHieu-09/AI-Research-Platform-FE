@@ -156,6 +156,16 @@ export function LandingHeader() {
         {user ? (
           /* ── Authenticated: name + avatar + dropdown ── */
           <>
+            {user.role === "ADMIN" && (
+              <Link
+                href="/admin/dashboard"
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0058be] text-white text-[12px] font-bold shadow-sm hover:bg-[#004ca3] transition-all"
+                title="Quay lại Admin Console"
+              >
+                <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                <span>Quay lại Admin</span>
+              </Link>
+            )}
             <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen(!profileOpen)}
@@ -189,6 +199,16 @@ export function LandingHeader() {
 
                 {/* Menu items */}
                 <div className="py-1">
+                  {user.role === "ADMIN" && (
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-bold text-[#0058be] bg-[#eff4ff]/70 hover:bg-[#eff4ff] transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[16px] text-[#0058be]">admin_panel_settings</span>
+                      Quay lại Admin Console
+                    </Link>
+                  )}
                   <Link
                     href="/user/storage"
                     onClick={() => setProfileOpen(false)}

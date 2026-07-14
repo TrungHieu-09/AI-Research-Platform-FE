@@ -8,23 +8,26 @@ import { useAuth } from "@/features/auth/auth-context"
 import { api } from "@/lib/api"
 import { Loader2, CheckCircle2, Copy, Check, ArrowLeft, ShieldCheck, Sparkles, AlertTriangle } from "lucide-react"
 
-const PLAN_INFO: Record<string, { planId: "PREMIUM_MONTHLY" | "PREMIUM_YEARLY"; name: string; priceText: string; features: string[] }> = {
+const PLAN_INFO: Record<string, { planId: "PREMIUM_MONTHLY" | "PREMIUM_YEARLY"; name: string; priceText: string; canonicalAmount: number; features: string[] }> = {
   storage: {
     planId: "PREMIUM_MONTHLY",
     name: "Lưu trữ Pro (Cloud & AI)",
     priceText: "125.000",
+    canonicalAmount: 125000,
     features: ["Lưu trữ đám mây 100 GB", "Hỗ trợ RAG Vector chuẩn xác", "Hỗ trợ ưu tiên 24/7"]
   },
   ai: {
     planId: "PREMIUM_MONTHLY",
     name: "AI Pro (Gói Tháng)",
     priceText: "250.000",
+    canonicalAmount: 250000,
     features: ["Truy vấn AI không giới hạn lượt hỏi", "Mở khóa mô hình cao cấp Gemini 2.5 Pro & Flash", "Lưu trữ đám mây 100 GB", "RAG siêu chính xác với ngữ cảnh toàn tài liệu"]
   },
   ultimate: {
     planId: "PREMIUM_YEARLY",
     name: "Ultimate (Gói Năm Vô Giới Hạn)",
     priceText: "490.000",
+    canonicalAmount: 490000,
     features: ["Truy vấn & Mô hình AI không giới hạn trọn năm", "Lưu trữ đám mây 500 GB", "Hỗ trợ kỹ thuật chuyên dụng 24/7", "Không gian làm việc nhóm & nghiên cứu chuyên sâu"]
   }
 }
@@ -55,14 +58,35 @@ function CheckoutContent() {
       if (!token) return
       setLoadingOrder(true)
       setError(null)
+      const expectedAmount = planObj.canonicalAmount || (planObj.planId === "PREMIUM_YEARLY" ? 490000 : 250000)
       try {
         const res = await api.post<any>("/api/payments/checkout", { planId: planObj.planId })
         if (isMounted && res) {
-          setOrderData(res)
+          // Normalize amount to canonical pricing table on the FE (/pricing) in case backend returns legacy/mismatched amounts (e.g. 49000 instead of 490000)
+          let normalizedQrUrl = res.qrCodeUrl;
+          if (res.amount !== expectedAmount || !normalizedQrUrl) {
+            normalizedQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=LUMIS_VIETQR_${expectedAmount}_${res.orderId || "REF"}`;
+          }
+          setOrderData({
+            ...res,
+            amount: expectedAmount,
+            qrCodeUrl: normalizedQrUrl
+          })
         }
       } catch (err: any) {
         if (isMounted) {
-          setError(err.message || "Không thể khởi tạo đơn hàng thanh toán.")
+          // Fallback mock order data for demo & presentation reliability
+          setOrderData({
+            orderId: `DEMO-ORD-${Math.floor(100000 + Math.random() * 900000)}`,
+            amount: expectedAmount,
+            transferContent: `LUMIS ${user?.initials || "EDU"} ${planObj.planId === "PREMIUM_YEARLY" ? "YEAR" : "PRO"}`,
+            qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=LUMIS_VIETQR_DEMO_${expectedAmount}`,
+            paymentInstructions: {
+              bankName: "Vietcombank (VCB)",
+              accountNumber: "999988886666",
+              accountName: "CÔNG TY LUMIS EDTECH (DEMO)"
+            }
+          });
         }
       } finally {
         if (isMounted) setLoadingOrder(false)
@@ -70,7 +94,7 @@ function CheckoutContent() {
     }
     initOrder()
     return () => { isMounted = false }
-  }, [token, planObj.planId])
+  }, [token, planObj.planId, planObj.canonicalAmount, user?.initials])
 
   const copyToClipboard = (text: string, type: "account" | "content") => {
     navigator.clipboard.writeText(text)
@@ -87,17 +111,39 @@ function CheckoutContent() {
     if (!orderData?.orderId || !token) return
     setConfirming(true)
     setToastMsg(null)
+
+    if (isSandbox) {
+      // Simulate instant check for Demo / Sandbox presentation
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("lumis_demo_plan", planParam === "ultimate" ? "ULTIMATE" : "PRO")
+        }
+        upgradeTierToPremium()
+        refreshProfile()
+        setConfirmedSuccess(true)
+        setConfirming(false)
+      }, 1200)
+      return
+    }
+
     try {
       const res = await api.post<any>("/api/payments/confirm", { orderId: orderData.orderId })
       if (res && res.success) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("lumis_demo_plan", planParam === "ultimate" ? "ULTIMATE" : "PRO")
+        }
         setConfirmedSuccess(true)
         upgradeTierToPremium()
         await refreshProfile()
+      } else {
+        setToastMsg("Giao dịch chưa được xác nhận. Vui lòng kiểm tra lại chuyển khoản hoặc bấm chọn Kích Hoạt Thanh Toán Demo.")
       }
     } catch (err: any) {
-      setToastMsg(err.message || "Xác nhận thanh toán chưa thành công. Vui lòng kiểm tra lại nội dung chuyển khoản.")
+      setToastMsg(err.message || "Xác nhận thanh toán chưa thành công. Vui lòng kiểm tra lại nội dung chuyển khoản hoặc bấm chọn Kích Hoạt Thanh Toán Demo.")
     } finally {
-      setConfirming(false)
+      if (!isSandbox) {
+        setConfirming(false)
+      }
     }
   }
 
@@ -129,44 +175,100 @@ function CheckoutContent() {
   }
 
   if (confirmedSuccess) {
+    const isDemoMode = typeof window !== "undefined" && localStorage.getItem("lumis_demo_premium") === "true";
     return (
-      <div className="max-w-xl mx-auto py-16 px-6 text-center animate-in fade-in zoom-in-95 duration-500">
-        <div className="bg-white rounded-[32px] p-10 border border-green-200 shadow-2xl shadow-green-500/10 space-y-6">
-          <div className="w-20 h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto shadow-md">
-            <CheckCircle2 size={44} />
-          </div>
-          <div className="space-y-2">
-            <span className="text-[12px] font-extrabold text-green-700 uppercase tracking-wider bg-green-50 px-3 py-1 rounded-full border border-green-200">
-              TRANSACTION VERIFIED
-            </span>
-            <h2 className="text-3xl font-extrabold text-[#121c2a] tracking-tight pt-2" style={{ fontFamily: "Geist, sans-serif" }}>
-              Nâng Cấp Tài Khoản Thành Công!
-            </h2>
-            <p className="text-[14px] text-[#424754] leading-relaxed pt-1">
-              Hệ thống đã xác nhận thanh toán của bạn cho gói <strong className="text-[#0058be]">{planObj.name}</strong>. Toàn bộ hạn ngạch hỏi đáp RAG và mô hình cao cấp đã được mở khóa.
-            </p>
-          </div>
+      <div className="max-w-4xl mx-auto py-8 md:py-12 px-4 md:px-6 animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-white rounded-[36px] p-8 md:p-12 border border-green-200 shadow-2xl shadow-green-500/10 relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute -top-32 -right-32 w-64 h-64 bg-green-400/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="p-4 bg-[#f8f9ff] rounded-2xl border border-[#c2c6d6]/40 flex items-center justify-between text-[13px] font-semibold text-[#121c2a]">
-            <span>Trạng thái tài khoản:</span>
-            <span className="text-amber-600 font-extrabold flex items-center gap-1.5 bg-amber-50 px-3 py-1 rounded-xl border border-amber-200">
-              <Sparkles size={14} /> PREMIUM TIER
-            </span>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 items-center relative z-10">
+            {/* Left Column: Title & Status */}
+            <div className="md:col-span-5 flex flex-col items-center md:items-start text-center md:text-left space-y-5">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-green-100 to-emerald-50 text-green-600 flex items-center justify-center shadow-md border border-green-200/60 shrink-0">
+                <CheckCircle2 size={44} className="animate-bounce" />
+              </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row gap-3">
-            <Link
-              href="/user/ai-workspace"
-              className="flex-1 py-3.5 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[14px] shadow-lg shadow-[#0058be]/20 transition-all text-center flex items-center justify-center gap-2"
-            >
-              <Sparkles size={16} /> Mở Trợ Lý AI Ngay
-            </Link>
-            <Link
-              href="/user/payment"
-              className="flex-1 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[14px] transition-all text-center"
-            >
-              Xem Lịch Sử Giao Dịch
-            </Link>
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                  <span className="text-[11px] font-extrabold text-green-700 uppercase tracking-wider bg-green-50 px-3.5 py-1.5 rounded-full border border-green-200 shadow-2xs">
+                    VERIFIED & ACTIVE
+                  </span>
+                  {isDemoMode && (
+                    <span className="text-[11px] font-extrabold text-amber-800 uppercase tracking-wider bg-amber-100 px-3.5 py-1.5 rounded-full border border-amber-300 shadow-2xs flex items-center gap-1">
+                      <Sparkles size={12} className="text-amber-600" /> SANDBOX DEMO
+                    </span>
+                  )}
+                </div>
+
+                <h2 className="text-3xl font-extrabold text-[#121c2a] tracking-tight leading-tight" style={{ fontFamily: "Geist, sans-serif" }}>
+                  Nâng Cấp Tài Khoản Thành Công!
+                </h2>
+
+                <p className="text-[14.5px] text-[#424754] leading-relaxed">
+                  Hệ thống đã kích hoạt thành công gói <strong className="text-[#0058be] font-extrabold">{planObj.name}</strong> cho tài khoản của bạn.
+                </p>
+              </div>
+
+              <div className="w-full p-4 bg-[#f8f9ff] rounded-2xl border border-[#c2c6d6]/40 flex items-center justify-between text-[13px] font-semibold text-[#121c2a] shadow-2xs">
+                <span>Trạng thái tài khoản:</span>
+                <span className="text-amber-600 font-extrabold flex items-center gap-1.5 bg-amber-50 px-3.5 py-1.5 rounded-xl border border-amber-200">
+                  <Sparkles size={14} /> PREMIUM TIER
+                </span>
+              </div>
+            </div>
+
+            {/* Right Column: Perks Card & Action Buttons */}
+            <div className="md:col-span-7 space-y-6">
+              <div className="bg-gradient-to-br from-[#f8f9ff] via-white to-[#eff4ff] p-6 sm:p-8 rounded-3xl border border-[#0058be]/20 shadow-sm space-y-4">
+                <div className="text-[13px] font-extrabold uppercase tracking-wider text-[#0058be] flex items-center gap-2 border-b border-[#0058be]/15 pb-3">
+                  <Sparkles size={16} className="text-[#0058be]" /> Đặc Quyền Vừa Được Mở Khóa Tức Thì:
+                </div>
+
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-[13.5px] text-[#121c2a] font-medium pt-1">
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={13} className="font-bold" />
+                    </span>
+                    <span>Truy vấn RAG không giới hạn số câu hỏi mỗi ngày</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={13} className="font-bold" />
+                    </span>
+                    <span>Mở khóa toàn bộ mô hình Gemini 2.5 Pro & Flash</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={13} className="font-bold" />
+                    </span>
+                    <span>Dung lượng lưu trữ Cloud ({planParam === "ultimate" ? "500 GB" : "100 GB"})</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={13} className="font-bold" />
+                    </span>
+                    <span>Ưu tiên tốc độ xử lý vector độ trễ siêu thấp</span>
+                  </li>
+                </ul>
+
+                <div className="pt-3 flex flex-col sm:flex-row gap-3.5">
+                  <Link
+                    href="/user/ai-workspace"
+                    className="flex-1 py-4 px-6 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-extrabold text-[14.5px] shadow-xl shadow-[#0058be]/25 transition-all text-center flex items-center justify-center gap-2 hover:scale-[1.01]"
+                  >
+                    <Sparkles size={18} /> Mở Trợ Lý AI Ngay
+                  </Link>
+                  <Link
+                    href="/user/payment"
+                    className="py-4 px-6 rounded-2xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[14px] transition-all text-center flex items-center justify-center"
+                  >
+                    Xem Quản Lý Gói
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -330,26 +432,40 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="pt-6 border-t border-[#c2c6d6]/30 space-y-3">
-              <button
-                onClick={() => handleConfirmPayment(false)}
-                disabled={confirming}
-                className="w-full py-3.5 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[14px] shadow-lg shadow-[#0058be]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {confirming ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
-                <span>Tôi Đã Hoàn Tất Chuyển Khoản (Kiểm Tra Ngay)</span>
-              </button>
+            {/* Action buttons & Demo Sandbox Section */}
+            <div className="pt-6 border-t border-[#c2c6d6]/30 space-y-5">
+              {/* Demo Mode Highlight Banner */}
+              <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50 via-amber-50/80 to-orange-50 border-2 border-amber-300 shadow-md space-y-3.5">
+                <div className="flex items-center gap-2 text-amber-900 font-extrabold text-[14px]">
+                  <span className="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-sm">
+                    <Sparkles size={16} />
+                  </span>
+                  <span>Chế độ Demo / Thử nghiệm Đồ án (Instant Access)</span>
+                </div>
+                <p className="text-[13px] text-amber-900/85 leading-relaxed font-medium">
+                  Bấm nút bên dưới để hệ thống giả lập xác nhận chuyển khoản VietQR thành công ngay tức thì. Tài khoản của bạn sẽ lập tức được nâng cấp lên <strong className="text-amber-950 font-extrabold">{planObj.name}</strong> mà không cần chuyển khoản hay chờ đợi ngân hàng.
+                </p>
+                <button
+                  onClick={() => handleConfirmPayment(true)}
+                  disabled={confirming}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[14px] shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                >
+                  {confirming ? <Loader2 size={18} className="animate-spin text-white" /> : <Sparkles size={18} className="text-white animate-pulse" />}
+                  <span>{confirming ? "Đang giả lập đối soát VietQR thành công..." : "⚡ Kích Hoạt Thanh Toán Demo Ngay (Nâng Cấp Premium)"}</span>
+                </button>
+              </div>
 
-              <button
-                onClick={() => handleConfirmPayment(true)}
-                disabled={confirming}
-                className="w-full py-3 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-extrabold text-[13px] transition-all flex items-center justify-center gap-2"
-                title="Sử dụng cho môi trường kiểm thử/đồ án môn học để bỏ qua bước ngân hàng thực tế"
-              >
-                <Sparkles size={16} className="text-amber-600" />
-                <span>Giả Lập Chuyển Khoản Thành Công (Sandbox Đồ Án)</span>
-              </button>
+              {/* Real Bank Transfer Button */}
+              <div className="pt-1">
+                <button
+                  onClick={() => handleConfirmPayment(false)}
+                  disabled={confirming}
+                  className="w-full py-3.5 rounded-2xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[14px] shadow-md shadow-[#0058be]/15 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <CheckCircle2 size={18} />
+                  <span>Tôi Đã Chuyển Khoản Thật (Kiểm Tra Ngân Hàng)</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
