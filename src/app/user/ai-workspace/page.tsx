@@ -1,12 +1,13 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
   Bell, HelpCircle, ChevronDown, FileText, FlaskConical,
   AlertTriangle, ArrowRightLeft, Paperclip, Send, Sparkles,
   Layers, Share2, X, Info, CheckCircle2, Code2,
-  Copy, Check, Edit3, Trash2, Download, ExternalLink, MoreVertical, Plus, History
+  Copy, Check, Edit3, Trash2, Download, ExternalLink, MoreVertical, Plus, History, Upload, BookOpen, PanelLeft
 } from "lucide-react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 import { useAuth } from "@/features/auth/auth-context"
@@ -33,12 +34,7 @@ const sourceReferences = [
   },
 ]
 
-const quickActions = [
-  { Icon: FileText, label: "Tóm tắt\nBộ sưu tập", color: "text-[#0058be]", bg: "bg-[#eff4ff]", hoverBg: "hover:bg-[#dbeafe]" },
-  { Icon: FlaskConical, label: "Giải thích\nPhương pháp", color: "text-[#7c3aed]", bg: "bg-[#f5f3ff]", hoverBg: "hover:bg-[#ede9fe]" },
-  { Icon: AlertTriangle, label: "Tìm kiếm\nHạn chế", color: "text-[#d93025]", bg: "bg-[#fff1f1]", hoverBg: "hover:bg-[#fee2e2]" },
-  { Icon: ArrowRightLeft, label: "So sánh\nBài báo", color: "text-[#a16207]", bg: "bg-[#fefce8]", hoverBg: "hover:bg-[#fef9c3]" },
-]
+// Removed quickActions
 
 /* ─── Typing Dots ────────────────────────────── */
 function TypingDots() {
@@ -682,59 +678,20 @@ function WorkspaceContent() {
 
       {/* ── Sub-toolbar ── */}
       <motion.div
-        className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-[#c2c6d6]/30 bg-white/80 backdrop-blur-sm"
+        className="shrink-0 flex items-center px-6 py-3 border-b border-[#c2c6d6]/30 bg-white/80 backdrop-blur-sm"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="flex items-center gap-3">
-          <motion.button
-            onClick={() => setShowSessionsSidebar(prev => !prev)}
-            className={`flex items-center gap-2 px-3.5 py-2 border rounded-lg text-[13px] font-bold shadow-sm transition-all ${
-              showSessionsSidebar ? "bg-[#eff4ff] border-[#0058be]/40 text-[#0058be]" : "bg-white border-[#c2c6d6]/50 text-[#424754]"
-            }`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <History size={15} />
-            <span>{showSessionsSidebar ? "Ẩn lịch sử" : "Lịch sử trò chuyện"}</span>
-          </motion.button>
-
-          <motion.button
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#c2c6d6]/50 rounded-lg text-[13px] font-bold text-[#424754] shadow-sm"
-            whileHover={{ scale: 1.02, boxShadow: "0 4px 16px rgba(0,88,190,0.10)" }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <Layers size={14} className="text-[#727785]" />
-            Bộ sưu tập: Tài liệu điện toán lượng tử
-            <ChevronDown size={14} className="text-[#727785] ml-1" />
-          </motion.button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <motion.button
-            onClick={handleExportChat}
-            disabled={messages.length === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#eff4ff] border border-[#c2c6d6]/50 hover:border-[#0058be]/40 disabled:opacity-40 rounded-lg text-[#0058be] text-[12.5px] font-bold shadow-sm transition-all"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            title="Xuất nội dung cuộc trò chuyện sang file Markdown"
-          >
-            <Download size={14} />
-            <span>Xuất file</span>
-          </motion.button>
-
-          {[Bell, HelpCircle].map((Icon, i) => (
-            <motion.button
-              key={i}
-              className="p-2 rounded-xl text-[#727785]"
-              whileHover={{ scale: 1.12, backgroundColor: "#ffffff", color: "#121c2a", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}
-              whileTap={{ scale: 0.92 }}
-            >
-              <Icon size={17} />
-            </motion.button>
-          ))}
-        </div>
+        <motion.button
+          onClick={() => setShowSessionsSidebar(prev => !prev)}
+          className="p-2 rounded-lg text-[#727785] transition-all hover:bg-white hover:text-[#121c2a] hover:shadow-sm border border-transparent hover:border-[#c2c6d6]/50"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          title={showSessionsSidebar ? "Đóng thanh bên" : "Mở thanh bên"}
+        >
+          <PanelLeft size={22} strokeWidth={2} />
+        </motion.button>
       </motion.div>
 
       {/* ── Main Area ── */}
@@ -833,55 +790,57 @@ function WorkspaceContent() {
         {/* Center: Chat */}
         <div className="flex-1 flex flex-col px-6 md:px-12 pt-8 pb-6 overflow-y-auto max-w-[800px] mx-auto">
 
-          {/* Quick Action Buttons */}
-          <div className="grid grid-cols-4 gap-3 mb-10">
-            {quickActions.map(({ Icon, label, color, bg, hoverBg }, i) => (
-              <motion.button
-                key={i}
-                className={`flex flex-col items-center justify-center gap-2.5 text-center p-4 rounded-2xl border border-transparent transition-colors ${hoverBg}`}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + i * 0.07, duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-                whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", borderColor: "rgba(0,0,0,0.08)" }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <motion.div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${bg}`}
-                  whileHover={{ rotate: 8, scale: 1.12 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <Icon size={20} className={color} strokeWidth={1.5} />
-                </motion.div>
-                <span className="text-[11px] font-bold text-[#424754] leading-tight whitespace-pre-line">{label}</span>
-              </motion.button>
-            ))}
-          </div>
-
           {/* Chat History */}
           <div className="flex flex-col gap-5 flex-1 mb-6 overflow-y-auto">
             <AnimatePresence initial={false}>
               {messages.length === 0 && !isTyping && (
                 <motion.div
                   key="empty"
-                  className="flex items-center justify-center h-full"
+                  className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto w-full px-4"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <div className="text-center">
-                    <motion.div
-                      animate={{ scale: [1, 1.06, 1], opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className="inline-flex mb-3"
-                    >
-                      <Sparkles size={28} className="text-[#0058be]/40" />
-                    </motion.div>
-                    <p className="text-[#727785] text-[14px] font-medium">
-                      {isDocAttached && realAttachedDoc
-                        ? `Hỏi điều gì đó về "${realAttachedDoc.title}"...`
-                        : "Bắt đầu một cuộc trò chuyện mới..."}
-                    </p>
-                  </div>
+                  {isDocAttached && realAttachedDoc ? (
+                    <div className="text-center">
+                      <motion.div
+                        animate={{ scale: [1, 1.06, 1], opacity: [0.7, 1, 0.7] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        className="inline-flex mb-3"
+                      >
+                        <Sparkles size={28} className="text-[#0058be]/40" />
+                      </motion.div>
+                      <p className="text-[#727785] text-[14px] font-medium">
+                        Hỏi điều gì đó về "{realAttachedDoc.title}"...
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-white border-2 border-dashed border-[#c2c6d6]/60 rounded-[32px] p-10 w-full shadow-sm flex flex-col items-center text-center transition-all hover:border-[#0058be]/30 hover:bg-[#f8f9ff]/50">
+                      <div className="w-16 h-16 bg-[#eff4ff] text-[#0058be] rounded-full flex items-center justify-center mb-5 shadow-sm shadow-[#0058be]/10">
+                        <FileText size={28} />
+                      </div>
+                      <h3 className="text-[20px] font-bold text-[#121c2a] mb-2" style={{ fontFamily: "Geist, sans-serif" }}>Bắt đầu phân tích tài liệu</h3>
+                      <p className="text-[#424754] text-[14px] mb-8 w-full max-w-[420px]">
+                        Tải lên tệp PDF, DOCX từ máy tính hoặc chọn tài liệu từ thư viện để Lumis bắt đầu phân tích.
+                      </p>
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-[420px]">
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex-1 w-full py-3 px-4 bg-[#0058be] hover:bg-[#004ca3] text-white font-semibold text-[14px] rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-[#0058be]/20 hover:-translate-y-0.5 whitespace-nowrap"
+                        >
+                          <Upload size={18} />
+                          Đính kèm tệp
+                        </button>
+                        <Link
+                          href="/user/library"
+                          className="flex-1 w-full py-3 px-4 bg-white hover:bg-[#f8f9ff] text-[#0058be] border border-[#0058be]/20 font-semibold text-[14px] rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-sm whitespace-nowrap"
+                        >
+                          <BookOpen size={18} />
+                          Chọn từ thư viện
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               )}
 
