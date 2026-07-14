@@ -193,7 +193,17 @@ export function getDocument(id: string) {
 }
 
 export function moderateDocument(id: string, payload: ModerateDocumentRequest) {
-  return apiFetch<MessageResponse>(DOCUMENT_ENDPOINTS.moderate(id), {
+  if (!id) {
+    throw new Error("Không thể duyệt document vì thiếu document id.")
+  }
+
+  const endpoint = DOCUMENT_ENDPOINTS.moderate(id)
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("[documents-api] moderateDocument", endpoint, payload)
+  }
+
+  return apiFetch<MessageResponse>(endpoint, {
     method: "POST",
     headers: getAdminHeaders(true),
     body: JSON.stringify(payload),

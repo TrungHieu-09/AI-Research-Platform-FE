@@ -7,12 +7,16 @@ import {
   ArrowLeft,
   Bookmark,
   Bot,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   FileText,
   MessageCircle,
+  Pencil,
   Send,
   Sparkles,
   Star,
+  X,
 } from "lucide-react"
 
 import { sendChatMessage } from "@/features/ai/api/ai-api"
@@ -24,9 +28,19 @@ import {
   removeDocumentBookmark,
   updateDocumentRating,
 } from "@/features/forum/api/forum-api"
+import {
+  ForumAuroraBackdrop,
+  ForumMetricRail,
+  ForumScrollProgress,
+  ForumSectionReveal,
+  ForumSoftPulse,
+} from "@/features/forum/components/forum-effects"
 import type { ForumRatingItem, ForumRatingsResponse, PublicForumDocument } from "@/features/forum/types"
 import { useAuth } from "@/features/auth/auth-context"
 import { cn } from "@/lib/utils"
+
+const RATINGS_FETCH_PAGE_SIZE = 1000
+const RATINGS_PAGE_SIZE = 5
 
 function formatDate(value?: string) {
   if (!value) return "N/A"
@@ -47,6 +61,34 @@ function getInitials(name?: string | null) {
 
 function getRatingAuthor(rating: ForumRatingItem) {
   return rating.user ?? rating.author ?? null
+}
+
+function resolveDocumentFileUrl(fileUrl?: string | null) {
+  if (!fileUrl) return ""
+
+  if (/^(https?:|blob:|data:)/i.test(fileUrl)) return fileUrl
+  if (fileUrl.startsWith("/api/")) return fileUrl
+
+  const normalizedKey = fileUrl.startsWith("/")
+    ? fileUrl.slice(1)
+    : fileUrl.startsWith("documents/")
+      ? fileUrl
+      : `documents/${fileUrl}`
+
+  return `/api/documents/mock-upload?key=${encodeURI(normalizedKey)}`
+}
+
+function normalizeRatings(response?: Partial<ForumRatingsResponse> | null): ForumRatingsResponse {
+  const items = response?.items ?? response?.data ?? response?.ratings ?? []
+
+  return {
+    average: Number(response?.average ?? 0),
+    total: Number(response?.total ?? items.length),
+    items: Array.isArray(items) ? items : [],
+    page: response?.page,
+    pageSize: response?.pageSize,
+    totalPages: response?.totalPages,
+  }
 }
 
 function RatingStars({
@@ -91,16 +133,26 @@ export default function ForumDocumentDetailPage() {
   const [aiQuestion, setAiQuestion] = React.useState("")
   const [aiAnswer, setAiAnswer] = React.useState("")
   const [sessionId, setSessionId] = React.useState<string | undefined>()
+  const [ratingsPage, setRatingsPage] = React.useState(1)
+  const [editingRatingId, setEditingRatingId] = React.useState<string | null>(null)
+  const [editRatingValue, setEditRatingValue] = React.useState(5)
+  const [editComment, setEditComment] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSubmittingRating, setIsSubmittingRating] = React.useState(false)
   const [isTogglingBookmark, setIsTogglingBookmark] = React.useState(false)
   const [isAskingAi, setIsAskingAi] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState("")
 
-  const myRating = React.useMemo(() => {
-    if (!user) return null
-    return ratings.items.find((item) => item.userId === user.id || item.authorId === user.id || item.user?.id === user.id || item.author?.id === user.id) ?? null
-  }, [ratings.items, user])
+  const ratingsTotalPages = Math.max(1, Math.ceil(ratings.items.length / RATINGS_PAGE_SIZE))
+  const visibleRatings = React.useMemo(() => {
+    const startIndex = (ratingsPage - 1) * RATINGS_PAGE_SIZE
+    return ratings.items.slice(startIndex, startIndex + RATINGS_PAGE_SIZE)
+  }, [ratings.items, ratingsPage])
+
+  function isOwnRating(item: ForumRatingItem) {
+    if (!user) return false
+    return item.userId === user.id || item.authorId === user.id || item.user?.id === user.id || item.author?.id === user.id
+  }
 
   const loadDetail = React.useCallback(async () => {
     try {
@@ -108,16 +160,15 @@ export default function ForumDocumentDetailPage() {
       setErrorMessage("")
       const [documentResponse, ratingsResponse] = await Promise.all([
         getPublicForumDocument(documentId),
-        getDocumentRatings(documentId).catch(() => ({ average: 0, total: 0, items: [] })),
+        getDocumentRatings(documentId, {
+          page: 1,
+          pageSize: RATINGS_FETCH_PAGE_SIZE,
+        }).catch(() => ({ average: 0, total: 0, items: [] })),
       ])
 
       setDocument(documentResponse)
       setIsBookmarked(Boolean(documentResponse.isBookmarked))
-      setRatings({
-        average: ratingsResponse.average ?? 0,
-        total: ratingsResponse.total ?? 0,
-        items: ratingsResponse.items ?? [],
-      })
+      setRatings(normalizeRatings(ratingsResponse))
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Không thể tải chi tiết tài liệu.")
       setDocument(null)
@@ -131,11 +182,21 @@ export default function ForumDocumentDetailPage() {
   }, [loadDetail])
 
   React.useEffect(() => {
-    if (myRating) {
-      setRatingValue(myRating.rating)
-      setComment(myRating.comment ?? "")
-    }
-  }, [myRating])
+    setRatingsPage((currentPage) => Math.min(currentPage, ratingsTotalPages))
+  }, [ratingsTotalPages])
+
+  function handleStartEditRating(item: ForumRatingItem) {
+    setEditingRatingId(item.id)
+    setEditRatingValue(item.rating)
+    setEditComment(item.comment ?? "")
+    setErrorMessage("")
+  }
+
+  function handleCancelEditRating() {
+    setEditingRatingId(null)
+    setEditRatingValue(5)
+    setEditComment("")
+  }
 
   async function handleSubmitRating(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -144,17 +205,42 @@ export default function ForumDocumentDetailPage() {
       setIsSubmittingRating(true)
       setErrorMessage("")
       const payload = { rating: ratingValue, comment: comment.trim() }
-      const response = myRating
-        ? await updateDocumentRating(documentId, payload)
-        : await createDocumentRating(documentId, payload)
+      await createDocumentRating(documentId, payload)
 
-      setRatings({
-        average: response.average ?? 0,
-        total: response.total ?? 0,
-        items: response.items ?? [],
+      const latestRatings = await getDocumentRatings(documentId, {
+        page: 1,
+        pageSize: RATINGS_FETCH_PAGE_SIZE,
       })
+      setRatings(normalizeRatings(latestRatings))
+      setRatingsPage(1)
+      setRatingValue(5)
+      setComment("")
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Không thể gửi đánh giá.")
+    } finally {
+      setIsSubmittingRating(false)
+    }
+  }
+
+  async function handleSubmitEditRating(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    try {
+      setIsSubmittingRating(true)
+      setErrorMessage("")
+      await updateDocumentRating(documentId, {
+        rating: editRatingValue,
+        comment: editComment.trim(),
+      })
+
+      const latestRatings = await getDocumentRatings(documentId, {
+        page: 1,
+        pageSize: RATINGS_FETCH_PAGE_SIZE,
+      })
+      setRatings(normalizeRatings(latestRatings))
+      handleCancelEditRating()
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Không thể cập nhật bình luận.")
     } finally {
       setIsSubmittingRating(false)
     }
@@ -225,9 +311,13 @@ export default function ForumDocumentDetailPage() {
     )
   }
 
+  const previewUrl = resolveDocumentFileUrl(document.fileUrl)
+
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#f8f9ff] px-6 py-8 md:px-10">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9ff] px-6 py-8 md:px-10">
+      <ForumScrollProgress />
+      <ForumAuroraBackdrop />
+      <div className="relative mx-auto max-w-7xl space-y-6">
         <Link
           href="/user/forum"
           className="inline-flex h-9 items-center gap-2 rounded-full border border-[#d9e3f7] bg-white px-3 text-[13px] font-bold text-[#424754] transition-colors hover:bg-[#eff4ff] hover:text-[#0058be]"
@@ -242,15 +332,26 @@ export default function ForumDocumentDetailPage() {
           </div>
         ) : null}
 
+        <ForumMetricRail
+          items={[
+            { label: "Views", value: document.viewCount ?? 0, helper: "Auto-incremented", tone: "blue" },
+            { label: "Rating", value: ratings.average.toFixed(1), helper: `${ratings.total} community votes`, tone: "amber" },
+            { label: "Pages", value: document.pageCount ?? 0, helper: "Document length", tone: "green" },
+            { label: "AI scope", value: "Single", helper: "RAG over this file", tone: "violet" },
+          ]}
+        />
+
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
           <main className="space-y-6">
-            <article className="rounded-[28px] border border-[#c2c6d6]/40 bg-white/80 p-6 shadow-sm md:p-8">
+            <ForumSectionReveal>
+            <article className="relative overflow-hidden rounded-[28px] border border-[#c2c6d6]/40 bg-white/80 p-6 shadow-sm backdrop-blur-xl md:p-8">
+              <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 translate-x-1/3 -translate-y-1/3 rounded-full bg-[#0058be]/10 blur-3xl" />
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-[12px] font-bold text-green-700">
                   APPROVED
                 </span>
                 <span className="rounded-full border border-[#0058be]/20 bg-[#eff4ff] px-3 py-1.5 text-[12px] font-bold text-[#0058be]">
-                  PUBLIC
+                  <ForumSoftPulse>PUBLIC</ForumSoftPulse>
                 </span>
                 {document.subject ? (
                   <span className="rounded-full border border-[#d9e3f7] bg-[#f8f9ff] px-3 py-1.5 text-[12px] font-bold text-[#424754]">
@@ -274,10 +375,13 @@ export default function ForumDocumentDetailPage() {
                 <p className="mb-6 whitespace-pre-line text-[15px] leading-8 text-[#424754]">{document.description}</p>
               ) : null}
 
-              <div className="overflow-hidden rounded-[24px] border border-[#c2c6d6]/40 bg-[#f8f9ff]">
-                {document.fileUrl ? (
+              <div className="relative overflow-hidden rounded-[24px] border border-[#c2c6d6]/40 bg-[#f8f9ff] shadow-inner">
+                <div className="absolute left-4 top-4 z-10 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#0058be] shadow-sm backdrop-blur">
+                  Live preview
+                </div>
+                {previewUrl ? (
                   <iframe
-                    src={document.fileUrl}
+                    src={previewUrl}
                     title={document.title}
                     className="h-[620px] w-full bg-white"
                   />
@@ -289,13 +393,15 @@ export default function ForumDocumentDetailPage() {
                 )}
               </div>
             </article>
+            </ForumSectionReveal>
 
-            <section className="rounded-[28px] border border-[#c2c6d6]/40 bg-white/80 p-6 shadow-sm md:p-8">
+            <ForumSectionReveal>
+            <section className="rounded-[28px] border border-[#c2c6d6]/40 bg-white/80 p-6 shadow-sm backdrop-blur-xl md:p-8">
               <div className="mb-5 flex items-center justify-between">
                 <div>
                   <h2 className="text-[20px] font-bold text-[#121c2a]">Đánh giá & bình luận</h2>
                   <p className="mt-1 text-[13px] text-[#727785]">
-                    {ratings.total} lượt đánh giá · trung bình {ratings.average.toFixed(1)}/5
+                    {ratings.total} lượt đánh giá · đang hiển thị {visibleRatings.length}/{ratings.items.length} bình luận · trung bình {ratings.average.toFixed(1)}/5
                   </p>
                 </div>
                 <RatingStars value={Math.round(ratings.average)} readonly />
@@ -303,7 +409,7 @@ export default function ForumDocumentDetailPage() {
 
               <form onSubmit={handleSubmitRating} className="mb-6 rounded-[22px] border border-[#d9e3f7] bg-[#f8f9ff] p-4">
                 <label className="mb-2 block text-[13px] font-bold text-[#424754]">
-                  {myRating ? "Cập nhật đánh giá của bạn" : "Gửi đánh giá của bạn"}
+                  Gửi đánh giá của bạn
                 </label>
                 <RatingStars value={ratingValue} onChange={setRatingValue} />
                 <textarea
@@ -324,14 +430,15 @@ export default function ForumDocumentDetailPage() {
                     ) : (
                       <Send size={15} />
                     )}
-                    {myRating ? "Cập nhật" : "Gửi đánh giá"}
+                    Gửi đánh giá
                   </button>
                 </div>
               </form>
 
               <div className="space-y-4">
-                {ratings.items.length > 0 ? ratings.items.map((item) => {
+                {visibleRatings.length > 0 ? visibleRatings.map((item) => {
                   const author = getRatingAuthor(item)
+                  const canEdit = isOwnRating(item)
                   return (
                     <article key={item.id} className="rounded-[20px] border border-[#c2c6d6]/40 bg-white p-4">
                       <div className="mb-3 flex items-start justify-between gap-4">
@@ -344,10 +451,76 @@ export default function ForumDocumentDetailPage() {
                             <p className="text-[12px] text-[#727785]">{formatDate(item.createdAt)}</p>
                           </div>
                         </div>
-                        <RatingStars value={item.rating} readonly />
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          <RatingStars value={item.rating} readonly />
+                          {canEdit ? (
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditRating(item)}
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors",
+                                editingRatingId === item.id
+                                  ? "bg-[#0058be] text-white"
+                                  : "border border-[#d9e3f7] bg-[#eff4ff] text-[#0058be] hover:bg-[#dee9fc]",
+                              )}
+                            >
+                              <Pencil size={12} />
+                              {editingRatingId === item.id ? "Đang sửa" : "Sửa"}
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
                       {item.comment ? (
                         <p className="whitespace-pre-line text-[14px] leading-6 text-[#424754]">{item.comment}</p>
+                      ) : null}
+                      {editingRatingId === item.id ? (
+                        <form
+                          onSubmit={handleSubmitEditRating}
+                          className="mt-4 rounded-[18px] border border-[#0058be]/20 bg-[#f8f9ff] p-4"
+                        >
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                            <label className="text-[13px] font-bold text-[#424754]">
+                              Chỉnh sửa bình luận
+                            </label>
+                            <button
+                              type="button"
+                              onClick={handleCancelEditRating}
+                              className="inline-flex items-center gap-1 rounded-full border border-[#c2c6d6]/70 bg-white px-3 py-1 text-[12px] font-bold text-[#727785] transition-colors hover:bg-[#eff4ff] hover:text-[#424754]"
+                            >
+                              <X size={13} />
+                              Hủy
+                            </button>
+                          </div>
+                          <RatingStars value={editRatingValue} onChange={setEditRatingValue} />
+                          <textarea
+                            value={editComment}
+                            onChange={(event) => setEditComment(event.target.value)}
+                            rows={3}
+                            placeholder="Cập nhật nội dung bình luận..."
+                            className="mt-3 w-full resize-y rounded-2xl border border-[#c2c6d6] bg-white p-3.5 text-[14px] leading-6 text-[#121c2a] outline-none placeholder:text-[#adb1bb] focus:border-[#0058be] focus:ring-4 focus:ring-[#0058be]/10"
+                          />
+                          <div className="mt-3 flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={handleCancelEditRating}
+                              className="inline-flex h-10 items-center rounded-xl border border-[#c2c6d6]/70 bg-white px-4 text-[13px] font-bold text-[#424754] transition-colors hover:bg-[#eff4ff]"
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={isSubmittingRating}
+                              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#0058be] px-5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-[#2170e4] disabled:opacity-60"
+                            >
+                              {isSubmittingRating ? (
+                                <span className="material-symbols-outlined animate-spin text-[17px]">progress_activity</span>
+                              ) : (
+                                <Send size={15} />
+                              )}
+                              Lưu chỉnh sửa
+                            </button>
+                          </div>
+                        </form>
                       ) : null}
                     </article>
                   )
@@ -357,11 +530,41 @@ export default function ForumDocumentDetailPage() {
                   </div>
                 )}
               </div>
+
+              {ratings.items.length > RATINGS_PAGE_SIZE ? (
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[#d9e3f7] pt-4">
+                  <p className="text-[13px] font-semibold text-[#727785]">
+                    Trang bình luận {ratingsPage} / {ratingsTotalPages}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={ratingsPage <= 1}
+                      onClick={() => setRatingsPage((value) => Math.max(1, value - 1))}
+                      className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#c2c6d6]/60 bg-white px-3 text-[13px] font-bold text-[#424754] transition-colors hover:bg-[#eff4ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <ChevronLeft size={15} />
+                      Trước
+                    </button>
+                    <button
+                      type="button"
+                      disabled={ratingsPage >= ratingsTotalPages}
+                      onClick={() => setRatingsPage((value) => Math.min(ratingsTotalPages, value + 1))}
+                      className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#c2c6d6]/60 bg-white px-3 text-[13px] font-bold text-[#424754] transition-colors hover:bg-[#eff4ff] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Sau
+                      <ChevronRight size={15} />
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </section>
+            </ForumSectionReveal>
           </main>
 
           <aside className="space-y-5">
-            <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm">
+            <ForumSectionReveal>
+            <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
               <button
                 type="button"
                 onClick={handleToggleBookmark}
@@ -392,8 +595,11 @@ export default function ForumDocumentDetailPage() {
                 </div>
               </div>
             </section>
+            </ForumSectionReveal>
 
-            <section className="rounded-[24px] border border-[#0058be]/15 bg-white/80 p-5 shadow-sm">
+            <ForumSectionReveal>
+            <section className="relative overflow-hidden rounded-[24px] border border-[#0058be]/15 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
+              <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#0058be]/10 blur-2xl" />
               <h2 className="mb-2 flex items-center gap-2 text-[16px] font-bold text-[#121c2a]">
                 <Bot size={18} className="text-[#0058be]" />
                 Hỏi AI về tài liệu
@@ -431,8 +637,10 @@ export default function ForumDocumentDetailPage() {
                 </div>
               ) : null}
             </section>
+            </ForumSectionReveal>
 
-            <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm">
+            <ForumSectionReveal>
+            <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
               <h2 className="mb-3 flex items-center gap-2 text-[16px] font-bold text-[#121c2a]">
                 <MessageCircle size={18} className="text-[#0058be]" />
                 Thông tin
@@ -443,6 +651,7 @@ export default function ForumDocumentDetailPage() {
                 <p><span className="font-bold">Loại file:</span> {document.mimeType || "N/A"}</p>
               </div>
             </section>
+            </ForumSectionReveal>
           </aside>
         </div>
       </div>

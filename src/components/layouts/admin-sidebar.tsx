@@ -6,6 +6,7 @@ import {
   Users,
   BookOpen,
   FileText,
+  MessageSquareText,
   Settings,
   ShieldCheck,
   LogOut,
@@ -23,6 +24,7 @@ const navigation = [
   { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Subject Management", href: "/admin/subjects", icon: BookOpen },
   { name: "Document Management", href: "/admin/documents", icon: FileText },
+  { name: "View Forum", href: "/user/forum", icon: MessageSquareText },
   { name: "System Settings", href: "/admin/settings", icon: Settings },
 ]
 

@@ -17,6 +17,11 @@ export interface GetPublicForumDocumentsQuery {
   sort?: ForumDocumentSort
 }
 
+export interface GetDocumentRatingsQuery {
+  page?: number
+  pageSize?: number
+}
+
 const FORUM_DOCUMENT_ENDPOINTS = {
   publicDocuments: "/api/documents/public",
   documentById: (id: string) => `/api/documents/${id}`,
@@ -61,8 +66,10 @@ export function getPublicForumDocument(id: string) {
   return apiFetch<PublicForumDocument>(FORUM_DOCUMENT_ENDPOINTS.documentById(id))
 }
 
-export function getDocumentRatings(id: string) {
-  return apiFetch<ForumRatingsResponse>(FORUM_DOCUMENT_ENDPOINTS.ratings(id))
+export function getDocumentRatings(id: string, query: GetDocumentRatingsQuery = {}) {
+  return apiFetch<ForumRatingsResponse>(
+    `${FORUM_DOCUMENT_ENDPOINTS.ratings(id)}${buildQueryString(query)}`,
+  )
 }
 
 export function createDocumentRating(id: string, payload: ForumRatingPayload) {

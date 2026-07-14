@@ -36,6 +36,12 @@ export default function AdminLayout({
             >
               User Library
             </Link>
+            <Link
+              href="/user/forum"
+              className="text-[13px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors"
+            >
+              Forum
+            </Link>
             <div className="h-4 w-px bg-[#c2c6d6]/50" />
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-[#0058be] text-white flex items-center justify-center font-bold text-[13px] shadow-sm">

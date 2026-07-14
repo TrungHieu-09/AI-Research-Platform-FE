@@ -47,6 +47,11 @@ export interface ForumRatingsResponse {
   average: number
   total: number
   items: ForumRatingItem[]
+  data?: ForumRatingItem[]
+  ratings?: ForumRatingItem[]
+  page?: number
+  pageSize?: number
+  totalPages?: number
 }
 
 export interface ForumRatingPayload {

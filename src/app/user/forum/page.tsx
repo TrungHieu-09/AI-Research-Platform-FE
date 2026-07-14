@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Eye,
   FileText,
+  MessageCircle,
   Search,
   Sparkles,
   Star,
@@ -16,8 +17,16 @@ import {
 } from "lucide-react"
 
 import {
+  getDocumentRatings,
   getPublicForumDocuments,
 } from "@/features/forum/api/forum-api"
+import {
+  ForumAuroraBackdrop,
+  ForumDocumentSkeletonList,
+  ForumMetricRail,
+  ForumSectionReveal,
+  ForumSoftPulse,
+} from "@/features/forum/components/forum-effects"
 import type { ForumDocumentSort, PublicForumDocument } from "@/features/forum/types"
 import { getSubjects } from "@/features/subjects/api/subjects-api"
 import type { Subject } from "@/features/subjects/types"
@@ -54,6 +63,10 @@ function getRatingCount(document: PublicForumDocument) {
   return document.ratingCount ?? document.totalRatings ?? 0
 }
 
+function getCommentCount(document: PublicForumDocument) {
+  return getRatingCount(document)
+}
+
 function getBookmarkCount(document: PublicForumDocument) {
   return document.bookmarkCount ?? document.savedCount ?? 0
 }
@@ -67,10 +80,11 @@ function ForumDocumentCard({ document }: { document: PublicForumDocument }) {
   return (
     <Link
       href={`/user/forum/${document.id}`}
-      className="group block rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#0058be]/25 hover:shadow-[0_14px_40px_rgba(0,65,145,0.08)]"
+      className="group relative block overflow-hidden rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#0058be]/25 hover:shadow-[0_14px_40px_rgba(0,65,145,0.08)]"
     >
+      <div className="absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-[#0058be]/5 to-transparent opacity-0 transition-all duration-700 group-hover:left-full group-hover:opacity-100" />
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-[#0058be]">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-[#0058be] transition-transform duration-300 group-hover:rotate-3 group-hover:scale-105">
           <FileText size={23} />
         </div>
 
@@ -112,9 +126,34 @@ function ForumDocumentCard({ document }: { document: PublicForumDocument }) {
               {getRatingAverage(document).toFixed(1)} ({getRatingCount(document)})
             </span>
             <span className="inline-flex items-center gap-1">
+              <MessageCircle size={14} />
+              {getCommentCount(document)} bình luận
+            </span>
+            <span className="inline-flex items-center gap-1">
               <Bookmark size={14} />
               {getBookmarkCount(document)} saves
             </span>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {[
+              { label: "Views", value: Math.min(100, (document.viewCount ?? 0) * 8) },
+              { label: "Rating", value: Math.min(100, getRatingAverage(document) * 20) },
+              { label: "Comments", value: Math.min(100, getCommentCount(document) * 12) },
+            ].map((metric) => (
+              <div key={metric.label} className="rounded-xl bg-[#f8f9ff] px-3 py-2">
+                <div className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-[#727785]">
+                  <span>{metric.label}</span>
+                  <span>{Math.round(metric.value)}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-[#dfe9fc]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#0058be] to-[#8bb5ff] transition-all duration-500 group-hover:from-[#2170e4]"
+                    style={{ width: `${metric.value}%` }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -129,7 +168,8 @@ export default function ForumPage() {
   const [subjectId, setSubjectId] = React.useState("")
   const [sort, setSort] = React.useState<ForumDocumentSort>("newest")
   const [page, setPage] = React.useState(1)
-  const [total, setTotal] = React.useState(0)
+  const [filteredTotal, setFilteredTotal] = React.useState(0)
+  const [totalPublicDocuments, setTotalPublicDocuments] = React.useState(0)
   const [totalPages, setTotalPages] = React.useState(1)
   const [isLoading, setIsLoading] = React.useState(true)
   const [errorMessage, setErrorMessage] = React.useState("")
@@ -138,6 +178,32 @@ export default function ForumPage() {
     getSubjects({ status: "ACTIVE" })
       .then(setSubjects)
       .catch(() => setSubjects([]))
+  }, [])
+
+  React.useEffect(() => {
+    let ignore = false
+
+    async function loadPublicDocumentTotal() {
+      try {
+        const response = await getPublicForumDocuments({
+          page: 1,
+          pageSize: 1,
+          sort: "newest",
+        })
+
+        if (!ignore) {
+          setTotalPublicDocuments(response.total ?? response.items.length)
+        }
+      } catch {
+        if (!ignore) setTotalPublicDocuments(0)
+      }
+    }
+
+    void loadPublicDocumentTotal()
+
+    return () => {
+      ignore = true
+    }
   }, [])
 
   React.useEffect(() => {
@@ -156,14 +222,33 @@ export default function ForumPage() {
         })
 
         if (ignore) return
-        setDocuments(response.items ?? [])
-        setTotal(response.total ?? 0)
+        const items = response.items ?? []
+        const enrichedItems = await Promise.all(
+          items.map(async (document) => {
+            try {
+              const ratingSummary = await getDocumentRatings(document.id)
+
+              return {
+                ...document,
+                ratingAverage: ratingSummary.average ?? getRatingAverage(document),
+                ratingCount: ratingSummary.total ?? getRatingCount(document),
+                totalRatings: ratingSummary.total ?? document.totalRatings,
+              }
+            } catch {
+              return document
+            }
+          }),
+        )
+
+        if (ignore) return
+        setDocuments(enrichedItems)
+        setFilteredTotal(response.total ?? 0)
         setTotalPages(response.totalPages || 1)
       } catch (error) {
         if (!ignore) {
           setErrorMessage(error instanceof Error ? error.message : "Không thể tải danh sách Forum.")
           setDocuments([])
-          setTotal(0)
+          setFilteredTotal(0)
           setTotalPages(1)
         }
       } finally {
@@ -181,12 +266,15 @@ export default function ForumPage() {
   const selectedSubject = subjects.find((subject) => subject.id === subjectId)
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#f8f9ff] px-6 py-8 md:px-10">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6">
+    <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9ff] px-6 py-8 md:px-10">
+      <ForumAuroraBackdrop />
+      <div className="relative mx-auto flex max-w-7xl flex-col gap-6">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#0058be]">
-              <Sparkles size={12} />
+              <ForumSoftPulse>
+                <Sparkles size={12} />
+              </ForumSoftPulse>
               LUMIS PUBLIC FORUM
             </div>
             <h1 className="mb-2 text-[30px] font-bold tracking-tight text-[#121c2a] md:text-[34px]">
@@ -206,7 +294,17 @@ export default function ForumPage() {
           </Link>
         </header>
 
-        <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-4 shadow-sm">
+        <ForumMetricRail
+          items={[
+            { label: "Public docs", value: totalPublicDocuments, helper: "Approved resources", tone: "blue" },
+            { label: "Subjects", value: subjects.length, helper: "Active filters", tone: "green" },
+            { label: "Current page", value: `${page}/${totalPages}`, helper: "Pagination state", tone: "amber" },
+            { label: "Sort mode", value: sort.replace("_", " "), helper: "Feed ranking", tone: "violet" },
+          ]}
+        />
+
+        <ForumSectionReveal>
+        <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-4 shadow-sm backdrop-blur-xl">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
             <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-[#c2c6d6]/50 bg-[#f8f9ff] px-4 py-3 focus-within:border-[#0058be]/50 focus-within:ring-4 focus-within:ring-[#0058be]/10">
               <Search size={17} className="shrink-0 text-[#727785]" />
@@ -253,10 +351,12 @@ export default function ForumPage() {
             </select>
           </div>
         </section>
+        </ForumSectionReveal>
 
         <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
           <aside className="space-y-4">
-            <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm">
+            <ForumSectionReveal>
+            <section className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm backdrop-blur-xl">
               <h2 className="mb-4 flex items-center gap-2 text-[15px] font-bold text-[#121c2a]">
                 <BookOpen size={17} className="text-[#0058be]" />
                 Môn học
@@ -298,12 +398,13 @@ export default function ForumPage() {
                 ))}
               </div>
             </section>
+            </ForumSectionReveal>
           </aside>
 
           <main className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[13px] font-semibold text-[#727785]">
-                Hiển thị {documents.length} / {total} tài liệu
+                Hiển thị {documents.length} / {filteredTotal} tài liệu
                 {selectedSubject ? ` · ${selectedSubject.name}` : ""}
               </p>
             </div>
@@ -315,12 +416,13 @@ export default function ForumPage() {
             ) : null}
 
             {isLoading ? (
-              <div className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-10 text-center text-[#727785]">
-                <span className="material-symbols-outlined animate-spin text-[34px] text-[#0058be]">progress_activity</span>
-                <p className="mt-3 text-[14px] font-semibold">Đang tải tài liệu public...</p>
-              </div>
+              <ForumDocumentSkeletonList count={4} />
             ) : documents.length > 0 ? (
-              documents.map((document) => <ForumDocumentCard key={document.id} document={document} />)
+              documents.map((document) => (
+                <ForumSectionReveal key={document.id}>
+                  <ForumDocumentCard document={document} />
+                </ForumSectionReveal>
+              ))
             ) : (
               <div className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-10 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eff4ff] text-[#0058be]">
