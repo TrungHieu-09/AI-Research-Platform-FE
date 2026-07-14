@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Eye,
   FileText,
+  Heart,
   MessageCircle,
   Search,
   Sparkles,
@@ -17,8 +18,10 @@ import {
 } from "lucide-react"
 
 import {
+  bookmarkDocument,
   getDocumentRatings,
   getPublicForumDocuments,
+  removeDocumentBookmark,
 } from "@/features/forum/api/forum-api"
 import {
   ForumAuroraBackdrop,
@@ -37,6 +40,68 @@ const sortOptions: Array<{ label: string; value: ForumDocumentSort }> = [
   { label: "Nhiều lượt xem", value: "popular" },
   { label: "Đánh giá cao", value: "top_rated" },
 ]
+
+const FORUM_LIKES_STORAGE_KEY = "lumis_forum_likes"
+const FORUM_BOOKMARKS_STORAGE_KEY = "lumis_forum_bookmarks"
+
+type ForumFeedView = "all" | "liked" | "saved"
+
+const feedViews: Array<{
+  label: string
+  value: ForumFeedView
+  icon: React.ComponentType<{ size?: number; fill?: string; className?: string }>
+}> = [
+  { label: "Tất cả", value: "all", icon: FileText },
+  { label: "Đã thích", value: "liked", icon: Heart },
+  { label: "Đã lưu", value: "saved", icon: Bookmark },
+]
+
+interface ForumLikeState {
+  documents: Record<string, boolean>
+  documentCounts: Record<string, number>
+  ratings: Record<string, boolean>
+  ratingCounts: Record<string, number>
+}
+
+const emptyForumLikeState: ForumLikeState = {
+  documents: {},
+  documentCounts: {},
+  ratings: {},
+  ratingCounts: {},
+}
+
+function readForumLikeState(): ForumLikeState {
+  if (typeof window === "undefined") return emptyForumLikeState
+
+  try {
+    const rawState = window.localStorage.getItem(FORUM_LIKES_STORAGE_KEY)
+    if (!rawState) return emptyForumLikeState
+
+    const parsed = JSON.parse(rawState) as Partial<ForumLikeState>
+
+    return {
+      documents: parsed.documents ?? {},
+      documentCounts: parsed.documentCounts ?? {},
+      ratings: parsed.ratings ?? {},
+      ratingCounts: parsed.ratingCounts ?? {},
+    }
+  } catch {
+    return emptyForumLikeState
+  }
+}
+
+function readForumBookmarkState(): Record<string, boolean> {
+  if (typeof window === "undefined") return {}
+
+  try {
+    const rawState = window.localStorage.getItem(FORUM_BOOKMARKS_STORAGE_KEY)
+    if (!rawState) return {}
+
+    return JSON.parse(rawState) as Record<string, boolean>
+  } catch {
+    return {}
+  }
+}
 
 function formatDate(value?: string) {
   if (!value) return "N/A"
@@ -71,7 +136,25 @@ function getBookmarkCount(document: PublicForumDocument) {
   return document.bookmarkCount ?? document.savedCount ?? 0
 }
 
-function ForumDocumentCard({ document }: { document: PublicForumDocument }) {
+function getDocumentLikeBase(document: PublicForumDocument) {
+  return document.likeCount ?? document.likedCount ?? 0
+}
+
+function ForumDocumentCard({
+  document,
+  isLiked,
+  isBookmarked,
+  likeCount,
+  onToggleLike,
+  onToggleBookmark,
+}: {
+  document: PublicForumDocument
+  isLiked: boolean
+  isBookmarked: boolean
+  likeCount: number
+  onToggleLike: () => void
+  onToggleBookmark: () => void
+}) {
   const excerpt =
     document.description && document.description.length > 180
       ? `${document.description.slice(0, 180)}...`
@@ -83,6 +166,44 @@ function ForumDocumentCard({ document }: { document: PublicForumDocument }) {
       className="group relative block overflow-hidden rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#0058be]/25 hover:shadow-[0_14px_40px_rgba(0,65,145,0.08)]"
     >
       <div className="absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-[#0058be]/5 to-transparent opacity-0 transition-all duration-700 group-hover:left-full group-hover:opacity-100" />
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+        <button
+          type="button"
+          aria-label={isLiked ? "Bỏ thích tài liệu" : "Thích tài liệu"}
+          title={isLiked ? "Bỏ thích" : "Thích"}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onToggleLike()
+          }}
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-full border text-rose-500 shadow-sm backdrop-blur transition-all hover:scale-105",
+            isLiked
+              ? "border-rose-200 bg-rose-500 text-white shadow-rose-500/20"
+              : "border-rose-200 bg-white/85 hover:bg-rose-50",
+          )}
+        >
+          <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+        </button>
+        <button
+          type="button"
+          aria-label={isBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu"}
+          title={isBookmarked ? "Bỏ lưu" : "Lưu"}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onToggleBookmark()
+          }}
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-full border text-[#0058be] shadow-sm backdrop-blur transition-all hover:scale-105",
+            isBookmarked
+              ? "border-[#0058be]/20 bg-[#0058be] text-white shadow-[#0058be]/20"
+              : "border-[#0058be]/20 bg-white/85 hover:bg-[#eff4ff]",
+          )}
+        >
+          <Bookmark size={16} fill={isBookmarked ? "currentColor" : "none"} />
+        </button>
+      </div>
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#eff4ff] text-[#0058be] transition-transform duration-300 group-hover:rotate-3 group-hover:scale-105">
           <FileText size={23} />
@@ -130,6 +251,10 @@ function ForumDocumentCard({ document }: { document: PublicForumDocument }) {
               {getCommentCount(document)} bình luận
             </span>
             <span className="inline-flex items-center gap-1">
+              <Heart size={14} fill={isLiked ? "currentColor" : "none"} className={isLiked ? "text-rose-500" : ""} />
+              {likeCount} thích
+            </span>
+            <span className="inline-flex items-center gap-1">
               <Bookmark size={14} />
               {getBookmarkCount(document)} saves
             </span>
@@ -167,18 +292,86 @@ export default function ForumPage() {
   const [search, setSearch] = React.useState("")
   const [subjectId, setSubjectId] = React.useState("")
   const [sort, setSort] = React.useState<ForumDocumentSort>("newest")
+  const [feedView, setFeedView] = React.useState<ForumFeedView>("all")
   const [page, setPage] = React.useState(1)
   const [filteredTotal, setFilteredTotal] = React.useState(0)
   const [totalPublicDocuments, setTotalPublicDocuments] = React.useState(0)
   const [totalPages, setTotalPages] = React.useState(1)
   const [isLoading, setIsLoading] = React.useState(true)
   const [errorMessage, setErrorMessage] = React.useState("")
+  const [likeState, setLikeState] = React.useState<ForumLikeState>(emptyForumLikeState)
+  const [bookmarkedDocuments, setBookmarkedDocuments] = React.useState<Record<string, boolean>>({})
 
   React.useEffect(() => {
     getSubjects({ status: "ACTIVE" })
       .then(setSubjects)
       .catch(() => setSubjects([]))
   }, [])
+
+  React.useEffect(() => {
+    setLikeState(readForumLikeState())
+    setBookmarkedDocuments(readForumBookmarkState())
+  }, [])
+
+  function persistLikeState(nextState: ForumLikeState) {
+    setLikeState(nextState)
+    window.localStorage.setItem(FORUM_LIKES_STORAGE_KEY, JSON.stringify(nextState))
+  }
+
+  function isDocumentLiked(document: PublicForumDocument) {
+    return likeState.documents[document.id] ?? Boolean(document.isLiked)
+  }
+
+  function getDocumentLikeCount(document: PublicForumDocument) {
+    return getDocumentLikeBase(document) + (likeState.documentCounts[document.id] ?? 0)
+  }
+
+  function handleToggleDocumentLike(document: PublicForumDocument) {
+    const wasLiked = isDocumentLiked(document)
+    const nextState: ForumLikeState = {
+      documents: {
+        ...likeState.documents,
+        [document.id]: !wasLiked,
+      },
+      documentCounts: {
+        ...likeState.documentCounts,
+        [document.id]: Math.max(0, (likeState.documentCounts[document.id] ?? 0) + (wasLiked ? -1 : 1)),
+      },
+      ratings: likeState.ratings,
+      ratingCounts: likeState.ratingCounts,
+    }
+
+    persistLikeState(nextState)
+  }
+
+  function isDocumentBookmarked(document: PublicForumDocument) {
+    return bookmarkedDocuments[document.id] ?? Boolean(document.isBookmarked)
+  }
+
+  function persistBookmarkState(nextState: Record<string, boolean>) {
+    setBookmarkedDocuments(nextState)
+    window.localStorage.setItem(FORUM_BOOKMARKS_STORAGE_KEY, JSON.stringify(nextState))
+  }
+
+  async function handleToggleDocumentBookmark(document: PublicForumDocument) {
+    const wasBookmarked = isDocumentBookmarked(document)
+    const nextState = {
+      ...bookmarkedDocuments,
+      [document.id]: !wasBookmarked,
+    }
+
+    persistBookmarkState(nextState)
+
+    try {
+      if (wasBookmarked) {
+        await removeDocumentBookmark(document.id)
+      } else {
+        await bookmarkDocument(document.id)
+      }
+    } catch (error) {
+      console.info("Bookmark API is not ready yet; using local Forum bookmark state.", error)
+    }
+  }
 
   React.useEffect(() => {
     let ignore = false
@@ -264,6 +457,26 @@ export default function ForumPage() {
   }, [page, search, sort, subjectId])
 
   const selectedSubject = subjects.find((subject) => subject.id === subjectId)
+  const visibleDocuments = React.useMemo(() => {
+    if (feedView === "liked") return documents.filter(isDocumentLiked)
+    if (feedView === "saved") return documents.filter(isDocumentBookmarked)
+    return documents
+  }, [documents, feedView, likeState, bookmarkedDocuments])
+
+  const viewEmptyCopy = {
+    all: {
+      title: "Chưa có tài liệu public",
+      description: "Thử đổi bộ lọc hoặc upload tài liệu public để admin duyệt.",
+    },
+    liked: {
+      title: "Chưa có tài liệu đã thích",
+      description: "Bấm biểu tượng trái tim trên tài liệu để gom vào tab này.",
+    },
+    saved: {
+      title: "Chưa có tài liệu đã lưu",
+      description: "Bấm biểu tượng bookmark trên tài liệu để lưu vào danh sách ôn tập.",
+    },
+  }[feedView]
 
   return (
     <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9ff] px-6 py-8 md:px-10">
@@ -404,32 +617,74 @@ export default function ForumPage() {
           <main className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[13px] font-semibold text-[#727785]">
-                Hiển thị {documents.length} / {filteredTotal} tài liệu
+                Hiển thị {visibleDocuments.length} / {feedView === "all" ? filteredTotal : documents.length} tài liệu
                 {selectedSubject ? ` · ${selectedSubject.name}` : ""}
               </p>
             </div>
 
-            {errorMessage ? (
+            {errorMessage && feedView === "all" ? (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-[14px] font-semibold text-red-700">
                 {errorMessage}
               </div>
             ) : null}
 
+            <div className="sticky top-[76px] z-20 rounded-[24px] border border-[#c2c6d6]/40 bg-white/85 p-2 shadow-sm backdrop-blur-xl">
+              <div className="grid grid-cols-3 gap-2">
+                {feedViews.map((view) => {
+                  const Icon = view.icon
+                  const active = feedView === view.value
+
+                  return (
+                    <button
+                      key={view.value}
+                      type="button"
+                      onClick={() => setFeedView(view.value)}
+                      className={cn(
+                        "flex h-11 items-center justify-center gap-2 rounded-2xl text-[13px] font-bold transition-all",
+                        active
+                          ? "bg-[#0058be] text-white shadow-md shadow-[#0058be]/20"
+                          : "text-[#424754] hover:bg-[#eff4ff] hover:text-[#0058be]",
+                      )}
+                    >
+                      <Icon
+                        size={16}
+                        fill={active && view.value !== "all" ? "currentColor" : "none"}
+                      />
+                      {view.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {isLoading ? (
               <ForumDocumentSkeletonList count={4} />
-            ) : documents.length > 0 ? (
-              documents.map((document) => (
+            ) : visibleDocuments.length > 0 ? (
+              visibleDocuments.map((document) => (
                 <ForumSectionReveal key={document.id}>
-                  <ForumDocumentCard document={document} />
+                  <ForumDocumentCard
+                    document={document}
+                    isLiked={isDocumentLiked(document)}
+                    isBookmarked={isDocumentBookmarked(document)}
+                    likeCount={getDocumentLikeCount(document)}
+                    onToggleLike={() => handleToggleDocumentLike(document)}
+                    onToggleBookmark={() => void handleToggleDocumentBookmark(document)}
+                  />
                 </ForumSectionReveal>
               ))
             ) : (
               <div className="rounded-[24px] border border-[#c2c6d6]/40 bg-white/80 p-10 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eff4ff] text-[#0058be]">
-                  <FileText size={26} />
+                  {feedView === "liked" ? (
+                    <Heart size={26} />
+                  ) : feedView === "saved" ? (
+                    <Bookmark size={26} />
+                  ) : (
+                    <FileText size={26} />
+                  )}
                 </div>
-                <h2 className="text-[18px] font-bold text-[#121c2a]">Chưa có tài liệu public</h2>
-                <p className="mt-2 text-[14px] text-[#727785]">Thử đổi bộ lọc hoặc upload tài liệu public để admin duyệt.</p>
+                <h2 className="text-[18px] font-bold text-[#121c2a]">{viewEmptyCopy.title}</h2>
+                <p className="mt-2 text-[14px] text-[#727785]">{viewEmptyCopy.description}</p>
               </div>
             )}
 

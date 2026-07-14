@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Eye,
   FileText,
+  Heart,
   MessageCircle,
   Pencil,
   Send,
@@ -41,6 +42,49 @@ import { cn } from "@/lib/utils"
 
 const RATINGS_FETCH_PAGE_SIZE = 1000
 const RATINGS_PAGE_SIZE = 5
+const FORUM_LIKES_STORAGE_KEY = "lumis_forum_likes"
+
+interface ForumLikeState {
+  documents: Record<string, boolean>
+  documentCounts: Record<string, number>
+  ratings: Record<string, boolean>
+  ratingCounts: Record<string, number>
+}
+
+const emptyForumLikeState: ForumLikeState = {
+  documents: {},
+  documentCounts: {},
+  ratings: {},
+  ratingCounts: {},
+}
+
+function readForumLikeState(): ForumLikeState {
+  if (typeof window === "undefined") return emptyForumLikeState
+
+  try {
+    const rawState = window.localStorage.getItem(FORUM_LIKES_STORAGE_KEY)
+    if (!rawState) return emptyForumLikeState
+
+    const parsed = JSON.parse(rawState) as Partial<ForumLikeState>
+
+    return {
+      documents: parsed.documents ?? {},
+      documentCounts: parsed.documentCounts ?? {},
+      ratings: parsed.ratings ?? {},
+      ratingCounts: parsed.ratingCounts ?? {},
+    }
+  } catch {
+    return emptyForumLikeState
+  }
+}
+
+function getDocumentLikeBase(document: PublicForumDocument) {
+  return document.likeCount ?? document.likedCount ?? 0
+}
+
+function getRatingLikeBase(rating: ForumRatingItem) {
+  return rating.likeCount ?? rating.likedCount ?? 0
+}
 
 function formatDate(value?: string) {
   if (!value) return "N/A"
@@ -137,6 +181,7 @@ export default function ForumDocumentDetailPage() {
   const [editingRatingId, setEditingRatingId] = React.useState<string | null>(null)
   const [editRatingValue, setEditRatingValue] = React.useState(5)
   const [editComment, setEditComment] = React.useState("")
+  const [likeState, setLikeState] = React.useState<ForumLikeState>(emptyForumLikeState)
   const [isLoading, setIsLoading] = React.useState(true)
   const [isSubmittingRating, setIsSubmittingRating] = React.useState(false)
   const [isTogglingBookmark, setIsTogglingBookmark] = React.useState(false)
@@ -148,6 +193,13 @@ export default function ForumDocumentDetailPage() {
     const startIndex = (ratingsPage - 1) * RATINGS_PAGE_SIZE
     return ratings.items.slice(startIndex, startIndex + RATINGS_PAGE_SIZE)
   }, [ratings.items, ratingsPage])
+
+  const isDocumentLiked = document
+    ? likeState.documents[documentId] ?? Boolean(document.isLiked)
+    : false
+  const documentLikeCount = document
+    ? getDocumentLikeBase(document) + (likeState.documentCounts[documentId] ?? 0)
+    : 0
 
   function isOwnRating(item: ForumRatingItem) {
     if (!user) return false
@@ -182,6 +234,10 @@ export default function ForumDocumentDetailPage() {
   }, [loadDetail])
 
   React.useEffect(() => {
+    setLikeState(readForumLikeState())
+  }, [])
+
+  React.useEffect(() => {
     setRatingsPage((currentPage) => Math.min(currentPage, ratingsTotalPages))
   }, [ratingsTotalPages])
 
@@ -196,6 +252,55 @@ export default function ForumDocumentDetailPage() {
     setEditingRatingId(null)
     setEditRatingValue(5)
     setEditComment("")
+  }
+
+  function persistLikeState(nextState: ForumLikeState) {
+    setLikeState(nextState)
+    window.localStorage.setItem(FORUM_LIKES_STORAGE_KEY, JSON.stringify(nextState))
+  }
+
+  function handleToggleDocumentLike() {
+    const wasLiked = Boolean(likeState.documents[documentId] ?? document?.isLiked)
+    const nextState: ForumLikeState = {
+      documents: {
+        ...likeState.documents,
+        [documentId]: !wasLiked,
+      },
+      documentCounts: {
+        ...likeState.documentCounts,
+        [documentId]: Math.max(0, (likeState.documentCounts[documentId] ?? 0) + (wasLiked ? -1 : 1)),
+      },
+      ratings: likeState.ratings,
+      ratingCounts: likeState.ratingCounts,
+    }
+
+    persistLikeState(nextState)
+  }
+
+  function isRatingLiked(item: ForumRatingItem) {
+    return likeState.ratings[item.id] ?? Boolean(item.isLiked)
+  }
+
+  function getRatingLikeCount(item: ForumRatingItem) {
+    return getRatingLikeBase(item) + (likeState.ratingCounts[item.id] ?? 0)
+  }
+
+  function handleToggleRatingLike(item: ForumRatingItem) {
+    const wasLiked = isRatingLiked(item)
+    const nextState: ForumLikeState = {
+      documents: likeState.documents,
+      documentCounts: likeState.documentCounts,
+      ratings: {
+        ...likeState.ratings,
+        [item.id]: !wasLiked,
+      },
+      ratingCounts: {
+        ...likeState.ratingCounts,
+        [item.id]: Math.max(0, (likeState.ratingCounts[item.id] ?? 0) + (wasLiked ? -1 : 1)),
+      },
+    }
+
+    persistLikeState(nextState)
   }
 
   async function handleSubmitRating(event: React.FormEvent<HTMLFormElement>) {
@@ -369,6 +474,7 @@ export default function ForumDocumentDetailPage() {
                 <span>{formatDate(document.createdAt)}</span>
                 <span className="inline-flex items-center gap-1"><Eye size={14} /> {document.viewCount ?? 0} views</span>
                 <span className="inline-flex items-center gap-1"><Star size={14} /> {ratings.average.toFixed(1)} ({ratings.total})</span>
+                <span className="inline-flex items-center gap-1"><Heart size={14} /> {documentLikeCount} thích</span>
               </div>
 
               {document.description ? (
@@ -439,6 +545,8 @@ export default function ForumDocumentDetailPage() {
                 {visibleRatings.length > 0 ? visibleRatings.map((item) => {
                   const author = getRatingAuthor(item)
                   const canEdit = isOwnRating(item)
+                  const likedRating = isRatingLiked(item)
+                  const ratingLikeCount = getRatingLikeCount(item)
                   return (
                     <article key={item.id} className="rounded-[20px] border border-[#c2c6d6]/40 bg-white p-4">
                       <div className="mb-3 flex items-start justify-between gap-4">
@@ -473,6 +581,24 @@ export default function ForumDocumentDetailPage() {
                       {item.comment ? (
                         <p className="whitespace-pre-line text-[14px] leading-6 text-[#424754]">{item.comment}</p>
                       ) : null}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleRatingLike(item)}
+                          className={cn(
+                            "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-bold transition-colors",
+                            likedRating
+                              ? "bg-rose-500 text-white shadow-sm shadow-rose-500/20"
+                              : "border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100",
+                          )}
+                        >
+                          <Heart size={13} fill={likedRating ? "currentColor" : "none"} />
+                          {likedRating ? "Đã thích" : "Thích"}
+                        </button>
+                        <span className="text-[12px] font-semibold text-[#727785]">
+                          {ratingLikeCount} lượt thích
+                        </span>
+                      </div>
                       {editingRatingId === item.id ? (
                         <form
                           onSubmit={handleSubmitEditRating}
@@ -584,7 +710,21 @@ export default function ForumDocumentDetailPage() {
                 {isBookmarked ? "Đã lưu tài liệu" : "Lưu tài liệu"}
               </button>
 
-              <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleToggleDocumentLike}
+                className={cn(
+                  "mb-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl px-4 text-[14px] font-bold transition-all",
+                  isDocumentLiked
+                    ? "bg-rose-500 text-white shadow-md shadow-rose-500/20"
+                    : "border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100",
+                )}
+              >
+                <Heart size={17} fill={isDocumentLiked ? "currentColor" : "none"} />
+                {isDocumentLiked ? `Đã thích · ${documentLikeCount}` : `Thích tài liệu · ${documentLikeCount}`}
+              </button>
+
+              <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-2xl border border-[#d9e3f7] bg-[#f8f9ff] p-3">
                   <p className="text-[20px] font-bold text-[#121c2a]">{document.viewCount ?? 0}</p>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[#727785]">Views</p>
@@ -592,6 +732,10 @@ export default function ForumDocumentDetailPage() {
                 <div className="rounded-2xl border border-[#d9e3f7] bg-[#f8f9ff] p-3">
                   <p className="text-[20px] font-bold text-[#121c2a]">{ratings.total}</p>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[#727785]">Ratings</p>
+                </div>
+                <div className="rounded-2xl border border-[#d9e3f7] bg-[#f8f9ff] p-3">
+                  <p className="text-[20px] font-bold text-[#121c2a]">{documentLikeCount}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#727785]">Likes</p>
                 </div>
               </div>
             </section>

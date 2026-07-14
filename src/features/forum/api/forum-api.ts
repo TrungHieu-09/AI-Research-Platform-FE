@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api/client"
+import { ApiError, apiFetch } from "@/lib/api/client"
 
 import type {
   BookmarkResponse,
@@ -90,6 +90,12 @@ export function bookmarkDocument(documentId: string) {
   return apiFetch<BookmarkResponse>(FORUM_DOCUMENT_ENDPOINTS.bookmarks, {
     method: "POST",
     body: JSON.stringify({ documentId }),
+  }).catch((error) => {
+    if (error instanceof ApiError && error.status === 405) {
+      throw new ApiError("BE chưa hỗ trợ POST /api/bookmarks nên chưa thể lưu tài liệu.", error.status)
+    }
+
+    throw error
   })
 }
 

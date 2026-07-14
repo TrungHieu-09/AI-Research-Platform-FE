@@ -10,6 +10,9 @@ export interface PublicForumDocument extends DocumentRecord {
   totalRatings?: number
   bookmarkCount?: number
   savedCount?: number
+  likeCount?: number
+  likedCount?: number
+  isLiked?: boolean
   isBookmarked?: boolean
 }
 
@@ -39,6 +42,9 @@ export interface ForumRatingItem {
   author?: ForumRatingAuthor | null
   rating: number
   comment?: string | null
+  likeCount?: number
+  likedCount?: number
+  isLiked?: boolean
   createdAt: string
   updatedAt?: string
 }
