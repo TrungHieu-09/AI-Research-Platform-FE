@@ -30,6 +30,7 @@ export default function DocumentsPage() {
 
   // Moderation modal state
   const [selectedDocForReject, setSelectedDocForReject] = useState<any | null>(null)
+  const [selectedPrivateDoc, setSelectedPrivateDoc] = useState<any | null>(null)
   const [rejectionReason, setRejectionReason] = useState("")
   const [moderatingId, setModeratingId] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null)
@@ -80,7 +81,7 @@ export default function DocumentsPage() {
 
   const handleViewDocument = (doc: any) => {
     if (isPrivateDocument(doc)) {
-      showToast("Không được xem tài liệu riêng tư.", "error")
+      setSelectedPrivateDoc(doc)
       return
     }
 
@@ -361,6 +362,64 @@ export default function DocumentsPage() {
         )}
       </div>
 
+      {/* Private Document Notice Modal */}
+      {selectedPrivateDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <div
+            className="relative w-full max-w-[520px] overflow-hidden rounded-3xl border border-[#c2c6d6]/40 bg-white shadow-2xl animate-in zoom-in-95 duration-200"
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedPrivateDoc(null)}
+              className="absolute right-5 top-5 rounded-full p-2 text-[#727785] transition-colors hover:bg-gray-100 hover:text-[#121c2a]"
+              aria-label="Đóng thông báo tài liệu riêng tư"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="bg-gradient-to-br from-[#eff4ff] via-white to-[#f8f9ff] px-6 pb-5 pt-7 sm:px-8">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0058be]/10 text-[#0058be] shadow-sm">
+                <Eye size={26} />
+              </div>
+              <h3 className="pr-10 text-2xl font-extrabold tracking-tight text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                Không thể xem tài liệu riêng tư
+              </h3>
+              <p className="mt-2 text-[14px] font-medium leading-relaxed text-[#424754]">
+                Tài liệu này đang ở chế độ <strong>Riêng tư</strong>, chỉ chủ sở hữu mới có quyền mở nội dung gốc. Admin chỉ quản lý thông tin hệ thống và kiểm duyệt tài liệu công khai.
+              </p>
+            </div>
+
+            <div className="space-y-4 px-6 py-5 sm:px-8">
+              <div className="rounded-2xl border border-[#c2c6d6]/40 bg-[#f8f9ff] p-4">
+                <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#727785]">Tài liệu</p>
+                <p className="mt-1 break-words text-[15px] font-extrabold text-[#121c2a]">{selectedPrivateDoc.title || "Tài liệu không tên"}</p>
+                <p className="mt-2 text-[12px] font-medium text-[#727785]">
+                  Chủ sở hữu: <span className="font-bold text-[#424754]">{selectedPrivateDoc.owner?.name || selectedPrivateDoc.owner?.email || "Sinh viên"}</span>
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                  <p className="text-[13px] font-semibold leading-relaxed">
+                    Nếu cần kiểm tra nội dung file riêng tư, hãy yêu cầu sinh viên chuyển tài liệu sang chế độ công khai hoặc gửi quyền truy cập hợp lệ.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPrivateDoc(null)}
+                  className="rounded-xl bg-[#0058be] px-6 py-2.5 text-[14px] font-bold text-white shadow-md shadow-[#0058be]/20 transition-all hover:bg-[#004ca3]"
+                >
+                  Đã hiểu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Reject Modal */}
       {selectedDocForReject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
@@ -415,4 +474,6 @@ export default function DocumentsPage() {
     </div>
   )
 }
+
+
 
