@@ -789,12 +789,21 @@ function WorkspaceContent() {
               <span>Lịch sử phiên ({chatSessions.length})</span>
             </div>
             <div className="flex-1 overflow-y-auto p-2.5 flex flex-col gap-1.5">
+              {/* Unsaved current session stub — visible while typing before first API save */}
+              {!chatSessions.some((s: any) => s.id === sessionId) && messages.length > 0 && (
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-[#eff4ff] border border-[#0058be]/40 text-[#0058be] font-bold shadow-sm">
+                  <Sparkles size={14} className="text-[#0058be] shrink-0" />
+                  <span className="truncate text-[13px] leading-tight">
+                    {messages.find(m => m.role === "user")?.content?.slice(0, 40) || "Cuộc trò chuyện mới"}
+                  </span>
+                </div>
+              )}
               {chatSessions.map((s: any) => {
                 const isSelected = s.id === sessionId;
                 return (
                   <div
                     key={s.id}
-                    onClick={() => loadSessionHistory(s.id)}
+                    onClick={() => { if (editingSessionId !== s.id) loadSessionHistory(s.id); }}
                     className={`group relative flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${isSelected
                       ? "bg-[#eff4ff] border-[#0058be]/40 text-[#0058be] font-bold shadow-sm"
                       : "bg-white hover:bg-[#f8fafc] border-transparent hover:border-[#e2e8f0] text-[#334155]"
@@ -807,6 +816,13 @@ function WorkspaceContent() {
                           type="text"
                           value={editingTitle}
                           onChange={e => setEditingTitle(e.target.value)}
+                          onBlur={() => {
+                            if (editingTitle.trim()) {
+                              handleRenameSession(s.id, editingTitle);
+                            } else {
+                              setEditingSessionId(null);
+                            }
+                          }}
                           onKeyDown={e => {
                             if (e.key === "Enter") handleRenameSession(s.id, editingTitle);
                             if (e.key === "Escape") setEditingSessionId(null);
@@ -846,9 +862,9 @@ function WorkspaceContent() {
                   </div>
                 );
               })}
-              {chatSessions.length === 0 && (
+              {chatSessions.length === 0 && messages.length === 0 && (
                 <div className="text-center py-8 px-4 text-[#94a3b8] text-[12px]">
-                  Chưa có lịch sử cuộc trò chuyện.
+                  Bắt đầu trò chuyện để lưu lịch sử.
                 </div>
               )}
             </div>
