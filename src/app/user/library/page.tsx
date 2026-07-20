@@ -192,9 +192,6 @@ export default function LibraryPage() {
     })
   }, [docs, search, activeCol, activeTag, sortOrder])
 
-  const toggleDoc = (id: string) => {
-    setSelectedDocs(prev => prev.includes(id) ? [] : [id])
-  }
 
   // Handle Bookmark Toggle
   const handleToggleBookmark = async (docId: string, e?: React.MouseEvent) => {
@@ -674,8 +671,7 @@ export default function LibraryPage() {
 
           {/* Table Header */}
           {(loadingDocs || filteredDocs.length > 0) && (
-            <div className="grid grid-cols-[auto_auto_minmax(0,1fr)_90px_160px_130px] gap-3 px-6 py-3.5 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider items-center">
-              <div className="w-[20px]"></div>
+            <div className="grid grid-cols-[auto_minmax(0,1fr)_90px_160px_130px] gap-3 px-6 py-3.5 border-b border-[#c2c6d6]/30 bg-[#f8f9ff]/50 text-[11px] font-bold text-[#727785] uppercase tracking-wider items-center">
               <div className="w-[24px]"></div>
               <div>Tiêu đề & Tác giả</div>
               <div>Năm</div>
@@ -746,19 +742,12 @@ export default function LibraryPage() {
                   key={doc.id}
                   onClick={() => setSelectedDocs([doc.id])}
                   className={cn(
-                    "grid grid-cols-[auto_auto_minmax(0,1fr)_90px_160px_130px] gap-3 px-6 py-4 border-b border-[#c2c6d6]/20 hover:bg-[#f8f9ff] transition-colors items-center group cursor-pointer",
-                    selectedDocs.includes(doc.id) && "bg-[#eff4ff]/60 border-[#0058be]/20"
+                    "grid grid-cols-[auto_minmax(0,1fr)_90px_160px_130px] gap-3 px-6 py-4 border-b transition-all items-center group cursor-pointer border-l-4",
+                    selectedDocs.includes(doc.id) 
+                      ? "bg-[#eff4ff] border-l-[#0058be] border-b-[#0058be]/20 shadow-sm" 
+                      : "border-l-transparent border-b-[#c2c6d6]/20 hover:bg-[#f8f9ff] hover:border-l-[#c2c6d6]"
                   )}
                 >
-                  <div className="w-[20px] flex items-center justify-center shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedDocs.includes(doc.id)} 
-                      onChange={() => toggleDoc(doc.id)}
-                      className="w-4 h-4 rounded border-[#c2c6d6] text-[#0058be] focus:ring-[#0058be]" 
-                    />
-                  </div>
-                  
                   {/* Bookmark Star Button */}
                   <div className="w-[24px] flex items-center justify-center shrink-0" onClick={(e) => handleToggleBookmark(doc.id, e)}>
                     <button className="p-1 hover:bg-amber-50 rounded-lg transition-colors text-amber-500" title={doc.isBookmarked ? "Gỡ đánh dấu" : "Đánh dấu quan trọng"}>
