@@ -364,7 +364,10 @@ export default function DocumentsPage() {
       {/* Reject Modal */}
       {selectedDocForReject && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 sm:p-8 w-full max-w-lg space-y-5 relative">
+          <div
+            className="bg-white rounded-3xl border border-[#c2c6d6]/40 shadow-2xl p-6 sm:p-8 space-y-5 relative max-h-[90vh] overflow-y-auto"
+            style={{ width: "min(92vw, 560px)", minWidth: "320px" }}
+          >
             <button
               onClick={() => setSelectedDocForReject(null)}
               className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors p-2"
@@ -373,10 +376,10 @@ export default function DocumentsPage() {
             </button>
 
             <div>
-              <h3 className="text-xl sm:text-2xl font-bold text-red-700" style={{ fontFamily: "Geist, sans-serif" }}>
+              <h3 className="text-xl sm:text-2xl font-bold text-red-700 leading-tight" style={{ fontFamily: "Geist, sans-serif" }}>
                 Từ chối kiểm duyệt tài liệu
               </h3>
-              <p className="text-[13px] sm:text-[14px] text-[#727785] mt-1.5">
+              <p className="text-[13px] sm:text-[14px] text-[#727785] mt-1.5 break-words pr-8">
                 Tài liệu: <strong className="text-[#121c2a]">{selectedDocForReject.title}</strong>
               </p>
             </div>
@@ -387,11 +390,11 @@ export default function DocumentsPage() {
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Ví dụ: Vi phạm bản quyền, định dạng mờ, không đúng chủ đề lĩnh vực nghiên cứu..."
-                className="w-full h-32 p-3.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] sm:text-[14px] outline-none focus:border-red-500 transition-colors resize-none"
+                className="w-full min-h-32 p-3.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] sm:text-[14px] outline-none focus:border-red-500 transition-colors resize-none"
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
               <button
                 onClick={() => setSelectedDocForReject(null)}
                 className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#121c2a] font-bold text-[13px] sm:text-[14px] transition-colors"
