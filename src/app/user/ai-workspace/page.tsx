@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
+
 import { useSearchParams } from "next/navigation"
 import {
   Bell, HelpCircle, ChevronDown, FileText, FlaskConical,
@@ -439,6 +439,12 @@ function WorkspaceContent() {
   const [isUploadingFile, setIsUploadingFile] = React.useState(false)
   const [uploadFileProgress, setUploadFileProgress] = React.useState(0)
 
+  // Library Picker Modal State
+  const [showLibraryPicker, setShowLibraryPicker] = React.useState(false)
+  const [libraryDocs, setLibraryDocs] = React.useState<any[]>([])
+  const [libraryLoading, setLibraryLoading] = React.useState(false)
+  const [librarySearch, setLibrarySearch] = React.useState("")
+
   const fetchChatSessions = React.useCallback(() => {
     if (!token) return;
     fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/sessions`, {
@@ -556,8 +562,31 @@ function WorkspaceContent() {
         .then(res => res.json())
         .then(data => {
           if (data.id) {
+            // Keep the inspector display state
             setRealAttachedDoc({ id: data.id, title: data.title })
             setIsDocAttached(true)
+
+            // Also inject as uploadedFile so the existing "attached file" flow is used:
+            // - file shows as blue bubble in chat UI
+            // - file is stored in session via [ATTACHED_FILE:...] marker
+            // - backend reads full file content and uses the rich system prompt
+            if (data.fileUrl) {
+              const ext = data.mimeType?.includes("pdf")
+                ? ".pdf"
+                : data.mimeType?.includes("word") || data.mimeType?.includes("document")
+                  ? ".docx"
+                  : data.mimeType?.includes("text")
+                    ? ".txt"
+                    : ""
+              const fileName = data.title.endsWith(ext) ? data.title : `${data.title}${ext}`
+              setUploadedFile({
+                name: fileName,
+                size: data.fileSize || 0,
+                fileUrl: data.fileUrl,
+                fileHash: data.fileHash,
+                mimeType: data.mimeType || "application/pdf"
+              })
+            }
           }
         })
         .catch(console.error)
@@ -567,6 +596,46 @@ function WorkspaceContent() {
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isTyping])
+
+  const openLibraryPicker = async () => {
+    setShowLibraryPicker(true)
+    setLibrarySearch("")
+    if (libraryDocs.length > 0) return // already loaded
+    setLibraryLoading(true)
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/documents?pageSize=50`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      )
+      const data = await res.json()
+      if (Array.isArray(data.items)) setLibraryDocs(data.items)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLibraryLoading(false)
+    }
+  }
+
+  const handleSelectLibraryDoc = (doc: any) => {
+    if (!doc.fileUrl) return
+    const ext = doc.mimeType?.includes("pdf")
+      ? ".pdf"
+      : doc.mimeType?.includes("word") || doc.mimeType?.includes("document")
+        ? ".docx"
+        : doc.mimeType?.includes("text")
+          ? ".txt"
+          : ""
+    const fileName = doc.title.endsWith(ext) ? doc.title : `${doc.title}${ext}`
+    setUploadedFile({
+      name: fileName,
+      size: doc.fileSize || 0,
+      fileUrl: doc.fileUrl,
+      fileHash: doc.fileHash,
+      mimeType: doc.mimeType || "application/pdf",
+    })
+    setShowLibraryPicker(false)
+    setLibrarySearch("")
+  }
 
   const handleUniversalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -830,13 +899,13 @@ function WorkspaceContent() {
                           <Upload size={18} />
                           Đính kèm tệp
                         </button>
-                        {/* <Link
-                          href="/user/library"
+                        <button
+                          onClick={openLibraryPicker}
                           className="flex-1 w-full py-3 px-4 bg-white hover:bg-[#f8f9ff] text-[#0058be] border border-[#0058be]/20 font-semibold text-[14px] rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-sm whitespace-nowrap"
                         >
                           <BookOpen size={18} />
                           Chọn từ thư viện
-                        </Link> */}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -999,6 +1068,15 @@ function WorkspaceContent() {
                   >
                     <Paperclip size={17} />
                   </motion.button>
+                  <motion.button
+                    onClick={openLibraryPicker}
+                    className="p-2 text-[#727785] rounded-lg relative"
+                    whileHover={{ scale: 1.1, color: "#0058be", backgroundColor: "#eff4ff" }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Chọn tài liệu từ thư viện"
+                  >
+                    <BookOpen size={17} />
+                  </motion.button>
                 </div>
                 <motion.button
                   onClick={handleSend}
@@ -1069,6 +1147,140 @@ function WorkspaceContent() {
           </div>
         </motion.div>
       </div>
+
+      {/* ── Library Picker Modal ── */}
+      <AnimatePresence>
+        {showLibraryPicker && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowLibraryPicker(false)}
+          >
+            <motion.div
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-[#c2c6d6]/50 flex flex-col max-h-[80vh]"
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-6 py-4 bg-gradient-to-r from-[#0058be] to-[#1e6be6] text-white flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <BookOpen size={20} />
+                  <h3 className="text-[17px] font-bold tracking-tight">Chọn tài liệu từ thư viện</h3>
+                </div>
+                <button
+                  onClick={() => setShowLibraryPicker(false)}
+                  className="p-1.5 rounded-xl hover:bg-white/15 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="px-5 py-3 border-b border-[#e2e8f0] shrink-0">
+                <input
+                  type="text"
+                  value={librarySearch}
+                  onChange={e => setLibrarySearch(e.target.value)}
+                  placeholder="Tìm kiếm tài liệu..."
+                  autoFocus
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#c2c6d6]/60 text-[14px] text-[#121c2a] placeholder:text-[#727785] outline-none focus:border-[#0058be]/50 focus:ring-2 focus:ring-[#0058be]/10 transition-all bg-[#f8fafc]"
+                />
+              </div>
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+                {libraryLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-3 text-[#727785]">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Sparkles size={22} className="text-[#0058be]" />
+                    </motion.div>
+                    <span className="text-[13px]">Đang tải thư viện...</span>
+                  </div>
+                ) : libraryDocs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-2 text-[#727785]">
+                    <FileText size={36} className="text-[#c2c6d6]" />
+                    <p className="text-[14px] font-medium">Thư viện của bạn đang trống</p>
+                    <p className="text-[12px] text-[#9ba3af]">Hãy tải lên tài liệu trước để sử dụng tính năng này.</p>
+                  </div>
+                ) : (() => {
+                  const filtered = libraryDocs.filter(d =>
+                    d.title?.toLowerCase().includes(librarySearch.toLowerCase())
+                  )
+                  return filtered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-[#727785]">
+                      <p className="text-[14px]">Không tìm thấy tài liệu phù hợp.</p>
+                    </div>
+                  ) : filtered.map((doc: any) => {
+                    const ext = doc.mimeType?.includes("pdf") ? "PDF"
+                      : doc.mimeType?.includes("word") || doc.mimeType?.includes("document") ? "DOCX"
+                      : doc.mimeType?.includes("text") ? "TXT"
+                      : "FILE"
+                    const hasFile = !!doc.fileUrl
+                    return (
+                      <button
+                        key={doc.id}
+                        onClick={() => handleSelectLibraryDoc(doc)}
+                        disabled={!hasFile}
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border text-left transition-all group
+                          ${hasFile
+                            ? "border-[#e2e8f0] hover:border-[#0058be]/40 hover:bg-[#eff4ff]/60 cursor-pointer"
+                            : "border-[#e2e8f0] opacity-50 cursor-not-allowed bg-[#f8fafc]"
+                          }`}
+                      >
+                        <div className="p-2 bg-[#eff4ff] rounded-xl text-[#0058be] group-hover:bg-[#0058be] group-hover:text-white transition-colors shrink-0">
+                          <FileText size={18} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-semibold text-[#121c2a] truncate leading-tight">{doc.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-1.5 py-0.5 rounded-md">{ext}</span>
+                            {doc.fileSize && (
+                              <span className="text-[11px] text-[#9ba3af]">{formatBytes(doc.fileSize)}</span>
+                            )}
+                            {doc.subject && (
+                              <span className="text-[11px] text-[#9ba3af] truncate">{doc.subject.name}</span>
+                            )}
+                            {!hasFile && (
+                              <span className="text-[11px] text-orange-400 font-medium">Chưa có tệp</span>
+                            )}
+                          </div>
+                        </div>
+                        {hasFile && (
+                          <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="px-3 py-1.5 bg-[#0058be] text-white text-[12px] font-bold rounded-xl">
+                              Chọn
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })
+                })()}
+              </div>
+
+              {/* Footer */}
+              <div className="px-5 py-3 border-t border-[#e2e8f0] bg-[#f8fafc] flex items-center justify-between shrink-0">
+                <span className="text-[12px] text-[#727785]">
+                  {libraryDocs.length} tài liệu trong thư viện
+                </span>
+                <button
+                  onClick={() => setShowLibraryPicker(false)}
+                  className="px-4 py-2 rounded-xl border border-[#c2c6d6]/60 text-[13px] font-semibold text-[#424754] hover:bg-white transition-colors"
+                >
+                  Hủy
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Citation Detail Modal ── */}
       <AnimatePresence>
