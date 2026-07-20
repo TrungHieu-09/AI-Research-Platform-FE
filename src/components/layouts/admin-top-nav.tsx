@@ -118,26 +118,9 @@ export function AdminTopNav() {
             </Link>
           )
         })}
-
-        <div className="mx-2 h-5 w-px bg-[#c2c6d6]/60" />
-
-        <Link
-          href="/user/library"
-          className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[14px] font-semibold text-[#727785] transition-colors hover:bg-[#f0f4ff] hover:text-[#0058be]"
-        >
-          User View
-          <ArrowUpRight size={14} />
-        </Link>
       </nav>
 
       <div className="flex items-center gap-3">
-        <Link
-          href="/user/library"
-          className="hidden sm:flex lg:hidden items-center gap-1.5 rounded-full bg-[#eff4ff] px-3.5 py-1.5 text-[12px] font-bold text-[#0058be] transition-all hover:bg-[#dee9fc]"
-        >
-          User View
-          <ArrowUpRight size={14} />
-        </Link>
 
         <div className="relative" ref={profileRef}>
           <button
@@ -192,14 +175,6 @@ export function AdminTopNav() {
               </div>
 
               <div className="border-t border-[#c2c6d6]/30 py-1">
-                <Link
-                  href="/user/library"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-bold text-[#0058be] transition-colors hover:bg-[#eff4ff]"
-                >
-                  <ArrowUpRight size={14} className="shrink-0" />
-                  Switch to User View
-                </Link>
                 <button
                   onClick={logout}
                   className="flex w-full items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-red-500 transition-colors hover:bg-red-50"
