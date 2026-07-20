@@ -403,7 +403,7 @@ export default function DocumentsPage() {
               </button>
               <button
                 onClick={() => handleModerate(selectedDocForReject.id, "REJECTED", rejectionReason)}
-                disabled={!rejectionReason.trim()}
+                disabled={!rejectionReason.trim() || moderatingId === selectedDocForReject.id}
                 className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] sm:text-[14px] shadow-md transition-all disabled:opacity-40"
               >
                 Xác nhận Từ chối
