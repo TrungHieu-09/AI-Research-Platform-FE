@@ -1,8 +1,70 @@
+"use client"
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { LandingHeader } from "@/components/layouts/landing-header";
-import { GetStartedButton } from "@/components/ui/get-started-button";
+import { useAuth } from "@/features/auth/auth-context";
+import { api } from "@/lib/api";
+import { Loader2, Check } from "lucide-react";
 
 export default function PricingPage() {
+  const { user, token } = useAuth();
+  const [currentPlan, setCurrentPlan] = useState<"GUEST" | "FREE" | "PRO" | "ULTIMATE">("GUEST");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!token || !user) {
+      setCurrentPlan("GUEST");
+      setLoading(false);
+      return;
+    }
+    
+    if (user.tier === "FREE") {
+      setCurrentPlan("FREE");
+      setLoading(false);
+      return;
+    }
+
+    // If PREMIUM, check receipts to differentiate PRO (monthly) vs ULTIMATE (yearly)
+    const checkPremiumPlan = async () => {
+      try {
+        const demoPlan = localStorage.getItem("lumis_demo_plan");
+        if (demoPlan === "ULTIMATE") {
+          setCurrentPlan("ULTIMATE");
+          setLoading(false);
+          return;
+        } else if (demoPlan === "PRO") {
+          setCurrentPlan("PRO");
+          setLoading(false);
+          return;
+        }
+
+        const receipts = await api.get<any[]>("/api/payments/receipts").catch(() => []);
+        if (Array.isArray(receipts) && receipts.length > 0) {
+           const completed = receipts.filter(r => r.status === "COMPLETED")
+             .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+           if (completed.length > 0) {
+              const latest = completed[0];
+              if (latest.planId === "PREMIUM_YEARLY") {
+                 setCurrentPlan("ULTIMATE");
+              } else {
+                 setCurrentPlan("PRO");
+              }
+              setLoading(false);
+              return;
+           }
+        }
+        setCurrentPlan("PRO"); // Fallback
+      } catch (err) {
+        setCurrentPlan("PRO");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    checkPremiumPlan();
+  }, [token, user]);
+
   return (
     <>
       <div className="ambient-blob bg-primary-fixed w-[600px] h-[600px] top-[-200px] left-[-200px]"></div>
@@ -20,24 +82,38 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-[1200px] mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-[1200px] mx-auto group/cards">
           {/* Free Plan */}
-          <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 hover:border-[#0058be]/30 transition-all hover:shadow-lg hover:-translate-y-1">
-            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Explorer</h3>
+          <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 transition-all duration-250 ease-out hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 hover:border-[#0058be]/30 hover:z-10 relative">
+            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Explorer (Miễn phí)</h3>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-[48px] font-bold text-[#121c2a]">0₫</span>
-              <span className="text-[#727785] font-medium">/ mãi mãi</span>
+              <span className="text-[48px] font-bold text-[#121c2a] font-mono tracking-tight">0₫</span>
+              <span className="text-[#727785] font-medium text-[15px]">/ vĩnh viễn</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
               Hoàn hảo cho sinh viên và các nhà nghiên cứu muốn bắt đầu.
             </p>
-            <GetStartedButton className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm">
-              Bắt đầu miễn phí
-            </GetStartedButton>
+            
+            {loading ? (
+              <button disabled className="w-full py-3 rounded-xl bg-gray-100 text-[#727785] mb-8 flex justify-center"><Loader2 size={20} className="animate-spin" /></button>
+            ) : currentPlan === "GUEST" ? (
+              <Link href="/signup" className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm text-center block">
+                Bắt đầu miễn phí
+              </Link>
+            ) : currentPlan === "FREE" ? (
+              <button disabled className="w-full py-3 rounded-xl bg-gray-100 text-[#727785] font-bold text-[14px] cursor-not-allowed mb-8 flex items-center justify-center gap-2">
+                <Check size={18} /> Gói Hiện Tại Của Bạn
+              </button>
+            ) : (
+              <button disabled className="w-full py-3 rounded-xl bg-gray-100 text-[#727785] font-bold text-[14px] cursor-not-allowed mb-8 flex items-center justify-center gap-2">
+                Không thể hạ cấp
+              </button>
+            )}
+
             <ul className="flex flex-col gap-4">
-              {["500 truy vấn AI / tháng", "Lưu trữ đám mây 5 GB", "Tổng hợp AI cơ bản", "Tìm kiếm tiêu chuẩn"].map(feature => (
+              {["10-15 truy vấn RAG/ngày", "Lưu trữ đám mây 5 GB", "Truy xuất vector cơ bản", "Hỗ trợ cộng đồng diễn đàn"].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
-                  <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
+                  <span className="material-symbols-outlined text-[18px] text-[#727785]">check_circle</span>
                   {feature}
                 </li>
               ))}
@@ -45,24 +121,48 @@ export default function PricingPage() {
           </div>
 
           {/* Pro Plan */}
-          <div className="bg-white rounded-3xl p-8 flex flex-col h-full border-2 border-[#0058be] relative shadow-xl transform md:-translate-y-4">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0058be] text-white px-4 py-1 rounded-full text-[12px] font-bold tracking-wide uppercase shadow-sm whitespace-nowrap">
-              Phổ biến nhất
+          <div className="bg-white rounded-3xl p-8 flex flex-col h-full border-2 border-[#0058be] relative shadow-[0_8px_30px_rgb(0,88,190,0.12)] transition-all duration-250 ease-out hover:shadow-[0_20px_40px_rgb(0,88,190,0.25)] hover:scale-[1.02] hover:-translate-y-2 hover:border-[#004ca3] z-10 md:-translate-y-2">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0058be] text-white px-5 py-1.5 rounded-full text-[12px] font-extrabold tracking-wider uppercase shadow-md whitespace-nowrap">
+              PHỔ BIẾN NHẤT
             </div>
-            <h3 className="text-[20px] font-bold text-[#0058be] mb-2">AI Pro</h3>
+            <h3 className="text-[20px] font-bold text-[#0058be] mb-2">AI Pro (Gói Tháng)</h3>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-[48px] font-bold text-[#121c2a]">250.000₫</span>
-              <span className="text-[#727785] font-medium">/ tháng</span>
+              <span className="text-[48px] font-bold text-[#121c2a] font-mono tracking-tight">250.000₫</span>
+              <span className="text-[#727785] font-medium text-[15px]">/ tháng</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
-              Dành cho học giả và chuyên gia cần phân tích chuyên sâu.
+              Dành cho sinh viên làm khóa luận & đồ án tốt nghiệp cần phân tích sâu.
             </p>
-            <Link href="/user/payment/checkout?plan=ai" className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#2170e4] transition-colors mb-8 shadow-md text-center block">
-              Nâng cấp ngay
-            </Link>
+            
+            {loading ? (
+              <button disabled className="w-full py-3 rounded-xl bg-[#0058be]/70 text-white mb-8 flex justify-center"><Loader2 size={20} className="animate-spin" /></button>
+            ) : currentPlan === "GUEST" ? (
+              <Link href="/login" className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#004ca3] transition-all duration-200 mb-8 shadow-[0_4px_14px_0_rgb(0,88,190,0.39)] hover:shadow-[0_6px_20px_rgba(0,88,190,0.23)] text-center block hover:scale-[0.98]">
+                Đăng nhập để nâng cấp
+              </Link>
+            ) : currentPlan === "FREE" ? (
+              <Link href="/user/payment/checkout?plan=ai" className="w-full py-3 rounded-xl bg-[#0058be] text-white font-bold hover:bg-[#004ca3] transition-all duration-200 mb-8 shadow-[0_4px_14px_0_rgb(0,88,190,0.39)] hover:shadow-[0_6px_20px_rgba(0,88,190,0.23)] text-center block hover:scale-[0.98]">
+                Nâng Cấp AI Pro Ngay
+              </Link>
+            ) : currentPlan === "PRO" ? (
+              <button disabled className="w-full py-3 rounded-xl bg-[#eff4ff] text-[#0058be] font-bold mb-8 cursor-default flex items-center justify-center gap-2 text-[14px]">
+                <Check size={18} /> Gói Hiện Tại Của Bạn
+              </button>
+            ) : (
+              <button disabled className="w-full py-3 rounded-xl bg-gray-100 text-[#727785] font-bold mb-8 cursor-not-allowed flex items-center justify-center gap-2 text-[14px]">
+                Không thể hạ cấp
+              </button>
+            )}
+
             <ul className="flex flex-col gap-4">
-              {["Truy vấn AI không giới hạn", "Mô hình nâng cao (GPT-4)", "Lưu trữ đám mây 5 GB", "Tìm kiếm vector ngữ nghĩa", "Hỗ trợ ưu tiên"].map(feature => (
-                <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
+              {[
+                "Truy vấn RAG không giới hạn", 
+                "Mô hình Gemini 2.5 Pro & Flash", 
+                "Lưu trữ đám mây 100 GB", 
+                "Truy xuất vector độ trễ thấp (<500ms)", 
+                "Hỗ trợ kỹ thuật ưu tiên 24/7"
+              ].map(feature => (
+                <li key={feature} className="flex items-center gap-3 text-[14px] text-[#121c2a] font-medium">
                   <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
                   {feature}
                 </li>
@@ -71,22 +171,41 @@ export default function PricingPage() {
           </div>
 
           {/* Ultimate Plan */}
-          <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 hover:border-[#0058be]/30 transition-all hover:shadow-lg hover:-translate-y-1">
-            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Ultimate</h3>
+          <div className="bg-white rounded-3xl p-8 flex flex-col h-full border border-[#c2c6d6]/40 transition-all duration-250 ease-out hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1 hover:border-[#0058be]/30 hover:z-10 relative">
+            <h3 className="text-[20px] font-bold text-[#121c2a] mb-2">Ultimate (Gói Năm)</h3>
             <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-[48px] font-bold text-[#121c2a]">300.000₫</span>
-              <span className="text-[#727785] font-medium">/ người dùng / tháng</span>
+              <span className="text-[48px] font-bold text-[#121c2a] font-mono tracking-tight">490.000₫</span>
+              <span className="text-[#727785] font-medium text-[15px]">/ 1 năm (tiết kiệm 80%)</span>
             </div>
             <p className="text-[14px] text-[#424754] mb-8 h-[40px]">
-              Không gian làm việc nghiên cứu toàn diện cho nhóm và phòng thí nghiệm.
+              Nghiên cứu trọn năm không lo ngắt quãng cho nhóm nghiên cứu.
             </p>
-            <Link href="/user/payment/checkout?plan=ultimate" className="w-full py-3 rounded-xl bg-white border border-[#c2c6d6] text-[#424754] font-bold hover:bg-gray-50 transition-colors mb-8 shadow-sm text-center block">
-              Nâng cấp Ultimate
-            </Link>
+            
+            {loading ? (
+              <button disabled className="w-full py-3 rounded-xl border border-[#0058be]/30 text-[#0058be] mb-8 flex justify-center"><Loader2 size={20} className="animate-spin" /></button>
+            ) : currentPlan === "GUEST" ? (
+              <Link href="/login" className="w-full py-3 rounded-xl bg-white border border-[#0058be] text-[#0058be] font-bold hover:bg-[#f8f9ff] transition-all duration-200 mb-8 text-center block hover:scale-[0.98]">
+                Đăng nhập để đăng ký
+              </Link>
+            ) : (currentPlan === "FREE" || currentPlan === "PRO") ? (
+              <Link href="/user/payment/checkout?plan=ultimate" className="w-full py-3 rounded-xl bg-white border border-[#0058be] text-[#0058be] font-bold hover:bg-[#f8f9ff] transition-all duration-200 mb-8 text-center block hover:scale-[0.98]">
+                {currentPlan === "PRO" ? "Nâng Cấp Lên Ultimate" : "Đăng Ký Gói Ultimate"}
+              </Link>
+            ) : (
+              <button disabled className="w-full py-3 rounded-xl bg-[#f8f9ff] text-[#0058be] border border-[#0058be]/30 font-bold mb-8 cursor-default flex items-center justify-center gap-2 text-[14px]">
+                <Check size={18} /> Gói Hiện Tại Của Bạn
+              </button>
+            )}
+
             <ul className="flex flex-col gap-4">
-              {["Truy vấn & Mô hình AI không giới hạn", "Lưu trữ đám mây 100 GB", "Hỗ trợ chuyên dụng 24/7", "Không gian làm việc chung", "Tích hợp SSO"].map(feature => (
+              {[
+                "Trọn quyền lợi AI Pro trong 365 ngày", 
+                "Lưu trữ đám mây 500 GB", 
+                "Ưu tiên RAG không nghẽn giờ cao điểm", 
+                "Chia sẻ không gian làm việc nhóm"
+              ].map(feature => (
                 <li key={feature} className="flex items-center gap-3 text-[14px] text-[#424754]">
-                  <span className="material-symbols-outlined text-[18px] text-[#0058be]">check_circle</span>
+                  <span className="material-symbols-outlined text-[18px] text-[#9333ea]">check_circle</span>
                   {feature}
                 </li>
               ))}
@@ -139,3 +258,4 @@ export default function PricingPage() {
     </>
   );
 }
+

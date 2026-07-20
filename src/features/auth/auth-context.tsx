@@ -27,6 +27,9 @@ interface AuthContextValue {
   verifyResetOtp: (email: string, otpCode: string) => Promise<void>
   resetPassword: (email: string, otpCode: string, password: string) => Promise<void>
   updateProfile: (data: { name: string }) => Promise<void>
+  refreshProfile: () => Promise<void>
+  upgradeTierToPremium: () => void
+  resetTierToFree: () => void
   logout: () => void
 }
 
@@ -51,6 +54,7 @@ function saveSession(token: string, user: AuthUser) {
 function clearSession() {
   localStorage.removeItem("lumis_token")
   localStorage.removeItem("lumis_user")
+  localStorage.removeItem("lumis_demo_premium")
   // Legacy key cleanup
   localStorage.removeItem("lumis_auth")
 }
@@ -60,7 +64,11 @@ function loadSession(): { token: string; user: AuthUser } | null {
     const token = localStorage.getItem("lumis_token")
     const raw = localStorage.getItem("lumis_user")
     if (!token || !raw) return null
-    return { token, user: JSON.parse(raw) }
+    const parsedUser = JSON.parse(raw) as AuthUser
+    if (localStorage.getItem("lumis_demo_premium") === "true") {
+      parsedUser.tier = "PREMIUM"
+    }
+    return { token, user: parsedUser }
   } catch {
     return null
   }
@@ -91,6 +99,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       { noAuth: true }
     )
     const authUser: AuthUser = { ...res.user, initials: makeInitials(res.user.name) }
+    if (localStorage.getItem("lumis_demo_premium") === "true") {
+      authUser.tier = "PREMIUM"
+    }
     saveSession(res.token, authUser)
     setToken(res.token)
     setUser(authUser)
@@ -134,6 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = React.useCallback(async (data: { name: string }) => {
     const res = await api.put<{ user: any }>("/api/users/me", data)
     const updatedAuthUser: AuthUser = { ...res.user, initials: makeInitials(res.user.name) }
+    if (localStorage.getItem("lumis_demo_premium") === "true") {
+      updatedAuthUser.tier = "PREMIUM"
+    }
     
     // Update local state and storage
     setUser(updatedAuthUser)
@@ -141,6 +155,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       saveSession(token, updatedAuthUser)
     }
   }, [token])
+
+  const refreshProfile = React.useCallback(async () => {
+    if (!token) return
+    try {
+      const res = await api.get<{ user: any }>("/api/users/me")
+      if (res && res.user) {
+        const updatedAuthUser: AuthUser = { ...res.user, initials: makeInitials(res.user.name || "User") }
+        if (localStorage.getItem("lumis_demo_premium") === "true") {
+          updatedAuthUser.tier = "PREMIUM"
+        }
+        setUser(updatedAuthUser)
+        saveSession(token, updatedAuthUser)
+      }
+    } catch (e) {
+      // ignore silently if session expired
+    }
+  }, [token])
+
+  const upgradeTierToPremium = React.useCallback(() => {
+    if (!user || !token) return
+    localStorage.setItem("lumis_demo_premium", "true")
+    const updatedUser: AuthUser = { ...user, tier: "PREMIUM" }
+    setUser(updatedUser)
+    saveSession(token, updatedUser)
+  }, [user, token])
+
+  const resetTierToFree = React.useCallback(() => {
+    if (!user || !token) return
+    localStorage.removeItem("lumis_demo_premium")
+    const updatedUser: AuthUser = { ...user, tier: "FREE" }
+    setUser(updatedUser)
+    saveSession(token, updatedUser)
+  }, [user, token])
 
   const logout = React.useCallback(() => {
     clearSession()
@@ -150,7 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router])
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, forgotPassword, verifyResetOtp, resetPassword, updateProfile, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, verifyOtp, forgotPassword, verifyResetOtp, resetPassword, updateProfile, refreshProfile, upgradeTierToPremium, resetTierToFree, logout }}>
       {children}
     </AuthContext.Provider>
   )
