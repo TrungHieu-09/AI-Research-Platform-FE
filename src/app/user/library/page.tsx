@@ -942,7 +942,7 @@ export default function LibraryPage() {
                   </div>
                   <div className="bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl p-3">
                     <BookOpen size={14} className="text-[#0058be] mb-2" />
-                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Môn học</p>
+                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Lĩnh vực nghiên cứu</p>
                     <p className="text-[13px] font-bold text-[#121c2a] truncate">{selectedDocDetails.raw?.subject?.name || "Chung"}</p>
                   </div>
                 </div>
@@ -1073,7 +1073,7 @@ export default function LibraryPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-[13.5px] font-bold text-[#121c2a] truncate">{targetDoc.title}</p>
                     <p className="text-[11.5px] text-[#727785] truncate">
-                      Môn: <strong className="text-[#0058be]">{targetDoc.raw?.subject?.name || "Chung"}</strong> • Tạo năm {targetDoc.year}
+                      Lĩnh vực: <strong className="text-[#0058be]">{targetDoc.raw?.subject?.name || "Chung"}</strong> • Tạo năm {targetDoc.year}
                     </p>
                   </div>
                 </div>
@@ -1322,3 +1322,4 @@ export default function LibraryPage() {
     </div>
   )
 }
+
