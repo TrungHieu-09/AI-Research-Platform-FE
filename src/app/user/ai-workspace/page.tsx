@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation"
 import {
   Bell, HelpCircle, ChevronDown, FileText, FlaskConical,
   AlertTriangle, ArrowRightLeft, Paperclip, Send, Sparkles,
-  Layers, Share2, X, Info, CheckCircle2, Code2,
+  Layers, X, Info, CheckCircle2, Code2,
   Copy, Check, Edit3, Trash2, Download, ExternalLink, MoreVertical, Plus, History, Upload, BookOpen, PanelLeft
 } from "lucide-react"
 import { motion, AnimatePresence, Variants } from "framer-motion"
@@ -232,7 +232,7 @@ function renderFormattedContent(text: string, onCitationClick?: (num: number) =>
                   }
                   return rowStr.trim().split(/\t+/).map(cell => cell.trim());
                 };
-                
+
                 const headers = parseRow(tableLines[0]);
                 const dataRows = tableLines.slice(1).filter(r => !r.includes("---") && !r.match(/^[\-\s\|]+$/)).map(parseRow);
 
@@ -444,11 +444,11 @@ function WorkspaceContent() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/sessions`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-    .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) setChatSessions(data)
-    })
-    .catch(console.error)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setChatSessions(data)
+      })
+      .catch(console.error)
   }, [token]);
 
   React.useEffect(() => {
@@ -553,14 +553,14 @@ function WorkspaceContent() {
       fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/documents/${docId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.id) {
-          setRealAttachedDoc({ id: data.id, title: data.title })
-          setIsDocAttached(true)
-        }
-      })
-      .catch(console.error)
+        .then(res => res.json())
+        .then(data => {
+          if (data.id) {
+            setRealAttachedDoc({ id: data.id, title: data.title })
+            setIsDocAttached(true)
+          }
+        })
+        .catch(console.error)
     }
   }, [docId, token])
 
@@ -630,15 +630,15 @@ function WorkspaceContent() {
     if (!input.trim()) return
     const userMsg = input
     const currentUploadedFile = uploadedFile
-    setMessages(prev => [...prev, { 
-      role: "user", 
+    setMessages(prev => [...prev, {
+      role: "user",
       content: userMsg,
       attachedFile: currentUploadedFile ? { name: currentUploadedFile.name, size: currentUploadedFile.size, fileUrl: currentUploadedFile.fileUrl } : undefined
     }])
     setInput("")
     setUploadedFile(null)
     setIsTyping(true)
-    
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ai/chat`, {
         method: "POST",
@@ -654,13 +654,13 @@ function WorkspaceContent() {
           attachedFile: currentUploadedFile ? { url: currentUploadedFile.fileUrl, name: currentUploadedFile.name, type: currentUploadedFile.mimeType, hash: currentUploadedFile.fileHash } : undefined
         })
       });
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Lỗi khi gọi AI");
-      
+
       setMessages(prev => [...prev, { role: "ai", content: data.answer }]);
       fetchChatSessions();
-      
+
       if (data.citations && data.citations.length > 0) {
         setRealSourceReferences(data.citations.map((c: any, i: number) => ({
           id: i, citationNumber: c.index, author: c.documentTitle, title: c.documentTitle, excerpt: c.excerpt, tags: [`Tr. ${c.pageNumber}`]
@@ -726,11 +726,10 @@ function WorkspaceContent() {
                   <div
                     key={s.id}
                     onClick={() => loadSessionHistory(s.id)}
-                    className={`group relative flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${
-                      isSelected
-                        ? "bg-[#eff4ff] border-[#0058be]/40 text-[#0058be] font-bold shadow-sm"
-                        : "bg-white hover:bg-[#f8fafc] border-transparent hover:border-[#e2e8f0] text-[#334155]"
-                    }`}
+                    className={`group relative flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border ${isSelected
+                      ? "bg-[#eff4ff] border-[#0058be]/40 text-[#0058be] font-bold shadow-sm"
+                      : "bg-white hover:bg-[#f8fafc] border-transparent hover:border-[#e2e8f0] text-[#334155]"
+                      }`}
                   >
                     <div className="flex items-center gap-2.5 overflow-hidden flex-1 mr-2">
                       <Sparkles size={14} className={isSelected ? "text-[#0058be] shrink-0" : "text-[#94a3b8] shrink-0"} />
@@ -824,20 +823,20 @@ function WorkspaceContent() {
                         Tải lên tệp PDF, DOCX từ máy tính hoặc chọn tài liệu từ thư viện để Lumis bắt đầu phân tích.
                       </p>
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-[420px]">
-                        <button 
+                        <button
                           onClick={() => fileInputRef.current?.click()}
                           className="flex-1 w-full py-3 px-4 bg-[#0058be] hover:bg-[#004ca3] text-white font-semibold text-[14px] rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-[#0058be]/20 hover:-translate-y-0.5 whitespace-nowrap"
                         >
                           <Upload size={18} />
                           Đính kèm tệp
                         </button>
-                        <Link
+                        {/* <Link
                           href="/user/library"
                           className="flex-1 w-full py-3 px-4 bg-white hover:bg-[#f8f9ff] text-[#0058be] border border-[#0058be]/20 font-semibold text-[14px] rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-sm whitespace-nowrap"
                         >
                           <BookOpen size={18} />
                           Chọn từ thư viện
-                        </Link>
+                        </Link> */}
                       </div>
                     </div>
                   )}
@@ -999,15 +998,6 @@ function WorkspaceContent() {
                     title="Đính kèm tệp (PDF, DOCX, TXT, PNG...)"
                   >
                     <Paperclip size={17} />
-                  </motion.button>
-                  <motion.button
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[#727785] rounded-lg text-[12px] font-semibold"
-                    whileHover={{ scale: 1.04, color: "#0058be", backgroundColor: "#eff4ff" }}
-                    whileTap={{ scale: 0.96 }}
-                    title="Chia sẻ phiên này"
-                  >
-                    <Share2 size={14} />
-                    Chia sẻ phiên
                   </motion.button>
                 </div>
                 <motion.button
