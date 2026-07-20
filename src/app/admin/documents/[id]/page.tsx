@@ -225,7 +225,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
                 </div>
 
                 <div>
-                  <span className="text-xs font-bold text-[#727785] block uppercase tracking-wide">Môn học / Lĩnh vực</span>
+                  <span className="text-xs font-bold text-[#727785] block uppercase tracking-wide">Lĩnh vực nghiên cứu</span>
                   <div className="flex items-center gap-2 mt-1">
                     <BookOpen size={16} className="text-[#0058be]" />
                     <span className="font-semibold text-[#121c2a]">{doc.subject?.name || doc.subject?.code || "Chung"}</span>

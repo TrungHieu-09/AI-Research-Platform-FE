@@ -223,7 +223,7 @@ export default function DocumentsPage() {
               <thead>
                 <tr className="bg-[#f8f9ff] border-b border-[#c2c6d6]/40 text-[#727785] text-[11px] font-extrabold uppercase tracking-wider">
                   <th className="py-4 px-6">Tài liệu & Tác giả</th>
-                  <th className="py-4 px-6">Môn học</th>
+                  <th className="py-4 px-6">Lĩnh vực nghiên cứu</th>
                   <th className="py-4 px-6">Định dạng</th>
                   <th className="py-4 px-6">Quyền hạn & Trạng thái</th>
                   <th className="py-4 px-6 text-right">Thao tác Kiểm duyệt</th>
@@ -371,7 +371,7 @@ export default function DocumentsPage() {
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Ví dụ: Vi phạm bản quyền, định dạng mờ, không đúng chủ đề môn học..."
+                placeholder="Ví dụ: Vi phạm bản quyền, định dạng mờ, không đúng chủ đề lĩnh vực nghiên cứu..."
                 className="w-full h-32 p-3.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] sm:text-[14px] outline-none focus:border-red-500 transition-colors resize-none"
               />
             </div>
@@ -397,3 +397,4 @@ export default function DocumentsPage() {
     </div>
   )
 }
+

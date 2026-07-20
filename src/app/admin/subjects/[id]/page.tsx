@@ -53,10 +53,10 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
         setCode(data.code || "")
         setDescription(data.description || "")
       } else {
-        setError("Không tìm thấy thông tin môn học này.")
+        setError("Không tìm thấy thông tin lĩnh vực nghiên cứu này.")
       }
     } catch (e) {
-      setError("Lỗi kết nối máy chủ khi tải chi tiết môn học.")
+      setError("Lỗi kết nối máy chủ khi tải chi tiết lĩnh vực nghiên cứu.")
     } finally {
       setLoading(false)
     }
@@ -85,10 +85,10 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
         body: JSON.stringify({ name, code, description })
       })
       if (res.ok) {
-        showToast("Đã lưu cập nhật môn học thành công!", "success")
+        showToast("Đã lưu cập nhật lĩnh vực nghiên cứu thành công!", "success")
         fetchSubject(subId)
       } else {
-        showToast("Lỗi khi cập nhật môn học.", "error")
+        showToast("Lỗi khi cập nhật lĩnh vực nghiên cứu.", "error")
       }
     } catch (e) {
       showToast("Lỗi kết nối máy chủ.", "error")
@@ -99,7 +99,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
 
   const handleDelete = async () => {
     if (!subId || !token) return
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa môn học "${subject?.name || subId}" khỏi hệ thống không?`)) return
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa lĩnh vực nghiên cứu "${subject?.name || subId}" khỏi hệ thống không?`)) return
     setDeleting(true)
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
@@ -108,13 +108,13 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
         headers: { Authorization: `Bearer ${token}` }
       })
       if (res.ok) {
-        showToast("Đã xóa môn học thành công!", "success")
+        showToast("Đã xóa lĩnh vực nghiên cứu thành công!", "success")
         setTimeout(() => router.push("/admin/subjects"), 1000)
       } else {
-        showToast("Lỗi khi xóa môn học. Có thể đang có tài liệu gắn với môn này.", "error")
+        showToast("Lỗi khi xóa lĩnh vực nghiên cứu. Có thể đang có tài liệu gắn với môn này.", "error")
       }
     } catch (e) {
-      showToast("Lỗi kết nối khi xóa môn học.", "error")
+      showToast("Lỗi kết nối khi xóa lĩnh vực nghiên cứu.", "error")
     } finally {
       setDeleting(false)
     }
@@ -140,7 +140,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
           </Link>
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-              {loading ? "Đang tải môn học..." : subject?.name || "Chi Tiết Môn Học"}
+              {loading ? "Đang tải lĩnh vực nghiên cứu..." : subject?.name || "Chi Tiết Môn Học"}
             </h1>
             <p className="text-[#727785] font-medium text-[14px]">Quản lý thông tin metadata, mã môn và các tài liệu liên kết.</p>
           </div>
@@ -163,12 +163,12 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center gap-3 text-[#727785] bg-white rounded-3xl border border-[#c2c6d6]/40">
           <Loader2 size={32} className="animate-spin text-[#0058be]" />
-          <p className="text-[13px] font-medium">Đang truy xuất chi tiết môn học từ máy chủ...</p>
+          <p className="text-[13px] font-medium">Đang truy xuất chi tiết lĩnh vực nghiên cứu từ máy chủ...</p>
         </div>
       ) : error || !subject ? (
         <div className="py-24 text-center text-[#727785] bg-white rounded-3xl border border-[#c2c6d6]/40 space-y-3">
           <AlertCircle size={40} className="mx-auto text-red-500" />
-          <p className="text-[16px] font-bold text-[#121c2a]">{error || "Môn học không tồn tại"}</p>
+          <p className="text-[16px] font-bold text-[#121c2a]">{error || "Lĩnh vực nghiên cứu không tồn tại"}</p>
           <Link href="/admin/subjects" className="inline-block px-5 py-2 bg-[#0058be] text-white font-bold text-[13px] rounded-xl">Quay lại danh sách</Link>
         </div>
       ) : (
@@ -212,7 +212,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  placeholder="Mô tả tóm tắt kiến thức, mục tiêu môn học và tài liệu tham khảo chính..."
+                  placeholder="Mô tả tóm tắt kiến thức, mục tiêu lĩnh vực nghiên cứu và tài liệu tham khảo chính..."
                   className="w-full px-4 py-3 rounded-2xl border border-[#c2c6d6]/60 bg-[#f8f9ff]/50 text-[#121c2a] text-sm focus:outline-none focus:ring-2 focus:ring-[#0058be]"
                 />
               </div>
@@ -252,7 +252,7 @@ export default function SubjectDetailPage({ params }: { params: Promise<{ id: st
                     </Link>
                   ))
                 ) : (
-                  <p className="text-xs text-[#727785] italic">Chưa có bài tài liệu nào liên kết với môn học này.</p>
+                  <p className="text-xs text-[#727785] italic">Chưa có bài tài liệu nào liên kết với lĩnh vực nghiên cứu này.</p>
                 )}
               </div>
             </div>

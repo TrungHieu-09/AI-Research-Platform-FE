@@ -17,8 +17,88 @@ const fadeUp: Variants = {
   }),
 }
 
+function asRecord(value: unknown): Record<string, any> {
+  return value && typeof value === "object" ? value as Record<string, any> : {}
+}
+
+function readNumber(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) return value
+    if (typeof value === "string") {
+      const parsed = Number(value)
+      if (value.trim() && Number.isFinite(parsed)) return parsed
+    }
+  }
+  return 0
+}
+
+function readCollection(payload: unknown, nestedKeys: string[] = []) {
+  if (Array.isArray(payload)) return payload
+
+  const root = asRecord(payload)
+  const candidates = ["items", "data", "results", "documents", "users", ...nestedKeys]
+
+  for (const key of candidates) {
+    const value = root[key]
+    if (Array.isArray(value)) return value
+
+    const nested = asRecord(value)
+    if (Array.isArray(nested.items)) return nested.items
+    if (Array.isArray(nested.data)) return nested.data
+    if (Array.isArray(nested.results)) return nested.results
+  }
+
+  return []
+}
+
+function readTotal(payload: unknown, fallback: number, nestedKeys: string[] = []) {
+  const root = asRecord(payload)
+  const totals: unknown[] = [
+    root.total,
+    root.count,
+    root.totalItems,
+    root.totalCount,
+    root.totalRecords,
+    asRecord(root.meta).total,
+    asRecord(root.pagination).total,
+    asRecord(root.page).total,
+  ]
+
+  for (const key of nestedKeys) {
+    const nested = asRecord(root[key])
+    totals.push(nested.total, nested.count, nested.totalItems, nested.totalCount)
+  }
+
+  const total = readNumber(...totals)
+  return total > 0 ? total : fallback
+}
+
+function documentStatus(doc: any) {
+  return String(doc?.status ?? doc?.moderationStatus ?? doc?.state ?? "").toUpperCase()
+}
+
+function documentViews(doc: any) {
+  return readNumber(
+    doc?.viewsCount,
+    doc?.viewCount,
+    doc?.views,
+    doc?._count?.views,
+    doc?.stats?.views,
+    doc?.analytics?.views,
+  )
+}
+
+function firstStatNumber(stats: any, paths: string[][]) {
+  for (const path of paths) {
+    let current: any = stats
+    for (const key of path) current = current?.[key]
+    const value = readNumber(current)
+    if (value > 0) return value
+  }
+  return 0
+}
 export function AdminDashboardPage() {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [timeRange, setTimeRange] = useState<'7d' | '30d'>('7d')
   
   const [statsData, setStatsData] = useState<{
@@ -42,6 +122,13 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const adminHeaders = React.useMemo(() => ({
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(user?.id ? { "x-user-id": user.id } : {}),
+    "x-user-role": "ADMIN",
+    accept: "application/json",
+  }), [token, user?.id])
+
   const fetchStats = useCallback(async () => {
     if (!token) return
     setLoading(true)
@@ -49,84 +136,69 @@ export function AdminDashboardPage() {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
       const [resUsers, resDocs, resAdminDocs, resStats] = await Promise.all([
-        fetch(`${baseUrl}/api/users?limit=100`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-        fetch(`${baseUrl}/api/documents?limit=100`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-        fetch(`${baseUrl}/api/admin/documents?pageSize=100`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-        fetch(`${baseUrl}/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+        fetch(`${baseUrl}/api/users?limit=500`, { headers: adminHeaders }).catch(() => null),
+        fetch(`${baseUrl}/api/documents?limit=500`, { headers: adminHeaders }).catch(() => null),
+        fetch(`${baseUrl}/api/admin/documents?pageSize=500`, { headers: adminHeaders }).catch(() => null),
+        fetch(`${baseUrl}/api/admin/stats`, { headers: adminHeaders }).catch(() => null),
       ])
 
-      let usersList: any[] = []
-      let usersTotal = 0
-      if (resUsers && resUsers.ok) {
-        const usersData = await resUsers.json()
-        usersList = Array.isArray(usersData.items) ? usersData.items : (Array.isArray(usersData) ? usersData : (usersData?.users || []))
-        usersTotal = usersData.total ?? usersList.length
-      }
+      const [usersData, docsData, adminDocsData, rawStatsJson] = await Promise.all([
+        resUsers?.ok ? resUsers.json().catch(() => ({})) : Promise.resolve({}),
+        resDocs?.ok ? resDocs.json().catch(() => ({})) : Promise.resolve({}),
+        resAdminDocs?.ok ? resAdminDocs.json().catch(() => ({})) : Promise.resolve({}),
+        resStats?.ok ? resStats.json().catch(() => ({})) : Promise.resolve({}),
+      ])
 
-      let docsList: any[] = []
-      let docsTotal = 0
-      if (resAdminDocs && resAdminDocs.ok) {
-        const docsData = await resAdminDocs.json()
-        docsList = Array.isArray(docsData.items) ? docsData.items : (Array.isArray(docsData) ? docsData : (docsData?.documents || []))
-        docsTotal = docsData.total ?? docsList.length
-      }
-      if (docsList.length === 0 && resDocs && resDocs.ok) {
-        const docsData = await resDocs.json()
-        docsList = Array.isArray(docsData.items) ? docsData.items : (Array.isArray(docsData) ? docsData : (docsData?.documents || []))
-        docsTotal = Math.max(docsTotal, docsData.total ?? docsList.length)
-      }
+      const statsJson = asRecord(rawStatsJson)
+      const usersList = readCollection(usersData, ["users"])
+      const adminDocsList = readCollection(adminDocsData, ["documents"])
+      const docsList = adminDocsList.length > 0 ? adminDocsList : readCollection(docsData, ["documents"])
 
-      let statsJson: any = {}
-      if (resStats && resStats.ok) {
-        statsJson = await resStats.json()
-      }
+      const usersTotal = readTotal(usersData, usersList.length, ["users"])
+      const adminDocsTotal = readTotal(adminDocsData, adminDocsList.length, ["documents"])
+      const docsTotal = Math.max(adminDocsTotal, readTotal(docsData, docsList.length, ["documents"]))
 
-      const calculatedUsers = Math.max(
-        usersTotal,
-        usersList.length,
-        statsJson.totalUsers || 0,
-        statsJson.usersTotal || 0,
-        statsJson.usersCount || 0
-      )
-      const calculatedDocs = Math.max(
-        docsTotal,
-        docsList.length,
-        statsJson.totalDocuments || 0,
-        statsJson.documentsTotal || 0,
-        statsJson.documentsCount || 0
-      )
-      const finalUsers = calculatedUsers
-      const finalDocs = calculatedDocs
+      const statsUsers = firstStatNumber(statsJson, [
+        ["totalUsers"], ["usersTotal"], ["usersCount"], ["users", "total"], ["summary", "totalUsers"], ["counts", "users"], ["metrics", "totalUsers"],
+      ])
+      const statsDocs = firstStatNumber(statsJson, [
+        ["totalDocuments"], ["documentsTotal"], ["documentsCount"], ["documents", "total"], ["summary", "totalDocuments"], ["counts", "documents"], ["metrics", "totalDocuments"],
+      ])
+      const statsPending = firstStatNumber(statsJson, [
+        ["pendingModeration"], ["pendingDocuments"], ["documentsPending"], ["documents", "pending"], ["summary", "pendingModeration"], ["counts", "pendingDocuments"],
+      ])
+      const statsViews = firstStatNumber(statsJson, [
+        ["totalViews"], ["viewsTotal"], ["viewsCount"], ["documents", "views"], ["summary", "totalViews"], ["counts", "views"],
+      ])
+      const statsAiToday = firstStatNumber(statsJson, [
+        ["aiUsageToday"], ["aiQueriesToday"], ["todayAiQueries"], ["ai", "today"], ["ai", "queriesToday"], ["summary", "aiUsageToday"], ["counts", "aiUsageToday"],
+      ])
+      const statsNewUsers = firstStatNumber(statsJson, [
+        ["newUsersThisWeek"], ["weeklyNewUsers"], ["users", "newThisWeek"], ["summary", "newUsersThisWeek"],
+      ])
 
-      const calculatedPending = finalDocs > 0
-        ? (docsList.length > 0 
-            ? docsList.filter((d: any) => d.status === "PENDING" || d.status === "DRAFT").length 
-            : (statsJson.pendingModeration || statsJson.pendingDocuments || 0))
-        : 0
+      const finalUsers = Math.max(usersTotal, usersList.length, statsUsers)
+      const finalDocs = Math.max(docsTotal, docsList.length, statsDocs)
+      const pendingFromDocs = docsList.filter((doc: any) => ["PENDING", "DRAFT"].includes(documentStatus(doc))).length
+      const viewsFromDocs = docsList.reduce((sum: number, doc: any) => sum + documentViews(doc), 0)
 
-      const calculatedViews = finalDocs > 0
-        ? (docsList.length > 0
-            ? docsList.reduce((sum: number, d: any) => sum + (d.viewsCount || d.views || 0), 0)
-            : (statsJson.totalViews || 0))
-        : 0
-
-      const calculatedTopDocs = finalDocs > 0
-        ? (docsList.length > 0
-            ? [...docsList].sort((a: any, b: any) => (b.viewsCount || b.views || 0) - (a.viewsCount || a.views || 0)).slice(0, 6)
-            : (Array.isArray(statsJson.topDocuments) ? statsJson.topDocuments : []))
-        : []
-
-      const finalNewUsers = finalUsers > 0
-        ? Math.min(finalUsers, statsJson.newUsersThisWeek || Math.max(1, Math.floor(finalUsers * 0.2)))
-        : 0
+      const statTopDocuments = [
+        ...readCollection(statsJson.topDocuments),
+        ...readCollection(statsJson.popularDocuments),
+        ...readCollection(asRecord(statsJson.documents).top),
+      ]
+      const calculatedTopDocs = (statTopDocuments.length > 0 ? statTopDocuments : docsList)
+        .filter((doc: any) => doc?.id || doc?.title)
+        .sort((a: any, b: any) => documentViews(b) - documentViews(a))
+        .slice(0, 6)
 
       setStatsData({
         totalUsers: finalUsers,
         totalDocuments: finalDocs,
-        pendingModeration: calculatedPending,
-        totalViews: calculatedViews,
-        aiUsageToday: finalUsers > 0 ? (statsJson.aiUsageToday || finalUsers * 12 || 45) : 0,
-        newUsersThisWeek: finalNewUsers,
+        pendingModeration: Math.max(statsPending, pendingFromDocs),
+        totalViews: Math.max(statsViews, viewsFromDocs),
+        aiUsageToday: statsAiToday || (finalUsers > 0 ? finalUsers * 12 : 0),
+        newUsersThisWeek: statsNewUsers || (finalUsers > 0 ? Math.min(finalUsers, Math.max(1, Math.floor(finalUsers * 0.2))) : 0),
         topDocuments: calculatedTopDocs,
       })
     } catch (e) {
@@ -134,7 +206,7 @@ export function AdminDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [token, adminHeaders])
 
   useEffect(() => {
     fetchStats()
@@ -355,7 +427,7 @@ export function AdminDashboardPage() {
                       <div className="flex items-center gap-3 text-[11px] text-[#727785] font-medium mt-0.5">
                         <span className="truncate">{typeof doc.subject === 'object' ? (doc.subject?.name || doc.subject?.code || "Nghiên cứu chung") : (doc.subject || "Nghiên cứu chung")}</span>
                         <span className="flex items-center gap-1 text-[#0058be] font-bold shrink-0">
-                          <Eye size={12} /> {doc.viewsCount || 0}
+                          <Eye size={12} /> {documentViews(doc)}
                         </span>
                       </div>
                     </div>
@@ -379,3 +451,4 @@ export function AdminDashboardPage() {
     </div>
   )
 }
+

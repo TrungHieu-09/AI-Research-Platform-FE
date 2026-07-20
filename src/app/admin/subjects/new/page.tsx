@@ -43,11 +43,11 @@ export default function NewSubjectPage() {
       })
 
       if (res.ok) {
-        showToast("Đã tạo môn học thành công!", "success")
+        showToast("Đã tạo lĩnh vực nghiên cứu thành công!", "success")
         setTimeout(() => router.push("/admin/subjects"), 1000)
       } else {
         const err = await res.json()
-        showToast(err.error || "Mã môn học hoặc tên đã tồn tại.", "error")
+        showToast(err.error || "Mã lĩnh vực nghiên cứu hoặc tên đã tồn tại.", "error")
       }
     } catch (e) {
       showToast("Lỗi kết nối máy chủ.", "error")
@@ -91,7 +91,7 @@ export default function NewSubjectPage() {
               <div className="w-16 h-16 rounded-3xl bg-[#0058be] text-white flex items-center justify-center shadow-lg shadow-[#0058be]/20 mb-6">
                 <BookOpen size={30} />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-[#121c2a] leading-tight" style={{ fontFamily: "Geist, sans-serif" }}>Khởi tạo Môn học Mới</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight text-[#121c2a] leading-tight" style={{ fontFamily: "Geist, sans-serif" }}>Khởi tạo Lĩnh vực nghiên cứu Mới</h1>
               <p className="text-[#727785] font-medium leading-relaxed text-[13px]">
                 Thiết lập khung học phần mới. Cung cấp danh mục chính thức để sinh viên tải tài liệu nghiên cứu lên đúng chuyên ngành.
               </p>
@@ -120,7 +120,7 @@ export default function NewSubjectPage() {
               <Sparkles size={14} />
               <span>Hỗ trợ AI Vector</span>
             </div>
-            <p className="text-[12px] text-[#727785]">Mỗi môn học tạo mới sẽ được tự động lập chỉ mục trong kho tri thức RAG của hệ thống.</p>
+            <p className="text-[12px] text-[#727785]">Mỗi lĩnh vực nghiên cứu tạo mới sẽ được tự động lập chỉ mục trong kho tri thức RAG của hệ thống.</p>
           </div>
         </div>
 
@@ -140,7 +140,7 @@ export default function NewSubjectPage() {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Tên môn học (Ví dụ: Hệ quản trị cơ sở dữ liệu)" 
+                      placeholder="Tên lĩnh vực nghiên cứu (Ví dụ: Hệ quản trị cơ sở dữ liệu)" 
                       className="w-full bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-2xl py-4 pl-12 pr-4 text-[15px] text-[#121c2a] focus:outline-none focus:border-[#0058be] focus:bg-white transition-all font-bold"
                     />
                   </div>
@@ -169,7 +169,7 @@ export default function NewSubjectPage() {
                     <textarea 
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Giới thiệu nội dung môn học, các kiến thức cốt lõi (tùy chọn)..." 
+                      placeholder="Giới thiệu nội dung lĩnh vực nghiên cứu, các kiến thức cốt lõi (tùy chọn)..." 
                       className="w-full h-36 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-2xl p-4 pl-12 text-[14px] text-[#121c2a] focus:outline-none focus:border-[#0058be] focus:bg-white transition-all resize-none font-medium leading-relaxed"
                     />
                 </div>
@@ -207,3 +207,4 @@ export default function NewSubjectPage() {
     </div>
   )
 }
+
