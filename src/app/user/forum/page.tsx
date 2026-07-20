@@ -262,65 +262,67 @@ export default function ForumPage() {
                 <div
                   key={doc.id}
                   onClick={() => router.push(`/user/documents/${doc.id}`)}
-                  className="bg-white rounded-2xl border border-[#c2c6d6]/40 hover:border-[#0058be] shadow-sm hover:shadow-lg transition-all p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden"
+                  className="bg-white rounded-2xl border border-transparent shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,88,190,0.12)] hover:border-[#0058be]/20 hover:-translate-y-1 transition-all duration-300 p-6 flex flex-col justify-between group cursor-pointer relative overflow-hidden"
                 >
-                  <div className="space-y-3.5">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#0058be]/5 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <div className="space-y-4 relative z-10">
                     {/* Card Header Info */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-[#eff4ff] text-[#0058be] font-bold text-[12px] flex items-center justify-center shrink-0 uppercase">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#eff4ff] to-[#e0ebff] text-[#0058be] font-bold text-[14px] flex items-center justify-center shrink-0 uppercase shadow-sm border border-white">
                           {doc.owner?.name ? doc.owner.name.charAt(0) : "U"}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[13px] font-bold text-[#121c2a] truncate">{doc.owner?.name || "Lumis Scholar"}</p>
-                          <p className="text-[11px] text-[#727785] flex items-center gap-1">
-                            <Calendar size={11} /> {new Date(doc.createdAt).toLocaleDateString("vi-VN")}
+                          <p className="text-[14px] font-extrabold text-[#121c2a] truncate">{doc.owner?.name || "Lumis Scholar"}</p>
+                          <p className="text-[12px] text-[#727785] flex items-center gap-1.5 mt-0.5">
+                            <Calendar size={12} className="text-[#a0a5b3]" /> {new Date(doc.createdAt).toLocaleDateString("vi-VN")}
                           </p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-extrabold text-[#0058be] bg-[#eff4ff] px-2.5 py-1 rounded-full shrink-0 border border-[#0058be]/10">
+                      <span className="text-[11px] font-bold text-[#0058be] bg-[#eff4ff] px-3 py-1.5 rounded-full shrink-0 border border-[#0058be]/10 shadow-sm">
                         {doc.subject?.name || "Chung"}
                       </span>
                     </div>
 
                     {/* Document Title & Description */}
-                    <div>
-                      <h3 className="text-[16px] font-bold text-[#121c2a] group-hover:text-[#0058be] transition-colors line-clamp-2 leading-snug mb-1.5" style={{ fontFamily: "Geist, sans-serif" }}>
+                    <div className="pt-2">
+                      <h3 className="text-[17px] font-extrabold text-[#121c2a] group-hover:text-[#0058be] transition-colors line-clamp-2 leading-tight mb-2.5" style={{ fontFamily: "Geist, sans-serif" }}>
                         {doc.title}
                       </h3>
-                      <p className="text-[13px] text-[#424754] line-clamp-3 leading-relaxed bg-[#f8f9ff] p-2.5 rounded-xl border border-[#c2c6d6]/20">
+                      <p className="text-[13px] text-[#424754] line-clamp-3 leading-relaxed bg-[#f8f9ff] group-hover:bg-[#eff4ff]/50 p-3.5 rounded-xl border border-[#c2c6d6]/20 transition-colors">
                         {doc.description || "Nhấp để xem chi tiết tài liệu, đọc toàn văn PDF và tham gia thảo luận cùng cộng đồng nghiên cứu."}
                       </p>
                     </div>
                   </div>
 
                   {/* Card Footer: Stats & Actions */}
-                  <div className="mt-5 pt-3.5 border-t border-[#c2c6d6]/30 flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-[12px] font-semibold text-[#727785]">
-                      <span className="flex items-center gap-1 hover:text-[#121c2a]">
-                        <Eye size={14} className="text-[#0058be]" /> {viewCount}
+                  <div className="mt-6 pt-4 border-t border-[#c2c6d6]/30 flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-3.5 text-[12px] font-semibold text-[#727785]">
+                      <span className="flex items-center gap-1.5 hover:text-[#0058be] transition-colors">
+                        <Eye size={15} className="text-[#0058be]/70" /> {viewCount}
                       </span>
-                      <span className="flex items-center gap-1 hover:text-[#121c2a]">
-                        <MessageSquare size={14} className="text-amber-500" /> {ratingCount}
+                      <span className="flex items-center gap-1.5 hover:text-amber-600 transition-colors">
+                        <MessageSquare size={15} className="text-amber-500/70" /> {ratingCount}
                       </span>
-                      <span className="flex items-center gap-1 hover:text-[#121c2a]">
-                        <Bookmark size={14} className="text-purple-500" /> {bookmarkCount}
+                      <span className="flex items-center gap-1.5 hover:text-purple-600 transition-colors">
+                        <Bookmark size={15} className="text-purple-500/70" /> {bookmarkCount}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={(e) => handleCopyLink(doc.id, e)}
-                        className="p-2 text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-xl transition-colors"
+                        className="w-8 h-8 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-full transition-all"
                         title="Sao chép liên kết"
                       >
-                        <Share2 size={15} />
+                        <Share2 size={16} />
                       </button>
                       <Link
                         href={`/user/ai-workspace?docId=${doc.id}`}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[12px] rounded-xl shadow-sm transition-all"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#0058be] to-[#1a6ddb] hover:from-[#004ca3] hover:to-[#0058be] text-white font-bold text-[12px] rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
                       >
-                        <Sparkles size={13} /> Hỏi AI
+                        <Sparkles size={14} className="text-amber-300" /> Hỏi AI
                       </Link>
                     </div>
                   </div>
