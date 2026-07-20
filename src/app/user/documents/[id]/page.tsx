@@ -141,7 +141,7 @@ export default function DocumentDetailPage() {
           <AlertCircle size={28} />
         </div>
         <h2 className="text-[20px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>Không tìm thấy tài liệu</h2>
-        <p className="text-[14px] text-[#727785] max-w-md">{error}</p>
+        <p className="text-[14px] text-[#727785] max-w-[448px]">{error}</p>
         <button
           onClick={() => router.back()}
           className="mt-2 px-6 py-2.5 bg-[#0058be] text-white rounded-xl text-[13px] font-bold hover:bg-[#004ca3] transition-colors"
@@ -160,7 +160,7 @@ export default function DocumentDetailPage() {
       {toastMessage && (
         <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-5 duration-300">
           <div className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold max-w-sm",
+            "flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold max-w-[384px]",
             toastMessage.type === "success" 
               ? "bg-white border-[#0058be]/20 text-[#121c2a]" 
               : "bg-red-50 border-red-200 text-red-700"
@@ -249,7 +249,7 @@ export default function DocumentDetailPage() {
                   title={doc.title}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-gray-200 max-w-lg shadow-sm">
+                <div className="flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-gray-200 w-full max-w-[512px] shadow-sm">
                   <div className="w-16 h-16 rounded-2xl bg-[#eff4ff] flex items-center justify-center text-[#0058be] mb-4">
                     <FileText size={36} />
                   </div>
