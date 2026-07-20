@@ -111,15 +111,16 @@ export default function DocumentDetailPage() {
       })
 
       if (res.ok) {
-        showToast("Đã gửi đánh giá & bình luận thành công!", "success")
+        showToast("Đã đăng đánh giá lên diễn đàn thành công.", "success")
+        setUserRating(5)
         setUserComment("")
         fetchRatings()
       } else {
         const err = await res.json()
-        showToast(err.error || "Bạn đã đánh giá tài liệu này trước đó.", "error")
+        showToast(err.error || "Không thể gửi đánh giá. Vui lòng thử lại sau.", "error")
       }
     } catch (err) {
-      showToast("Lỗi kết nối máy chủ.", "error")
+      showToast("Không kết nối được máy chủ. Vui lòng thử lại.", "error")
     } finally {
       setSubmittingReview(false)
     }
