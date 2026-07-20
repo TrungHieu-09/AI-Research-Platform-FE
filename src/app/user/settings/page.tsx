@@ -18,13 +18,19 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
+import { useTheme } from "@/features/theme/theme-context"
 
 /* ─── Toggle Component ─── */
-function Toggle({ defaultChecked = false }: { defaultChecked?: boolean }) {
-  const [on, setOn] = React.useState(defaultChecked)
+function Toggle({ checked, onChange }: { checked?: boolean; onChange?: () => void }) {
+  const [on, setOn] = React.useState(checked ?? false)
+  const handleClick = () => {
+    const next = !on
+    setOn(next)
+    onChange?.()
+  }
   return (
     <button
-      onClick={() => setOn(!on)}
+      onClick={handleClick}
       aria-pressed={on}
       className={cn(
         "relative flex items-center w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0058be] focus-visible:ring-offset-2 shrink-0",
@@ -33,8 +39,31 @@ function Toggle({ defaultChecked = false }: { defaultChecked?: boolean }) {
     >
       <span
         className={cn(
-          "absolute w-4.5 h-[18px] w-[18px] bg-white rounded-full shadow-sm transition-transform duration-300",
+          "absolute w-[18px] h-[18px] bg-white rounded-full shadow-sm transition-transform duration-300",
           on ? "translate-x-[22px]" : "translate-x-[3px]"
+        )}
+      />
+    </button>
+  )
+}
+
+/* ─── Dark Mode Toggle — connected to ThemeContext ─── */
+function DarkModeToggle() {
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === "dark"
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-pressed={isDark}
+      className={cn(
+        "relative flex items-center w-11 h-6 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0058be] focus-visible:ring-offset-2 shrink-0",
+        isDark ? "bg-[#0058be]" : "bg-[#d1d5db]"
+      )}
+    >
+      <span
+        className={cn(
+          "absolute w-[18px] h-[18px] bg-white rounded-full shadow-sm transition-transform duration-300",
+          isDark ? "translate-x-[22px]" : "translate-x-[3px]"
         )}
       />
     </button>
@@ -287,7 +316,7 @@ export default function UserSettingsPage() {
                     icon: Moon,
                     label: "Chế độ tối",
                     desc: "Bật Dark Mode toàn bộ giao diện",
-                    right: <Toggle />
+                    right: <DarkModeToggle />
                   },
                   {
                     icon: LayoutGrid,

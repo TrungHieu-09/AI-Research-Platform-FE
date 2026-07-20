@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
   Wallet, Settings, LogOut, Search, ChevronDown, MessageSquare,
-  Bell, CheckCircle2, XCircle, Clock
+  Bell, CheckCircle2, XCircle, Clock, Moon, Sun
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
+import { useTheme } from "@/features/theme/theme-context"
 
 /* ─── Nav items when logged in ──────────────── */
 const appNavLinks = [
@@ -74,6 +75,7 @@ function userTimeAgo(value: string) {
 export function LandingHeader() {
   const pathname = usePathname()
   const { user, token, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   const [profileOpen, setProfileOpen] = React.useState(false)
   const [notificationOpen, setNotificationOpen] = React.useState(false)
@@ -280,6 +282,15 @@ export function LandingHeader() {
                 <span>Quay lại Admin</span>
               </Link>
             )}
+            {/* Dark Mode Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#424754] transition-all hover:bg-[#eff4ff] hover:text-[#0058be]"
+              title={theme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <div className="relative" ref={notificationRef}>
               <button
                 type="button"

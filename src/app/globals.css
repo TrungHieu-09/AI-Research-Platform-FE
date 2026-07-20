@@ -166,10 +166,149 @@
     color: var(--color-on-background);
     font-family: var(--font-inter), sans-serif;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   html {
     @apply font-sans;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   Strategy: override CSS custom properties so all usages flip
+═══════════════════════════════════════════════════════════════ */
+
+html.dark {
+  color-scheme: dark;
+
+  /* Surface colors — replaces hardcoded whites/light grays */
+  --color-surface: #0f1117;
+  --color-surface-container-high: #1a1f2e;
+  --color-surface-container-highest: #1e2535;
+  --color-surface-container-low: #141822;
+  --color-surface-variant: #1e2535;
+  --color-on-background: #e2e8f0;
+  --color-on-surface: #e2e8f0;
+  --color-on-surface-variant: #94a3b8;
+  --color-outline-variant: #1e293b;
+}
+
+/* Scope dark overrides to elements that use bg-white, bg-[#f8...], etc. */
+html.dark body {
+  background-color: #0f1117;
+  color: #e2e8f0;
+}
+
+/* Cards / panels */
+html.dark .bg-white,
+html.dark [class*="bg-white"] {
+  background-color: #151b2a !important;
+}
+
+html.dark [class*="bg-\[#f8f9ff\]"],
+html.dark [class*="bg-\[#f8fafc\]"],
+html.dark [class*="bg-\[#fafbff\]"],
+html.dark [class*="bg-\[#f5f7fc\]"],
+html.dark [class*="bg-\[#f0f4ff\]"],
+html.dark [class*="bg-\[#f9fafb\]"],
+html.dark [class*="bg-\[#f8f9ff\]"] {
+  background-color: #1a1f2e !important;
+}
+
+/* Nav / sidebar backgrounds */
+html.dark [class*="bg-\[#0058be\]"] {
+  /* keep blue as-is — it's a brand color */
+}
+
+/* Text colors */
+html.dark [class*="text-\[#121c2a\]"],
+html.dark [class*="text-\[#1a2333\]"],
+html.dark [class*="text-\[#0f172a\]"],
+html.dark [class*="text-\[#334155\]"],
+html.dark [class*="text-\[#1e293b\]"] {
+  color: #e2e8f0 !important;
+}
+
+html.dark [class*="text-\[#424754\]"],
+html.dark [class*="text-\[#475569\]"] {
+  color: #94a3b8 !important;
+}
+
+html.dark [class*="text-\[#727785\]"],
+html.dark [class*="text-\[#8b90a0\]"],
+html.dark [class*="text-\[#6b7280\]"],
+html.dark [class*="text-\[#9ca3af\]"],
+html.dark [class*="text-\[#64748b\]"] {
+  color: #64748b !important;
+}
+
+/* Border colors */
+html.dark [class*="border-\[#c2c6d6\]"],
+html.dark [class*="border-\[#e2e8f0\]"],
+html.dark [class*="border-\[#eaecf5\]"],
+html.dark [class*="border-\[#e5e7eb\]"] {
+  border-color: #1e293b !important;
+}
+
+/* Input backgrounds */
+html.dark input:not([type="range"]),
+html.dark textarea,
+html.dark select {
+  background-color: #1e2535 !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #475569 !important;
+}
+
+/* Hover states */
+html.dark [class*="hover:bg-\[#f8f9ff\]"]:hover,
+html.dark [class*="hover:bg-\[#f8fafc\]"]:hover {
+  background-color: #1e2535 !important;
+}
+
+html.dark [class*="hover:bg-white"]:hover {
+  background-color: #1e2535 !important;
+}
+
+/* EFF4FF — light blue tint (selected state, badges) */
+html.dark [class*="bg-\[#eff4ff\]"] {
+  background-color: #1a2744 !important;
+}
+
+/* Glass panel override */
+html.dark .glass-panel {
+  background: #1a1f2e;
+  border-color: #1e293b;
+}
+
+/* Sidebar specific */
+html.dark [class*="bg-\[#f8fafc\]"] {
+  background-color: #111827 !important;
+}
+
+/* Scrollbar */
+html.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+html.dark ::-webkit-scrollbar-track {
+  background: #0f1117;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Shadow override — lighten in dark */
+html.dark [class*="shadow"] {
+  --tw-shadow-color: rgba(0, 0, 0, 0.5);
 }
 
 .glass-panel {
