@@ -61,14 +61,15 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
   const canModerateTo = (status: "APPROVED" | "REJECTED") => {
     if (!doc) return false
-    if (status === "APPROVED") return doc.status === "PENDING"
-    return ["PENDING", "APPROVED"].includes(String(doc.status || "").toUpperCase())
+    const currentStatus = String(doc.status || "").toUpperCase()
+    if (status === "APPROVED") return ["PENDING", "REJECTED"].includes(currentStatus)
+    return ["PENDING", "APPROVED"].includes(currentStatus)
   }
 
   const handleModerate = async (status: "APPROVED" | "REJECTED") => {
     if (!docId || !token) return
     if (!canModerateTo(status)) {
-      showToast(status === "REJECTED" ? "Chỉ tài liệu chờ duyệt hoặc đã duyệt mới có thể bị từ chối." : "Chỉ tài liệu đang chờ duyệt mới có thể được duyệt.", "error")
+      showToast(status === "REJECTED" ? "Chỉ tài liệu chờ duyệt hoặc đã duyệt mới có thể bị từ chối/gỡ công khai." : "Chỉ tài liệu chờ duyệt hoặc đã bị từ chối mới có thể được duyệt/công khai lại.", "error")
       return
     }
     if (status === "REJECTED" && !rejectionReason.trim()) {
@@ -94,9 +95,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
         const err = await res.json().catch(() => ({}))
         const message = String(err.error || err.message || "")
         showToast(
-          status === "REJECTED" && message.toLowerCase().includes("pending")
-            ? "BE chưa hỗ trợ từ chối tài liệu đã duyệt. Cần API thu hồi/gỡ public."
-            : message || "Lỗi kiểm duyệt tài liệu.",
+          message || "Lỗi kiểm duyệt tài liệu.",
           "error"
         )
       }
@@ -141,7 +140,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
               className="flex items-center justify-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all disabled:opacity-50"
             >
               <CheckCircle size={18} />
-              <span>{doc.status === "APPROVED" ? "Đã Duyệt" : "Duyệt Công Khai"}</span>
+              <span>{doc.status === "APPROVED" ? "Đã Duyệt" : doc.status === "REJECTED" ? "Công Khai Lại" : "Duyệt Công Khai"}</span>
             </button>
             <button
               onClick={() => setShowRejectInput(!showRejectInput)}
@@ -157,17 +156,17 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
       {showRejectInput && (
         <div className="bg-red-50/70 border border-red-200 rounded-2xl p-5 space-y-3 animate-in fade-in duration-300">
-          <label className="text-[13px] font-bold text-red-800 block">Lý do từ chối tài liệu (Gửi thông báo về cho sinh viên):</label>
+          <label className="text-[13px] font-bold text-red-800 block">{doc?.status === "APPROVED" ? "Lý do gỡ công khai (Gửi thông báo về cho sinh viên):" : "Lý do từ chối tài liệu (Gửi thông báo về cho sinh viên):"}</label>
           <input
             type="text"
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder="Ví dụ: Tài liệu trùng lặp, hình ảnh mờ, vi phạm bản quyền..."
+            placeholder={doc?.status === "APPROVED" ? "Ví dụ: Gỡ khỏi diễn đàn vì tài liệu cần rà soát lại..." : "Ví dụ: Tài liệu trùng lặp, hình ảnh mờ, vi phạm bản quyền..."}
             className="w-full px-4 py-2.5 rounded-xl border border-red-300 bg-white text-[13px] focus:outline-none focus:ring-2 focus:ring-red-500"
           />
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowRejectInput(false)} className="px-4 py-1.5 text-[12px] font-bold text-[#727785] hover:bg-gray-200 rounded-xl">Hủy</button>
-            <button onClick={() => handleModerate("REJECTED")} disabled={moderating} className="px-5 py-1.5 text-[12px] font-bold bg-red-600 text-white rounded-xl shadow hover:bg-red-700 disabled:opacity-50">Xác nhận Từ Chối</button>
+            <button onClick={() => handleModerate("REJECTED")} disabled={moderating || !rejectionReason.trim()} className="px-5 py-1.5 text-[12px] font-bold bg-red-600 text-white rounded-xl shadow hover:bg-red-700 disabled:opacity-50">{doc?.status === "APPROVED" ? "Xác nhận Gỡ công khai" : "Xác nhận Từ Chối"}</button>
           </div>
         </div>
       )}
@@ -274,3 +273,5 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
     </div>
   )
 }
+
+

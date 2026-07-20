@@ -89,6 +89,7 @@ export default function DocumentsPage() {
   }
 
   const canRejectDocument = (doc: any) => doc.visibility === "PUBLIC" && ["PENDING", "APPROVED"].includes(String(doc.status || "").toUpperCase())
+  const canRepublishDocument = (doc: any) => doc.visibility === "PUBLIC" && String(doc.status || "").toUpperCase() === "REJECTED"
 
   const openRejectModal = (doc: any) => {
     if (!canRejectDocument(doc)) {
@@ -129,9 +130,7 @@ export default function DocumentsPage() {
         const err = await res.json().catch(() => ({}))
         const message = String(err.error || err.message || "")
         showToast(
-          decision === "REJECTED" && message.toLowerCase().includes("pending")
-            ? "BE chưa hỗ trợ từ chối tài liệu đã duyệt. Cần API thu hồi/gỡ public."
-            : message || "Không thể thực hiện thao tác kiểm duyệt.",
+          message || "Không thể thực hiện thao tác kiểm duyệt.",
           "error"
         )
       }
@@ -346,7 +345,17 @@ export default function DocumentsPage() {
                             className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[12px] rounded-xl transition-colors flex items-center gap-1 disabled:opacity-50"
                             title={doc.status === "APPROVED" ? "Từ chối/gỡ tài liệu đã duyệt khỏi diễn đàn" : "Từ chối bài chia sẻ"}
                           >
-                            <Ban size={13} /> Từ chối
+                            <Ban size={13} /> {doc.status === "APPROVED" ? "Gỡ công khai" : "Từ chối"}
+                          </button>
+                        )}
+                        {canRepublishDocument(doc) && (
+                          <button
+                            onClick={() => handleModerate(doc.id, "APPROVED")}
+                            disabled={moderatingId === doc.id}
+                            className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 font-bold text-[12px] rounded-xl transition-colors flex items-center gap-1 disabled:opacity-50"
+                            title="Công khai lại tài liệu đã bị từ chối"
+                          >
+                            <CheckCircle size={13} /> Công khai lại
                           </button>
                         )}
                       </div>
@@ -456,7 +465,7 @@ export default function DocumentsPage() {
 
             <div>
               <h3 className="text-xl sm:text-2xl font-bold text-red-700 leading-tight" style={{ fontFamily: "Geist, sans-serif" }}>
-                Từ chối kiểm duyệt tài liệu
+                {selectedDocForReject.status === "APPROVED" ? "Gỡ tài liệu khỏi công khai" : "Từ chối kiểm duyệt tài liệu"}
               </h3>
               <p className="text-[13px] sm:text-[14px] text-[#727785] mt-1.5 break-words pr-8">
                 Tài liệu: <strong className="text-[#121c2a]">{selectedDocForReject.title}</strong>
@@ -464,11 +473,11 @@ export default function DocumentsPage() {
             </div>
 
             <div>
-              <label className="text-[13px] font-bold text-[#424754] block mb-2">Lý do từ chối (Gửi đến sinh viên)</label>
+              <label className="text-[13px] font-bold text-[#424754] block mb-2">{selectedDocForReject.status === "APPROVED" ? "Lý do gỡ công khai (Gửi đến sinh viên)" : "Lý do từ chối (Gửi đến sinh viên)"}</label>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Ví dụ: Vi phạm bản quyền, định dạng mờ, không đúng chủ đề lĩnh vực nghiên cứu..."
+                placeholder={selectedDocForReject.status === "APPROVED" ? "Ví dụ: Gỡ khỏi diễn đàn vì tài liệu cần rà soát lại..." : "Ví dụ: Vi phạm bản quyền, định dạng mờ, không đúng chủ đề lĩnh vực nghiên cứu..."}
                 className="w-full min-h-32 p-3.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] sm:text-[14px] outline-none focus:border-red-500 transition-colors resize-none"
               />
             </div>
@@ -485,7 +494,7 @@ export default function DocumentsPage() {
                 disabled={!rejectionReason.trim() || moderatingId === selectedDocForReject.id}
                 className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-[13px] sm:text-[14px] shadow-md transition-all disabled:opacity-40"
               >
-                Xác nhận Từ chối
+                {selectedDocForReject.status === "APPROVED" ? "Xác nhận Gỡ công khai" : "Xác nhận Từ chối"}
               </button>
             </div>
           </div>
@@ -494,6 +503,9 @@ export default function DocumentsPage() {
     </div>
   )
 }
+
+
+
 
 
 
