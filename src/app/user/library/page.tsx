@@ -57,6 +57,19 @@ export default function LibraryPage() {
     setTimeout(() => setToastMessage(null), 4000)
   }
 
+  const getDocumentStatusMeta = (status?: string) => {
+    const normalized = String(status || "PENDING").toUpperCase()
+
+    if (normalized === "APPROVED") {
+      return { label: "Đã duyệt", className: "bg-green-100 text-green-700 border-green-200" }
+    }
+
+    if (normalized === "REJECTED") {
+      return { label: "Bị từ chối", className: "bg-red-100 text-red-700 border-red-200" }
+    }
+
+    return { label: "Chờ duyệt", className: "bg-amber-100 text-amber-800 border-amber-200" }
+  }
   // Fetch Documents & Collections from API
   const fetchAllData = React.useCallback(async () => {
     if (!token) return
@@ -99,7 +112,8 @@ export default function LibraryPage() {
               collection: firstCol,
               collectionList: item.collections || [],
               isBookmarked,
-              status: item.status || "APPROVED",
+              status: String(item.status || "APPROVED").toUpperCase(),
+              rejectionReason: item.rejectionReason || item.raw?.rejectionReason || null,
               tags: item.tags || [],
               raw: item
             }
@@ -766,8 +780,16 @@ export default function LibraryPage() {
                           {doc.title}
                         </Link>
                         <span className="text-[9px] font-bold text-[#727785] bg-gray-100 px-1.5 py-0.5 rounded shrink-0">{doc.type}</span>
+                        <span className={cn("text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border shrink-0", getDocumentStatusMeta(doc.status).className)}>
+                          {getDocumentStatusMeta(doc.status).label}
+                        </span>
                       </div>
                       <p className="text-[12px] text-[#727785] truncate">{doc.authors}</p>
+                      {doc.status === "REJECTED" && doc.rejectionReason && (
+                        <p className="mt-1 text-[11px] font-semibold text-red-600 line-clamp-1">
+                          Lý do từ chối: {doc.rejectionReason}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -932,8 +954,10 @@ export default function LibraryPage() {
                   </div>
                   <div className="bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl p-3">
                     <Hash size={14} className="text-[#0058be] mb-2" />
-                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-0.5">Trạng thái</p>
-                    <p className="text-[13px] font-bold text-[#0058be]">{selectedDocDetails.status}</p>
+                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-1.5">Trạng thái</p>
+                    <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[11px] font-extrabold", getDocumentStatusMeta(selectedDocDetails.status).className)}>
+                      {getDocumentStatusMeta(selectedDocDetails.status).label}
+                    </span>
                   </div>
                   <div className="bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl p-3">
                     <FolderOpen size={14} className="text-[#0058be] mb-2" />
@@ -946,6 +970,17 @@ export default function LibraryPage() {
                     <p className="text-[13px] font-bold text-[#121c2a] truncate">{selectedDocDetails.raw?.subject?.name || "Chung"}</p>
                   </div>
                 </div>
+                {selectedDocDetails.status === "REJECTED" && selectedDocDetails.rejectionReason && (
+                  <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-red-700">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wide">Lý do bị từ chối</p>
+                        <p className="mt-1 text-[12px] font-medium leading-relaxed">{selectedDocDetails.rejectionReason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Tags list */}
@@ -1322,4 +1357,7 @@ export default function LibraryPage() {
     </div>
   )
 }
+
+
+
 

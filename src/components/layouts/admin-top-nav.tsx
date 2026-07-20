@@ -40,7 +40,7 @@ const adminNavLinks = [
   },
   {
     name: "Documents",
-    href: "/admin/documents",
+    href: "/admin/documents?status=PENDING",
     icon: FileText,
     activePrefix: "/admin/documents",
   },
@@ -160,6 +160,12 @@ export function AdminTopNav() {
 
       const usersPayload = usersRes?.ok ? await usersRes.json().catch(() => ({})) : {}
       const docsPayload = docsRes?.ok ? await docsRes.json().catch(() => ({})) : {}
+      const pendingDocs = normalizeArray(docsPayload).filter(
+        (item: any) => item?.id && String(item?.status).toUpperCase() === "PENDING"
+      )
+      const pendingTotalValue = Number(docsPayload?.total ?? docsPayload?.totalItems ?? docsPayload?.count)
+      const pendingTotal = Number.isFinite(pendingTotalValue) && pendingTotalValue > 0 ? pendingTotalValue : pendingDocs.length
+      setPendingDocumentCount(pendingTotal)
 
       const userItems = normalizeArray(usersPayload)
         .filter((item: any) => item?.id && item?.createdAt)
@@ -172,8 +178,7 @@ export function AdminTopNav() {
           createdAt: item.createdAt,
         }))
 
-      const documentItems = normalizeArray(docsPayload)
-        .filter((item: any) => item?.id && String(item?.status).toUpperCase() === "PENDING")
+      const documentItems = pendingDocs
         .map((item: any): AdminNotification => ({
           id: `doc-pending-${item.id}`,
           type: "DOCUMENT_PENDING",
@@ -240,7 +245,7 @@ export function AdminTopNav() {
               key={name}
               href={href}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2 text-[14px] font-semibold tracking-wide transition-all",
+                "relative flex items-center gap-2 rounded-xl px-4 py-2 text-[14px] font-semibold tracking-wide transition-all",
                 active
                   ? "bg-[#0058be] text-white shadow-md shadow-[#0058be]/20"
                   : "text-[#424754] hover:bg-[#eff4ff] hover:text-[#0058be]"
@@ -251,7 +256,7 @@ export function AdminTopNav() {
               {showPendingBadge && (
                 <span
                   className={cn(
-                    "ml-0.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold",
+                    "absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold shadow-sm",
                     active ? "bg-white text-[#0058be]" : "bg-red-600 text-white"
                   )}
                 >
@@ -408,4 +413,9 @@ export function AdminTopNav() {
     </header>
   )
 }
+
+
+
+
+
 

@@ -5,7 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   BookOpen, Brain, HardDrive,
-  Wallet, Settings, LogOut, Search, ChevronDown, MessageSquare
+  Wallet, Settings, LogOut, Search, ChevronDown, MessageSquare,
+  Bell, CheckCircle2, XCircle, Clock
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
@@ -32,37 +33,150 @@ const appNavLinks = [
   },
 ]
 
+
+type UserNotification = {
+  id: string
+  title: string
+  content: string
+  createdAt: string
+  tone: "success" | "error" | "info"
+}
+
+const USER_NOTIFY_SEEN_KEY = "lumis_user_notifications_seen_at"
+
+function normalizeNotificationArray(payload: any): any[] {
+  if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload?.items)) return payload.items
+  if (Array.isArray(payload?.data)) return payload.data
+  if (Array.isArray(payload?.notifications)) return payload.notifications
+  return []
+}
+
+function getUserNotificationTime(item: UserNotification) {
+  const time = new Date(item.createdAt).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
+function userTimeAgo(value: string) {
+  const diff = Date.now() - new Date(value).getTime()
+  if (!Number.isFinite(diff) || diff < 0) return "vừa xong"
+
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 1) return "vừa xong"
+  if (minutes < 60) return `${minutes} phút trước`
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} giờ trước`
+
+  return `${Math.floor(hours / 24)} ngày trước`
+}
 /* ─── Component ─────────────────────────────── */
 export function LandingHeader() {
   const pathname = usePathname()
-  const { user, logout } = useAuth()
+  const { user, token, logout } = useAuth()
 
   const [profileOpen, setProfileOpen] = React.useState(false)
+  const [notificationOpen, setNotificationOpen] = React.useState(false)
+  const [notifications, setNotifications] = React.useState<UserNotification[]>([])
+  const [seenAt, setSeenAt] = React.useState<number>(() => Date.now())
   const [scrolled, setScrolled] = React.useState(false)
 
   const profileRef = React.useRef<HTMLDivElement>(null)
+  const notificationRef = React.useRef<HTMLDivElement>(null)
 
   /* Scroll handler */
   React.useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 8)
       if (profileOpen) setProfileOpen(false)
+      if (notificationOpen) setNotificationOpen(false)
     }
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
-  }, [profileOpen])
+  }, [profileOpen, notificationOpen])
 
   /* Close dropdown on outside click */
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node))
+      const target = e.target as Node
+      if (profileRef.current && !profileRef.current.contains(target))
         setProfileOpen(false)
+      if (notificationRef.current && !notificationRef.current.contains(target))
+        setNotificationOpen(false)
     }
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
+  React.useEffect(() => {
+    const storedSeenAt = localStorage.getItem(USER_NOTIFY_SEEN_KEY)
+    if (storedSeenAt) {
+      setSeenAt(new Date(storedSeenAt).getTime() || Date.now())
+      return
+    }
+
+    const now = new Date().toISOString()
+    localStorage.setItem(USER_NOTIFY_SEEN_KEY, now)
+    setSeenAt(new Date(now).getTime())
+  }, [])
+
+  const loadUserNotifications = React.useCallback(async () => {
+    if (!token) return
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
+    try {
+      const res = await fetch(`${baseUrl}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (!res.ok) return
+
+      const payload = await res.json().catch(() => ({}))
+      const mapped = normalizeNotificationArray(payload)
+        .map((item: any): UserNotification => {
+          const title = String(item.title || item.type || "Thông báo")
+          const content = String(item.content || item.message || item.description || "Bạn có một cập nhật mới.")
+          const text = `${title} ${content}`.toLowerCase()
+
+          return {
+            id: String(item.id || `${title}-${item.createdAt || item.updatedAt || Date.now()}`),
+            title,
+            content,
+            createdAt: item.createdAt || item.updatedAt || new Date().toISOString(),
+            tone: text.includes("từ chối") || text.includes("rejected") ? "error" : text.includes("duyệt") || text.includes("approved") ? "success" : "info",
+          }
+        })
+        .filter((item) => getUserNotificationTime(item) > 0)
+        .sort((a, b) => getUserNotificationTime(b) - getUserNotificationTime(a))
+        .slice(0, 10)
+
+      setNotifications(mapped)
+    } catch {
+      // Notification loading must not block navigation.
+    }
+  }, [token])
+
+  React.useEffect(() => {
+    if (!user) return
+
+    loadUserNotifications()
+    const timer = window.setInterval(loadUserNotifications, 30000)
+    return () => window.clearInterval(timer)
+  }, [user, loadUserNotifications])
+
+  const unreadCount = notifications.filter((item) => getUserNotificationTime(item) > seenAt).length
+
+  const openNotifications = () => {
+    setNotificationOpen((open) => !open)
+    setProfileOpen(false)
+
+    const now = new Date().toISOString()
+    localStorage.setItem(USER_NOTIFY_SEEN_KEY, now)
+    setSeenAt(new Date(now).getTime())
+  }
   const handleLogout = () => {
+    setNotificationOpen(false)
     setProfileOpen(false)
     logout()
   }
@@ -166,9 +280,79 @@ export function LandingHeader() {
                 <span>Quay lại Admin</span>
               </Link>
             )}
+            <div className="relative" ref={notificationRef}>
+              <button
+                type="button"
+                onClick={openNotifications}
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#424754] transition-all hover:bg-[#eff4ff] hover:text-[#0058be]"
+                title="Thông báo"
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-extrabold text-white shadow-sm">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {notificationOpen && (
+                <div className="absolute right-0 top-[calc(100%+10px)] w-[380px] overflow-hidden rounded-2xl border border-[#c2c6d6]/40 bg-white shadow-xl shadow-black/8">
+                  <div className="flex items-center justify-between border-b border-[#c2c6d6]/30 bg-[#f8f9ff] px-4 py-3.5">
+                    <div>
+                      <p className="text-[13px] font-extrabold text-[#121c2a]">Thông báo</p>
+                      <p className="text-[11px] font-medium text-[#727785]">Cập nhật duyệt tài liệu và phản hồi từ admin</p>
+                    </div>
+                    <span className="rounded-full bg-[#eff4ff] px-2.5 py-1 text-[11px] font-extrabold text-[#0058be]">
+                      {notifications.length}
+                    </span>
+                  </div>
+
+                  <div className="max-h-[380px] overflow-y-auto py-1">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-[13px] font-semibold text-[#727785]">
+                        Chưa có thông báo mới.
+                      </div>
+                    ) : (
+                      notifications.map((item) => {
+                        const Icon = item.tone === "error" ? XCircle : item.tone === "success" ? CheckCircle2 : Clock
+                        const isUnread = getUserNotificationTime(item) > seenAt
+
+                        return (
+                          <div key={item.id} className="flex gap-3 px-4 py-3 transition-colors hover:bg-[#f8f9ff]">
+                            <div
+                              className={cn(
+                                "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                                item.tone === "error"
+                                  ? "bg-red-50 text-red-700"
+                                  : item.tone === "success"
+                                    ? "bg-green-50 text-green-700"
+                                    : "bg-[#eff4ff] text-[#0058be]"
+                              )}
+                            >
+                              <Icon size={17} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-[13px] font-extrabold text-[#121c2a]">{item.title}</p>
+                                {isUnread && <span className="mt-1 h-2 w-2 rounded-full bg-red-600" />}
+                              </div>
+                              <p className="mt-0.5 text-[12px] font-medium leading-relaxed text-[#727785]">{item.content}</p>
+                              <p className="mt-1 text-[11px] font-bold text-[#0058be]">{userTimeAgo(item.createdAt)}</p>
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="relative" ref={profileRef}>
             <button
-              onClick={() => setProfileOpen(!profileOpen)}
+              onClick={() => {
+                setProfileOpen(!profileOpen)
+                setNotificationOpen(false)
+              }}
               className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-[#eff4ff] transition-all group"
             >
               <span className="hidden sm:block text-[14px] font-semibold text-[#424754] group-hover:text-[#0058be] transition-colors">
@@ -272,3 +456,5 @@ export function LandingHeader() {
     </header>
   )
 }
+
+
