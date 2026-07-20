@@ -76,6 +76,16 @@ export default function DocumentsPage() {
   useEffect(() => {
     fetchDocuments()
   }, [fetchDocuments])
+  const isPrivateDocument = (doc: any) => String(doc?.visibility || "").toUpperCase() === "PRIVATE"
+
+  const handleViewDocument = (doc: any) => {
+    if (isPrivateDocument(doc)) {
+      showToast("Không được xem tài liệu riêng tư.", "error")
+      return
+    }
+
+    router.push(`/admin/documents/${doc.id}`)
+  }
 
   // Handle Moderate (Approve / Reject)
   const handleModerate = async (docId: string, decision: "APPROVED" | "REJECTED", reason?: string) => {
@@ -238,9 +248,13 @@ export default function DocumentsPage() {
                           <FileText size={18} />
                         </div>
                         <div className="min-w-0">
-                          <Link href={`/admin/documents/${doc.id}`} className="font-bold text-[#121c2a] hover:text-[#0058be] transition-colors line-clamp-1">
+                                                    <button
+                            type="button"
+                            onClick={() => handleViewDocument(doc)}
+                            className="font-bold text-[#121c2a] hover:text-[#0058be] transition-colors line-clamp-1 text-left"
+                          >
                             {doc.title}
-                          </Link>
+                          </button>
                           <p className="text-[12px] text-[#727785] truncate">
                             Bởi: <strong className="text-[#424754]">{doc.owner?.name || doc.owner?.email || "Sinh viên"}</strong> · {new Date(doc.createdAt).toLocaleDateString("vi-VN")}
                           </p>
@@ -284,13 +298,14 @@ export default function DocumentsPage() {
 
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          href={`/admin/documents/${doc.id}`}
+                                                <button
+                          type="button"
+                          onClick={() => handleViewDocument(doc)}
                           className="p-2 bg-[#eff4ff] text-[#0058be] hover:bg-[#dee9fc] rounded-xl transition-colors"
-                          title="Xem chi tiết & kiểm duyệt tài liệu"
+                          title={isPrivateDocument(doc) ? "Không được xem tài liệu riêng tư" : "Xem chi tiết & kiểm duyệt tài liệu"}
                         >
                           <Eye size={15} />
-                        </Link>
+                        </button>
 
                         {doc.visibility === "PUBLIC" && doc.status !== "APPROVED" && (
                           <button
