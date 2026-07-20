@@ -121,27 +121,31 @@ export default function ForumPage() {
       )}
 
       {/* Hero Header Banner */}
-      <section className="bg-gradient-to-r from-[#0058be] via-[#1a6ddb] to-[#316bf3] py-12 px-6 md:px-16 text-white relative overflow-hidden shadow-md">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[12px] font-bold tracking-wide uppercase text-white">
-              <Sparkles size={14} className="text-amber-300" /> Diễn đàn & Khám phá Học thuật
+      <section className="bg-gradient-to-br from-[#004ca3] via-[#0058be] to-[#2662d9] pt-14 pb-20 px-6 md:px-16 text-white relative overflow-hidden shadow-lg">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+        <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-3xl pointer-events-none -mr-40 -mt-40 animate-pulse" />
+        <div className="absolute left-20 bottom-0 w-64 h-64 bg-[#4da2ff]/30 rounded-full blur-3xl pointer-events-none -mb-20" />
+        
+        <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-5 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[12px] font-extrabold tracking-wider uppercase text-white shadow-sm">
+              <Sparkles size={15} className="text-amber-300" /> Diễn đàn & Khám phá Học thuật
             </div>
-            <h1 className="text-[32px] md:text-[38px] font-extrabold leading-tight tracking-tight" style={{ fontFamily: "Geist, sans-serif" }}>
+            <h1 className="text-[36px] md:text-[46px] font-extrabold leading-[1.15] tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-[#e0ebff]" style={{ fontFamily: "Geist, sans-serif" }}>
               Cộng Đồng Nghiên Cứu AI Lumis
             </h1>
-            <p className="text-[14px] md:text-[15px] text-white/90 leading-relaxed font-medium">
+            <p className="text-[15px] md:text-[17px] text-white/90 leading-relaxed font-medium max-w-xl">
               Khám phá, đánh giá và thảo luận hàng ngàn tài liệu nghiên cứu công khai từ sinh viên và giảng viên. Kết hợp Trợ lý AI để phân tích tri thức chuyên sâu ngay lập tức.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+          <div className="flex flex-col sm:flex-row gap-4 shrink-0">
             <Link
               href="/user/upload?visibility=PUBLIC"
-              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-[#0058be] hover:bg-[#eff4ff] rounded-2xl font-bold text-[14px] shadow-lg shadow-black/10 transition-all hover:scale-105"
+              className="group flex items-center justify-center gap-2.5 px-7 py-4 bg-white text-[#0058be] rounded-2xl font-extrabold text-[15px] shadow-[0_8px_30px_rgb(0,0,0,0.15)] transition-all hover:shadow-[0_8px_30px_rgb(255,255,255,0.2)] hover:-translate-y-1"
             >
-              <PlusCircle size={18} /> Đăng tài liệu / Thảo luận
+              <PlusCircle size={20} className="group-hover:rotate-90 transition-transform duration-300" /> Đăng tài liệu / Thảo luận
             </Link>
           </div>
         </div>
