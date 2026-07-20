@@ -20,6 +20,8 @@ export default function LibraryPage() {
   const [activeCol, setActiveCol] = React.useState<string>("all") // "all", "bookmarked", or collectionId/name
   const [activeTag, setActiveTag] = React.useState<string | null>(null)
   const [sortOrder, setSortOrder] = React.useState<"newest" | "oldest" | "title">("newest")
+  const [visibilityFilter, setVisibilityFilter] = React.useState<"ALL" | "PUBLIC" | "PRIVATE">("ALL")
+  const [moderationFilter, setModerationFilter] = React.useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL")
   
   // State for data
   const [docs, setDocs] = React.useState<any[]>([])
@@ -70,6 +72,16 @@ export default function LibraryPage() {
 
     return { label: "Chờ duyệt", className: "bg-amber-100 text-amber-800 border-amber-200" }
   }
+
+  const getDocumentVisibilityMeta = (visibility?: string) => {
+    const normalized = String(visibility || "PRIVATE").toUpperCase()
+
+    if (normalized === "PUBLIC") {
+      return { label: "Công khai", className: "bg-purple-100 text-purple-700 border-purple-200" }
+    }
+
+    return { label: "Riêng tư", className: "bg-gray-100 text-gray-700 border-gray-200" }
+  }
   // Fetch Documents & Collections from API
   const fetchAllData = React.useCallback(async () => {
     if (!token) return
@@ -112,6 +124,7 @@ export default function LibraryPage() {
               collection: firstCol,
               collectionList: item.collections || [],
               isBookmarked,
+              visibility: String(item.visibility || "PRIVATE").toUpperCase(),
               status: String(item.status || "APPROVED").toUpperCase(),
               rejectionReason: item.rejectionReason || item.raw?.rejectionReason || null,
               tags: item.tags || [],
@@ -168,6 +181,14 @@ export default function LibraryPage() {
         doc.raw?.description?.toLowerCase().includes(search.toLowerCase())
       if (!matchSearch) return false
 
+      // Visibility check
+      if (visibilityFilter !== "ALL" && doc.visibility !== visibilityFilter) return false
+
+      // Public moderation status check
+      if (moderationFilter !== "ALL") {
+        if (doc.visibility !== "PUBLIC" || doc.status !== moderationFilter) return false
+      }
+
       // Collection check
       if (activeCol === "bookmarked") {
         if (!doc.isBookmarked) return false
@@ -190,7 +211,7 @@ export default function LibraryPage() {
       if (sortOrder === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       return a.title.localeCompare(b.title)
     })
-  }, [docs, search, activeCol, activeTag, sortOrder])
+  }, [docs, search, activeCol, activeTag, sortOrder, visibilityFilter, moderationFilter])
 
 
   // Handle Bookmark Toggle
@@ -481,6 +502,29 @@ export default function LibraryPage() {
 
           <div className="flex items-center gap-3">
             <select
+              value={visibilityFilter}
+              onChange={(e) => { const next = e.target.value as "ALL" | "PUBLIC" | "PRIVATE"; setVisibilityFilter(next); if (next !== "PUBLIC") setModerationFilter("ALL") }}
+              className="px-4 py-2.5 bg-white border border-[#c2c6d6]/50 rounded-2xl text-[13px] font-semibold text-[#424754] hover:bg-gray-50 shadow-sm transition-all outline-none cursor-pointer"
+            >
+              <option value="ALL">Tất cả quyền truy cập</option>
+              <option value="PUBLIC">Công khai</option>
+              <option value="PRIVATE">Riêng tư</option>
+            </select>
+
+            {visibilityFilter === "PUBLIC" && (
+              <select
+                value={moderationFilter}
+                onChange={(e) => setModerationFilter(e.target.value as "ALL" | "PENDING" | "APPROVED" | "REJECTED")}
+                className="px-4 py-2.5 bg-white border border-[#c2c6d6]/50 rounded-2xl text-[13px] font-semibold text-[#424754] hover:bg-gray-50 shadow-sm transition-all outline-none cursor-pointer"
+              >
+                <option value="ALL">Tất cả trạng thái công khai</option>
+                <option value="PENDING">Chờ duyệt</option>
+                <option value="APPROVED">Đã duyệt</option>
+                <option value="REJECTED">Bị từ chối</option>
+              </select>
+            )}
+
+            <select
               value={sortOrder}
               onChange={(e: any) => setSortOrder(e.target.value)}
               className="px-4 py-2.5 bg-white border border-[#c2c6d6]/50 rounded-2xl text-[13px] font-semibold text-[#424754] hover:bg-gray-50 shadow-sm transition-all outline-none cursor-pointer"
@@ -581,6 +625,70 @@ export default function LibraryPage() {
               })}
             </div>
           </div>
+
+          {/* Visibility Filters */}
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider">Quyền truy cập</h3>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              {([
+                { key: "ALL", label: "Tất cả", count: docs.length },
+                { key: "PUBLIC", label: "Công khai", count: docs.filter(d => d.visibility === "PUBLIC").length },
+                { key: "PRIVATE", label: "Riêng tư", count: docs.filter(d => d.visibility === "PRIVATE").length },
+              ] as const).map((item) => {
+                const isActive = visibilityFilter === item.key
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => { setVisibilityFilter(item.key); if (item.key !== "PUBLIC") setModerationFilter("ALL") }}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium transition-colors w-full",
+                      isActive
+                        ? "bg-[#0058be] text-white shadow-sm"
+                        : "text-[#424754] hover:bg-white hover:shadow-sm"
+                    )}
+                  >
+                    <span className="truncate">{item.label}</span>
+                    <span className={cn("text-[11px] font-semibold shrink-0 ml-2", isActive ? "text-white/80" : "text-[#727785]")}>{item.count}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {visibilityFilter === "PUBLIC" && (
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h3 className="text-[11px] font-bold text-[#727785] uppercase tracking-wider">Trạng thái công khai</h3>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {([
+                  { key: "ALL", label: "Tất cả trạng thái", count: docs.filter(d => d.visibility === "PUBLIC").length },
+                  { key: "PENDING", label: "Chờ duyệt", count: docs.filter(d => d.visibility === "PUBLIC" && d.status === "PENDING").length },
+                  { key: "APPROVED", label: "Đã duyệt", count: docs.filter(d => d.visibility === "PUBLIC" && d.status === "APPROVED").length },
+                  { key: "REJECTED", label: "Bị từ chối", count: docs.filter(d => d.visibility === "PUBLIC" && d.status === "REJECTED").length },
+                ] as const).map((item) => {
+                  const isActive = moderationFilter === item.key
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => setModerationFilter(item.key)}
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-medium transition-colors w-full",
+                        isActive
+                          ? "bg-[#0058be] text-white shadow-sm"
+                          : "text-[#424754] hover:bg-white hover:shadow-sm"
+                      )}
+                    >
+                      <span className="truncate">{item.label}</span>
+                      <span className={cn("text-[11px] font-semibold shrink-0 ml-2", isActive ? "text-white/80" : "text-[#727785]")}>{item.count}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Tags */}
           <div>
@@ -723,9 +831,9 @@ export default function LibraryPage() {
                         <Plus size={18} />
                         <span>Tải tài liệu PDF/DOCX ngay</span>
                       </Link>
-                      {(search || activeCol !== "all" || activeTag !== null) && (
+                      {(search || activeCol !== "all" || activeTag !== null || visibilityFilter !== "ALL" || moderationFilter !== "ALL") && (
                         <button 
-                          onClick={() => { setSearch(""); setActiveCol("all"); setActiveTag(null); }}
+                          onClick={() => { setSearch(""); setActiveCol("all"); setActiveTag(null); setVisibilityFilter("ALL"); setModerationFilter("ALL"); }}
                           className="inline-flex items-center gap-2 px-5 py-3 bg-white border border-[#c2c6d6]/60 text-[#121c2a] text-[14px] font-bold rounded-2xl hover:bg-gray-50 transition-colors shadow-sm"
                         >
                           <X size={16} />
@@ -769,12 +877,17 @@ export default function LibraryPage() {
                           {doc.title}
                         </Link>
                         <span className="text-[9px] font-bold text-[#727785] bg-gray-100 px-1.5 py-0.5 rounded shrink-0">{doc.type}</span>
-                        <span className={cn("text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border shrink-0", getDocumentStatusMeta(doc.status).className)}>
-                          {getDocumentStatusMeta(doc.status).label}
+                        <span className={cn("text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border shrink-0", getDocumentVisibilityMeta(doc.visibility).className)}>
+                          {getDocumentVisibilityMeta(doc.visibility).label}
                         </span>
+                        {doc.visibility === "PUBLIC" && (
+                          <span className={cn("text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border shrink-0", getDocumentStatusMeta(doc.status).className)}>
+                            {getDocumentStatusMeta(doc.status).label}
+                          </span>
+                        )}
                       </div>
                       <p className="text-[12px] text-[#727785] truncate">{doc.authors}</p>
-                      {doc.status === "REJECTED" && doc.rejectionReason && (
+                      {doc.visibility === "PUBLIC" && doc.status === "REJECTED" && doc.rejectionReason && (
                         <p className="mt-1 text-[11px] font-semibold text-red-600 line-clamp-1">
                           Lý do từ chối: {doc.rejectionReason}
                         </p>
@@ -943,10 +1056,15 @@ export default function LibraryPage() {
                   </div>
                   <div className="bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl p-3">
                     <Hash size={14} className="text-[#0058be] mb-2" />
-                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-1.5">Trạng thái</p>
-                    <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[11px] font-extrabold", getDocumentStatusMeta(selectedDocDetails.status).className)}>
-                      {getDocumentStatusMeta(selectedDocDetails.status).label}
+                    <p className="text-[10px] font-bold text-[#727785] uppercase mb-1.5">Quyền truy cập</p>
+                    <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[11px] font-extrabold", getDocumentVisibilityMeta(selectedDocDetails.visibility).className)}>
+                      {getDocumentVisibilityMeta(selectedDocDetails.visibility).label}
                     </span>
+                    {selectedDocDetails.visibility === "PUBLIC" && (
+                      <span className={cn("mt-1.5 inline-flex rounded-full border px-2 py-0.5 text-[11px] font-extrabold", getDocumentStatusMeta(selectedDocDetails.status).className)}>
+                        {getDocumentStatusMeta(selectedDocDetails.status).label}
+                      </span>
+                    )}
                   </div>
                   <div className="bg-[#f8f9ff] border border-[#c2c6d6]/40 rounded-xl p-3">
                     <FolderOpen size={14} className="text-[#0058be] mb-2" />
@@ -959,7 +1077,7 @@ export default function LibraryPage() {
                     <p className="text-[13px] font-bold text-[#121c2a] truncate">{selectedDocDetails.raw?.subject?.name || "Chung"}</p>
                   </div>
                 </div>
-                {selectedDocDetails.status === "REJECTED" && selectedDocDetails.rejectionReason && (
+                {selectedDocDetails.visibility === "PUBLIC" && selectedDocDetails.status === "REJECTED" && selectedDocDetails.rejectionReason && (
                   <div className="mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-red-700">
                     <div className="flex items-start gap-2">
                       <AlertCircle size={16} className="mt-0.5 shrink-0" />
