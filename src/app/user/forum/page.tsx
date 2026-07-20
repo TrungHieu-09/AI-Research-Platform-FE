@@ -229,22 +229,25 @@ export default function ForumPage() {
             </button>
           </div>
         ) : documents.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-[#c2c6d6]/40 p-14 text-center max-w-xl mx-auto space-y-4 shadow-sm">
-            <div className="w-16 h-16 rounded-2xl bg-[#eff4ff] text-[#0058be] flex items-center justify-center mx-auto">
-              <BookOpen size={32} />
+          <div className="w-full max-w-xl mx-auto bg-white/80 backdrop-blur-md rounded-3xl border border-[#c2c6d6]/40 p-14 text-center space-y-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#eff4ff]/50 to-transparent pointer-events-none" />
+            <div className="w-20 h-20 rounded-full bg-[#eff4ff] text-[#0058be] flex items-center justify-center mx-auto relative z-10 shadow-sm">
+              <BookOpen size={36} />
             </div>
-            <h3 className="text-[18px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
-              Chưa có tài liệu nào trong danh mục này
-            </h3>
-            <p className="text-[13px] text-[#727785] max-w-md mx-auto leading-relaxed">
-              Bạn có thể là người đầu tiên chia sẻ tài liệu và khởi tạo chủ đề thảo luận học thuật với cộng đồng Lumis AI!
-            </p>
-            <div className="pt-2">
+            <div className="relative z-10">
+              <h3 className="text-[20px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
+                Chưa có tài liệu nào trong danh mục này
+              </h3>
+              <p className="text-[14px] text-[#727785] max-w-md mx-auto leading-relaxed mt-2">
+                Bạn có thể là người đầu tiên chia sẻ tài liệu và khởi tạo chủ đề thảo luận học thuật với cộng đồng Lumis AI!
+              </p>
+            </div>
+            <div className="pt-4 relative z-10">
               <Link
                 href="/user/upload?visibility=PUBLIC"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#0058be] text-white font-bold text-[13px] rounded-xl hover:bg-[#004ca3] transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#0058be] text-white font-bold text-[14px] rounded-2xl hover:bg-[#004ca3] hover:shadow-lg hover:-translate-y-0.5 transition-all"
               >
-                <PlusCircle size={16} /> Chia sẻ tài liệu ngay
+                <PlusCircle size={18} /> Chia sẻ tài liệu ngay
               </Link>
             </div>
           </div>
