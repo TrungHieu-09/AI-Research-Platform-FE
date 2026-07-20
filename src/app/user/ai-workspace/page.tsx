@@ -556,8 +556,31 @@ function WorkspaceContent() {
         .then(res => res.json())
         .then(data => {
           if (data.id) {
+            // Keep the inspector display state
             setRealAttachedDoc({ id: data.id, title: data.title })
             setIsDocAttached(true)
+
+            // Also inject as uploadedFile so the existing "attached file" flow is used:
+            // - file shows as blue bubble in chat UI
+            // - file is stored in session via [ATTACHED_FILE:...] marker
+            // - backend reads full file content and uses the rich system prompt
+            if (data.fileUrl) {
+              const ext = data.mimeType?.includes("pdf")
+                ? ".pdf"
+                : data.mimeType?.includes("word") || data.mimeType?.includes("document")
+                  ? ".docx"
+                  : data.mimeType?.includes("text")
+                    ? ".txt"
+                    : ""
+              const fileName = data.title.endsWith(ext) ? data.title : `${data.title}${ext}`
+              setUploadedFile({
+                name: fileName,
+                size: data.fileSize || 0,
+                fileUrl: data.fileUrl,
+                fileHash: data.fileHash,
+                mimeType: data.mimeType || "application/pdf"
+              })
+            }
           }
         })
         .catch(console.error)
@@ -830,13 +853,13 @@ function WorkspaceContent() {
                           <Upload size={18} />
                           Đính kèm tệp
                         </button>
-                        {/* <Link
+                        <Link
                           href="/user/library"
                           className="flex-1 w-full py-3 px-4 bg-white hover:bg-[#f8f9ff] text-[#0058be] border border-[#0058be]/20 font-semibold text-[14px] rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-sm whitespace-nowrap"
                         >
                           <BookOpen size={18} />
                           Chọn từ thư viện
-                        </Link> */}
+                        </Link>
                       </div>
                     </div>
                   )}
