@@ -82,14 +82,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
-  // Rehydrate session on mount
+  // Rehydrate and validate session on mount.
+  // Do not trust localStorage alone: copied private URLs must wait for token verification.
   React.useEffect(() => {
-    const session = loadSession()
-    if (session) {
-      setToken(session.token)
-      setUser(session.user)
+    let cancelled = false
+
+    async function rehydrateSession() {
+      const session = loadSession()
+      if (!session) {
+        if (!cancelled) setIsLoading(false)
+        return
+      }
+
+      try {
+        const res = await api.get<{ user?: any } | any>("/api/users/me", { token: session.token })
+        const profile = (res as any)?.user ?? res
+
+        if (!profile?.id) {
+          throw new Error("Invalid session profile")
+        }
+
+        const verifiedUser: AuthUser = {
+          ...profile,
+          initials: makeInitials(profile.name || session.user.name || "User"),
+        }
+
+        if (localStorage.getItem("lumis_demo_premium") === "true") {
+          verifiedUser.tier = "PREMIUM"
+        }
+
+        saveSession(session.token, verifiedUser)
+
+        if (!cancelled) {
+          setToken(session.token)
+          setUser(verifiedUser)
+        }
+      } catch {
+        clearSession()
+        if (!cancelled) {
+          setToken(null)
+          setUser(null)
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
     }
-    setIsLoading(false)
+
+    rehydrateSession()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const login = React.useCallback(async (email: string, password: string) => {
