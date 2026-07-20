@@ -151,7 +151,7 @@ export default function UploadDocumentPage() {
       return
     }
     if (!subjectId) {
-      setErrorMessage("Vui lòng chọn môn học.")
+      setErrorMessage("Vui lòng chọn lĩnh vực nghiên cứu.")
       return
     }
     if (!title.trim()) {
@@ -429,10 +429,10 @@ export default function UploadDocumentPage() {
                   />
                 </div>
 
-                {/* Subject */}
+                {/* Research Area */}
                 <div>
                   <label htmlFor="doc-subject" className="block text-[13px] font-semibold tracking-wide text-[#424753] mb-1.5 uppercase">
-                    Môn học <span className="text-[#ba1a1a]">*</span>
+                    Lĩnh vực nghiên cứu <span className="text-[#ba1a1a]">*</span>
                   </label>
                   <div className="relative">
                     <select
@@ -443,7 +443,7 @@ export default function UploadDocumentPage() {
                       className="w-full h-11 px-3.5 rounded-lg border border-[#c2c6d5] bg-[#f8f9ff] focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/20 text-[14px] text-[#121c2a] appearance-none transition-all outline-none disabled:opacity-60"
                     >
                       <option value="">
-                        {subjectsLoading ? "Đang tải môn học..." : "Chọn môn học..."}
+                        {subjectsLoading ? "Đang tải lĩnh vực nghiên cứu..." : "Chọn lĩnh vực nghiên cứu..."}
                       </option>
                       {subjects.map((s) => (
                         <option key={s.id} value={s.id}>
@@ -553,3 +553,4 @@ export default function UploadDocumentPage() {
     </div>
   )
 }
+

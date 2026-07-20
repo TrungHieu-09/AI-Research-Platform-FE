@@ -85,8 +85,8 @@ export default function UsersPage() {
     )
   }, [users, searchTerm])
 
-  // Handle Update User (Role / Status / Tier)
-  const handleUpdateUser = async (userId: string, updates: { role?: string; status?: string; tier?: string }) => {
+  // Handle Update User (Status / Tier)
+  const handleUpdateUser = async (userId: string, updates: { status?: string; tier?: string }) => {
     if (!token) return
     setUpdating(true)
     try {
@@ -141,7 +141,7 @@ export default function UsersPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-1.5" style={{ fontFamily: "Geist, sans-serif" }}>
-              Quản lý Người dùng & Phân quyền
+              Quản lý Người dùng
             </h1>
             <button
               onClick={fetchUsers}
@@ -153,7 +153,7 @@ export default function UsersPage() {
             </button>
           </div>
           <p className="text-[#424754] font-medium text-[14px]">
-            Quản lý tài khoản sinh viên, cấp quyền truy cập cao cấp (`Premium`) hoặc phân quyền quản trị (`Admin`).
+            Quản lý tài khoản sinh viên, cấp quyền truy cập cao cấp (`Premium`) hoặc khóa / mở khóa tài khoản.
           </p>
         </div>
       </div>
@@ -281,7 +281,7 @@ export default function UsersPage() {
                         onClick={() => { setSelectedUser(u); setIsEditModalOpen(true); }}
                         className="px-3.5 py-1.5 rounded-xl bg-[#eff4ff] hover:bg-[#dee9fc] text-[#0058be] font-bold text-[12px] transition-colors"
                       >
-                        Phân quyền & Tùy chỉnh
+                        Tùy chỉnh
                       </button>
                     </td>
                   </tr>
@@ -328,10 +328,10 @@ export default function UsersPage() {
 
             <div>
               <span className="text-[11px] font-extrabold text-[#0058be] uppercase tracking-wider bg-[#eff4ff] px-3 py-1 rounded-full">
-                ADMIN PRIVILEGES
+                ACCOUNT SETTINGS
               </span>
               <h3 className="text-xl sm:text-2xl font-bold text-[#121c2a] mt-3 font-sans">
-                Điều chỉnh quyền tài khoản
+                Tùy chỉnh tài khoản
               </h3>
               <p className="text-[13px] sm:text-[14px] text-[#727785] mt-1.5 font-sans">
                 Tài khoản: <strong className="text-[#121c2a]">{selectedUser.name} ({selectedUser.email})</strong>
@@ -339,33 +339,6 @@ export default function UsersPage() {
             </div>
 
             <div className="space-y-5 pt-1">
-              {/* Role setting */}
-              <div>
-                <label className="text-[13px] sm:text-[14px] font-bold text-[#424754] block mb-2 font-sans">Vai trò hệ thống (Role)</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleUpdateUser(selectedUser.id, { role: "STUDENT" })}
-                    disabled={updating || selectedUser.role === "STUDENT"}
-                    className={cn(
-                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
-                      selectedUser.role === "STUDENT" ? "bg-[#0058be] text-white border-[#0058be] shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
-                    )}
-                  >
-                    <span>Sinh viên</span>
-                  </button>
-                  <button
-                    onClick={() => handleUpdateUser(selectedUser.id, { role: "ADMIN" })}
-                    disabled={updating || selectedUser.role === "ADMIN"}
-                    className={cn(
-                      "py-3.5 px-4 rounded-xl font-bold text-[14px] border transition-all flex items-center justify-center gap-2 text-center",
-                      selectedUser.role === "ADMIN" ? "bg-purple-600 text-white border-purple-600 shadow-md" : "bg-[#f8f9ff] text-[#424754] border-[#c2c6d6]/60 hover:bg-gray-100"
-                    )}
-                  >
-                    <Shield size={16} className="shrink-0" /> <span>Quản trị viên</span>
-                  </button>
-                </div>
-              </div>
-
               {/* Tier setting */}
               <div>
                 <label className="text-[13px] sm:text-[14px] font-bold text-[#424754] block mb-2 font-sans">Gói tài khoản AI (Tier)</label>
@@ -435,3 +408,4 @@ export default function UsersPage() {
     </div>
   )
 }
+
