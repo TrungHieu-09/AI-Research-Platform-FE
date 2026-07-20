@@ -6,7 +6,7 @@ import Link from "next/link"
 import {
   ArrowLeft, FileText, Download, Eye, Sparkles, Star,
   Calendar, Hash, User, BookOpen, MessageSquare, Send, CheckCircle2,
-  AlertCircle, Loader2, Share2, Bookmark, ExternalLink
+  AlertCircle, Loader2, Share2, Bookmark, ExternalLink, Pencil, X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
@@ -31,6 +31,10 @@ export default function DocumentDetailPage() {
   const [userRating, setUserRating] = React.useState<number>(5)
   const [userComment, setUserComment] = React.useState<string>("")
   const [submittingReview, setSubmittingReview] = React.useState(false)
+  const [editingReviewId, setEditingReviewId] = React.useState<string | null>(null)
+  const [editRating, setEditRating] = React.useState<number>(5)
+  const [editComment, setEditComment] = React.useState<string>("")
+  const [updatingReview, setUpdatingReview] = React.useState(false)
 
   // Toast
   const [toastMessage, setToastMessage] = React.useState<{ text: string; type: "success" | "error" } | null>(null)
@@ -39,6 +43,21 @@ export default function DocumentDetailPage() {
     setTimeout(() => setToastMessage(null), 4000)
   }
 
+  const getReviewUserId = (review: any) => String(review?.userId || review?.user?.id || review?.ownerId || "")
+
+  const isOwnReview = (review: any) => Boolean(user?.id && getReviewUserId(review) === String(user.id))
+
+  const startEditReview = (review: any) => {
+    setEditingReviewId(String(review.id || "current-user-review"))
+    setEditRating(Number(review.rating || 5))
+    setEditComment(String(review.comment || ""))
+  }
+
+  const cancelEditReview = () => {
+    setEditingReviewId(null)
+    setEditRating(5)
+    setEditComment("")
+  }
   // Fetch Document Details
   const fetchDocument = React.useCallback(async () => {
     if (!id || !token) return
@@ -126,6 +145,40 @@ export default function DocumentDetailPage() {
     }
   }
 
+
+  const handleUpdateReview = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!token || !id) return
+
+    setUpdatingReview(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const res = await fetch(`${baseUrl}/api/documents/${id}/ratings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          rating: editRating,
+          comment: editComment.trim() || undefined,
+        }),
+      })
+
+      if (res.ok) {
+        showToast("Đã cập nhật đánh giá của bạn.", "success")
+        cancelEditReview()
+        fetchRatings()
+      } else {
+        const err = await res.json().catch(() => ({}))
+        showToast(err.error || "Không thể cập nhật đánh giá. Vui lòng thử lại.", "error")
+      }
+    } catch {
+      showToast("Không kết nối được máy chủ. Vui lòng thử lại.", "error")
+    } finally {
+      setUpdatingReview(false)
+    }
+  }
   if (loadingDoc) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-64px)] bg-[#f8f9ff] gap-3 text-[#727785]">
@@ -412,31 +465,98 @@ export default function DocumentDetailPage() {
                     Chưa có bình luận nào. Hãy là người đầu tiên thảo luận về tài liệu này!
                   </p>
                 ) : (
-                  ratingsData.items.map((rev: any) => (
-                    <div key={rev.id} className="bg-[#f8f9ff] border border-[#c2c6d6]/30 rounded-2xl p-3.5 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-[#0058be] text-white font-bold text-[11px] flex items-center justify-center uppercase">
-                            {rev.user?.name ? rev.user.name.charAt(0) : "U"}
+                  ratingsData.items.map((rev: any) => {
+                    const ownReview = isOwnReview(rev)
+                    const isEditing = editingReviewId === String(rev.id || "current-user-review")
+
+                    return (
+                      <div key={rev.id || `${getReviewUserId(rev)}-${rev.createdAt}`} className="bg-[#f8f9ff] border border-[#c2c6d6]/30 rounded-2xl p-3.5 space-y-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-6 h-6 rounded-full bg-[#0058be] text-white font-bold text-[11px] flex items-center justify-center uppercase shrink-0">
+                              {rev.user?.name ? rev.user.name.charAt(0) : "U"}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-[13px] font-bold text-[#121c2a] truncate block">{rev.user?.name || "Lumis Scholar"}</span>
+                              {ownReview && <span className="text-[10px] font-bold text-[#0058be]">Bình luận của bạn</span>}
+                            </div>
                           </div>
-                          <span className="text-[13px] font-bold text-[#121c2a]">{rev.user?.name || "Lumis Scholar"}</span>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-0.5 text-amber-500">
+                              {[...Array(rev.rating || 5)].map((_, i) => (
+                                <Star key={i} size={12} className="fill-amber-400" />
+                              ))}
+                            </div>
+                            {ownReview && !isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => startEditReview(rev)}
+                                className="inline-flex items-center gap-1 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-[#0058be] border border-[#c2c6d6]/50 hover:bg-[#eff4ff] transition-colors"
+                              >
+                                <Pencil size={12} /> Sửa
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-0.5 text-amber-500">
-                          {[...Array(rev.rating || 5)].map((_, i) => (
-                            <Star key={i} size={12} className="fill-amber-400" />
-                          ))}
-                        </div>
+
+                        {isEditing ? (
+                          <form onSubmit={handleUpdateReview} className="ml-8 rounded-2xl border border-[#0058be]/20 bg-white p-3 space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-[12px] font-bold text-[#121c2a]">Chỉnh sửa đánh giá</span>
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <button
+                                    key={star}
+                                    type="button"
+                                    onClick={() => setEditRating(star)}
+                                    className="p-0.5 text-amber-500 hover:scale-110 transition-transform cursor-pointer"
+                                  >
+                                    <Star size={16} className={cn(star <= editRating ? "fill-amber-400 text-amber-500" : "text-gray-300")} />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <textarea
+                              rows={3}
+                              value={editComment}
+                              onChange={(e) => setEditComment(e.target.value)}
+                              placeholder="Cập nhật bình luận của bạn..."
+                              className="w-full px-3 py-2 bg-[#f8f9ff] rounded-xl border border-[#c2c6d6]/60 text-[13px] outline-none focus:border-[#0058be] transition-all resize-none"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={cancelEditReview}
+                                disabled={updatingReview}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#424754] font-bold text-[12px] transition-colors disabled:opacity-50"
+                              >
+                                <X size={13} /> Hủy
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={updatingReview}
+                                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#0058be] hover:bg-[#004ca3] text-white font-bold text-[12px] shadow-sm transition-all disabled:opacity-50"
+                              >
+                                {updatingReview ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                                Lưu thay đổi
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          rev.comment && (
+                            <p className="text-[13px] text-[#424754] leading-relaxed pl-8">
+                              {rev.comment}
+                            </p>
+                          )
+                        )}
+
+                        <span className="text-[10px] text-[#727785] block text-right">
+                          {new Date(rev.updatedAt || rev.createdAt || Date.now()).toLocaleDateString("vi-VN")}
+                        </span>
                       </div>
-                      {rev.comment && (
-                        <p className="text-[13px] text-[#424754] leading-relaxed pl-8">
-                          {rev.comment}
-                        </p>
-                      )}
-                      <span className="text-[10px] text-[#727785] block text-right">
-                        {new Date(rev.createdAt || Date.now()).toLocaleDateString("vi-VN")}
-                      </span>
-                    </div>
-                  ))
+                    )
+                  })
                 )}
               </div>
             </div>
@@ -447,3 +567,7 @@ export default function DocumentDetailPage() {
     </div>
   )
 }
+
+
+
+
