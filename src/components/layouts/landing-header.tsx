@@ -237,7 +237,7 @@ export function LandingHeader() {
               href="/pricing"
               className="px-3 py-2 text-[14px] font-semibold text-[#727785] hover:text-[#424754] transition-colors rounded-xl hover:bg-[#f0f4ff]"
             >
-              Bảng giá
+              Gói dịch vụ
             </Link>
           </>
         ) : (
@@ -259,7 +259,7 @@ export function LandingHeader() {
               href="/pricing"
               className="px-4 py-2 text-[14px] font-semibold text-[#424754] hover:text-[#0058be] transition-colors rounded-xl hover:bg-[#eff4ff]"
             >
-              Bảng giá
+              Gói dịch vụ
             </Link>
           </>
         )}

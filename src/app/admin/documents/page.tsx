@@ -88,6 +88,17 @@ export default function DocumentsPage() {
     router.push(`/admin/documents/${doc.id}`)
   }
 
+  const canRejectDocument = (doc: any) => doc.visibility === "PUBLIC" && ["PENDING", "APPROVED"].includes(String(doc.status || "").toUpperCase())
+
+  const openRejectModal = (doc: any) => {
+    if (!canRejectDocument(doc)) {
+      showToast("Chỉ tài liệu công khai đang chờ duyệt hoặc đã duyệt mới có thể bị từ chối.", "error")
+      return
+    }
+
+    setSelectedDocForReject(doc)
+  }
+
   // Handle Moderate (Approve / Reject)
   const handleModerate = async (docId: string, decision: "APPROVED" | "REJECTED", reason?: string) => {
     if (!token) return
@@ -102,18 +113,27 @@ export default function DocumentsPage() {
         },
         body: JSON.stringify({
           decision,
-          rejectionReason: reason || undefined
+          action: decision,
+          status: decision,
+          rejectionReason: reason?.trim() || undefined,
+          reason: reason?.trim() || undefined,
         })
       })
 
       if (res.ok) {
-        showToast(decision === "APPROVED" ? "Đã duyệt bài đăng/tài liệu thành công!" : "Đã từ chối bài đăng tài liệu.", "success")
+        showToast(decision === "APPROVED" ? "Đã duyệt bài đăng/tài liệu thành công!" : "Đã từ chối/gỡ công khai bài đăng tài liệu.", "success")
         setSelectedDocForReject(null)
         setRejectionReason("")
         fetchDocuments()
       } else {
-        const err = await res.json()
-        showToast(err.error || "Không thể thực hiện thao tác kiểm duyệt.", "error")
+        const err = await res.json().catch(() => ({}))
+        const message = String(err.error || err.message || "")
+        showToast(
+          decision === "REJECTED" && message.toLowerCase().includes("pending")
+            ? "BE chưa hỗ trợ từ chối tài liệu đã duyệt. Cần API thu hồi/gỡ public."
+            : message || "Không thể thực hiện thao tác kiểm duyệt.",
+          "error"
+        )
       }
     } catch (e) {
       showToast("Lỗi kết nối máy chủ.", "error")
@@ -308,7 +328,7 @@ export default function DocumentsPage() {
                           <Eye size={15} />
                         </button>
 
-                        {doc.visibility === "PUBLIC" && doc.status !== "APPROVED" && (
+                        {doc.visibility === "PUBLIC" && doc.status === "PENDING" && (
                           <button
                             onClick={() => handleModerate(doc.id, "APPROVED")}
                             disabled={moderatingId === doc.id}
@@ -319,12 +339,12 @@ export default function DocumentsPage() {
                           </button>
                         )}
 
-                        {doc.visibility === "PUBLIC" && doc.status !== "REJECTED" && (
+                        {canRejectDocument(doc) && (
                           <button
-                            onClick={() => setSelectedDocForReject(doc)}
+                            onClick={() => openRejectModal(doc)}
                             disabled={moderatingId === doc.id}
                             className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-[12px] rounded-xl transition-colors flex items-center gap-1 disabled:opacity-50"
-                            title="Từ chối bài chia sẻ"
+                            title={doc.status === "APPROVED" ? "Từ chối/gỡ tài liệu đã duyệt khỏi diễn đàn" : "Từ chối bài chia sẻ"}
                           >
                             <Ban size={13} /> Từ chối
                           </button>

@@ -59,8 +59,18 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
     if (docId) fetchDocument(docId)
   }, [docId, fetchDocument])
 
+  const canModerateTo = (status: "APPROVED" | "REJECTED") => {
+    if (!doc) return false
+    if (status === "APPROVED") return doc.status === "PENDING"
+    return ["PENDING", "APPROVED"].includes(String(doc.status || "").toUpperCase())
+  }
+
   const handleModerate = async (status: "APPROVED" | "REJECTED") => {
     if (!docId || !token) return
+    if (!canModerateTo(status)) {
+      showToast(status === "REJECTED" ? "Chỉ tài liệu chờ duyệt hoặc đã duyệt mới có thể bị từ chối." : "Chỉ tài liệu đang chờ duyệt mới có thể được duyệt.", "error")
+      return
+    }
     if (status === "REJECTED" && !rejectionReason.trim()) {
       showToast("Vui lòng nhập lý do từ chối tài liệu.", "error")
       return
@@ -74,14 +84,21 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ status, reason: rejectionReason })
+        body: JSON.stringify({ decision: status, action: status, status, rejectionReason: rejectionReason.trim() || undefined, reason: rejectionReason.trim() || undefined })
       })
       if (res.ok) {
-        showToast(`Đã ${status === "APPROVED" ? "Duyệt" : "Từ chối"} tài liệu thành công!`, "success")
+        showToast(`Đã ${status === "APPROVED" ? "Duyệt" : "Từ chối/gỡ công khai"} tài liệu thành công!`, "success")
         setShowRejectInput(false)
         fetchDocument(docId)
       } else {
-        showToast("Lỗi kiểm duyệt tài liệu.", "error")
+        const err = await res.json().catch(() => ({}))
+        const message = String(err.error || err.message || "")
+        showToast(
+          status === "REJECTED" && message.toLowerCase().includes("pending")
+            ? "BE chưa hỗ trợ từ chối tài liệu đã duyệt. Cần API thu hồi/gỡ public."
+            : message || "Lỗi kiểm duyệt tài liệu.",
+          "error"
+        )
       }
     } catch (e) {
       showToast("Lỗi kết nối kiểm duyệt.", "error")
@@ -120,7 +137,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleModerate("APPROVED")}
-              disabled={moderating || doc.status === "APPROVED"}
+              disabled={moderating || !canModerateTo("APPROVED")}
               className="flex items-center justify-center gap-2 px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-600/20 transition-all disabled:opacity-50"
             >
               <CheckCircle size={18} />
@@ -128,11 +145,11 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
             </button>
             <button
               onClick={() => setShowRejectInput(!showRejectInput)}
-              disabled={moderating || doc.status === "REJECTED"}
+              disabled={moderating || !canModerateTo("REJECTED")}
               className="flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-red-200 text-red-600 rounded-2xl font-bold hover:bg-red-50 transition-all disabled:opacity-50 shadow-sm"
             >
               <XCircle size={18} />
-              <span>{doc.status === "REJECTED" ? "Đã Từ Chối" : "Từ Chối"}</span>
+              <span>{doc.status === "REJECTED" ? "Đã Từ Chối" : doc.status === "APPROVED" ? "Từ Chối / Gỡ" : "Từ Chối"}</span>
             </button>
           </div>
         )}
