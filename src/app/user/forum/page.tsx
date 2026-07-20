@@ -148,27 +148,27 @@ export default function ForumPage() {
       </section>
 
       {/* Filter & Sort Bar */}
-      <section className="max-w-6xl w-full mx-auto px-6 mt-8">
-        <div className="bg-white rounded-2xl p-4 border border-[#c2c6d6]/40 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+      <section className="max-w-6xl w-full mx-auto px-6 mt-8 relative z-10 -translate-y-6">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-4 border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Search Box */}
-          <div className="relative flex-1 w-full">
-            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#727785]" />
+          <div className="relative flex-1 w-full group">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#727785] group-focus-within:text-[#0058be] transition-colors" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && fetchForumFeed()}
               placeholder="Tìm kiếm tài liệu, từ khóa, tác giả hoặc tóm tắt..."
-              className="w-full pl-10 pr-4 py-2.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] font-medium text-[#121c2a] outline-none focus:border-[#0058be] transition-all"
+              className="w-full pl-11 pr-4 py-3 bg-[#f8f9ff]/50 hover:bg-[#f8f9ff] focus:bg-white border border-[#c2c6d6]/60 rounded-xl text-[14px] font-medium text-[#121c2a] outline-none focus:border-[#0058be] focus:ring-4 focus:ring-[#0058be]/10 transition-all placeholder:text-[#9ea3b0]"
             />
           </div>
 
           {/* Subject Filter & Sort Tabs */}
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
             <select
               value={selectedSubjectId}
               onChange={(e) => setSelectedSubjectId(e.target.value)}
-              className="px-3.5 py-2.5 bg-[#f8f9ff] border border-[#c2c6d6]/60 rounded-xl text-[13px] font-semibold text-[#424754] outline-none focus:border-[#0058be] cursor-pointer"
+              className="px-4 py-3 bg-[#f8f9ff]/50 hover:bg-[#f8f9ff] focus:bg-white border border-[#c2c6d6]/60 rounded-xl text-[13px] font-semibold text-[#424754] outline-none focus:border-[#0058be] focus:ring-4 focus:ring-[#0058be]/10 transition-all cursor-pointer min-w-[160px]"
             >
               <option value="">Tất cả môn học</option>
               {subjects.map((s) => (
@@ -176,33 +176,33 @@ export default function ForumPage() {
               ))}
             </select>
 
-            <div className="flex items-center bg-[#f8f9ff] p-1 rounded-xl border border-[#c2c6d6]/40 shrink-0">
+            <div className="flex items-center bg-[#f8f9ff] p-1.5 rounded-xl border border-[#c2c6d6]/40 shrink-0 shadow-inner">
               <button
                 onClick={() => setSortBy("newest")}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer",
-                  sortBy === "newest" ? "bg-white text-[#0058be] shadow-sm" : "text-[#727785] hover:text-[#121c2a]"
+                  "flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-bold transition-all cursor-pointer",
+                  sortBy === "newest" ? "bg-white text-[#0058be] shadow-sm ring-1 ring-black/5" : "text-[#727785] hover:text-[#121c2a] hover:bg-black/5"
                 )}
               >
-                <Clock size={14} /> Mới nhất
+                <Clock size={15} /> Mới nhất
               </button>
               <button
                 onClick={() => setSortBy("popular")}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer",
-                  sortBy === "popular" ? "bg-white text-[#0058be] shadow-sm" : "text-[#727785] hover:text-[#121c2a]"
+                  "flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-bold transition-all cursor-pointer",
+                  sortBy === "popular" ? "bg-white text-[#0058be] shadow-sm ring-1 ring-black/5" : "text-[#727785] hover:text-[#121c2a] hover:bg-black/5"
                 )}
               >
-                <TrendingUp size={14} /> Phổ biến
+                <TrendingUp size={15} /> Phổ biến
               </button>
               <button
                 onClick={() => setSortBy("top_rated")}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all cursor-pointer",
-                  sortBy === "top_rated" ? "bg-white text-[#0058be] shadow-sm" : "text-[#727785] hover:text-[#121c2a]"
+                  "flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-bold transition-all cursor-pointer",
+                  sortBy === "top_rated" ? "bg-white text-[#0058be] shadow-sm ring-1 ring-black/5" : "text-[#727785] hover:text-[#121c2a] hover:bg-black/5"
                 )}
               >
-                <Award size={14} /> Đánh giá cao
+                <Award size={15} /> Đánh giá cao
               </button>
             </div>
           </div>
