@@ -338,23 +338,25 @@ export default function ForumPage() {
 
         {/* Pagination Controls */}
         {totalPages > 1 && !loading && (
-          <div className="flex items-center justify-center gap-2 mt-10">
+          <div className="flex items-center justify-center gap-3 mt-12 mb-8">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 rounded-xl border border-[#c2c6d6]/60 bg-white text-[13px] font-bold text-[#424754] hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="px-5 py-2.5 rounded-xl border border-[#c2c6d6]/60 bg-white text-[14px] font-extrabold text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] hover:border-[#0058be]/30 shadow-sm disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-[#424754] disabled:hover:border-[#c2c6d6]/60 transition-all flex items-center gap-2"
             >
-              Trang trước
+              <ArrowRight size={16} className="rotate-180" /> Trước
             </button>
-            <span className="text-[13px] font-bold text-[#121c2a] px-3">
-              Trang {page} / {totalPages}
-            </span>
+            <div className="flex items-center justify-center min-w-[120px] bg-white border border-[#c2c6d6]/40 rounded-xl py-2.5 shadow-sm">
+              <span className="text-[14px] font-extrabold text-[#121c2a]">
+                Trang {page} <span className="text-[#9ea3b0] font-semibold mx-1">/</span> {totalPages}
+              </span>
+            </div>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 rounded-xl border border-[#c2c6d6]/60 bg-white text-[13px] font-bold text-[#424754] hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+              className="px-5 py-2.5 rounded-xl border border-[#c2c6d6]/60 bg-white text-[14px] font-extrabold text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] hover:border-[#0058be]/30 shadow-sm disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-[#424754] disabled:hover:border-[#c2c6d6]/60 transition-all flex items-center gap-2"
             >
-              Trang tiếp
+              Tiếp <ArrowRight size={16} />
             </button>
           </div>
         )}
