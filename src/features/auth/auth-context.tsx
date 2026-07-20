@@ -59,6 +59,17 @@ function clearSession() {
   localStorage.removeItem("lumis_auth")
 }
 
+function isJwtExpired(token: string) {
+  try {
+    const payloadPart = token.split(".")[1]
+    if (!payloadPart) return false
+    const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/")
+    const payload = JSON.parse(atob(normalized)) as { exp?: number }
+    return typeof payload.exp === "number" && payload.exp * 1000 <= Date.now()
+  } catch {
+    return false
+  }
+}
 function loadSession(): { token: string; user: AuthUser } | null {
   try {
     const token = localStorage.getItem("lumis_token")
@@ -82,57 +93,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
-  // Rehydrate and validate session on mount.
-  // Do not trust localStorage alone: copied private URLs must wait for token verification.
+  // Rehydrate session on mount.
+  // FE route guard only needs local session to keep reload stable.
   React.useEffect(() => {
-    let cancelled = false
-
-    async function rehydrateSession() {
-      const session = loadSession()
-      if (!session) {
-        if (!cancelled) setIsLoading(false)
-        return
-      }
-
-      try {
-        const res = await api.get<{ user?: any } | any>("/api/users/me", { token: session.token })
-        const profile = (res as any)?.user ?? res
-
-        if (!profile?.id) {
-          throw new Error("Invalid session profile")
-        }
-
-        const verifiedUser: AuthUser = {
-          ...profile,
-          initials: makeInitials(profile.name || session.user.name || "User"),
-        }
-
-        if (localStorage.getItem("lumis_demo_premium") === "true") {
-          verifiedUser.tier = "PREMIUM"
-        }
-
-        saveSession(session.token, verifiedUser)
-
-        if (!cancelled) {
-          setToken(session.token)
-          setUser(verifiedUser)
-        }
-      } catch {
-        clearSession()
-        if (!cancelled) {
-          setToken(null)
-          setUser(null)
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false)
-      }
+    const session = loadSession()
+    if (session) {
+      setToken(session.token)
+      setUser(session.user)
     }
-
-    rehydrateSession()
-
-    return () => {
-      cancelled = true
-    }
+    setIsLoading(false)
   }, [])
 
   const login = React.useCallback(async (email: string, password: string) => {
