@@ -105,7 +105,7 @@ export default function ForumPage() {
       {toastMessage && (
         <div className="fixed top-20 right-6 z-50 animate-in fade-in slide-in-from-top-5 duration-300">
           <div className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold max-w-sm",
+            "flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold max-w-[384px]",
             toastMessage.type === "success" 
               ? "bg-white border-[#0058be]/20 text-[#121c2a]" 
               : "bg-red-50 border-red-200 text-red-700"
@@ -127,15 +127,15 @@ export default function ForumPage() {
         <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-gradient-to-bl from-white/20 to-transparent rounded-full blur-3xl pointer-events-none -mr-40 -mt-40 animate-pulse" />
         <div className="absolute left-20 bottom-0 w-64 h-64 bg-[#4da2ff]/30 rounded-full blur-3xl pointer-events-none -mb-20" />
         
-        <div className="max-w-6xl mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-          <div className="space-y-5 max-w-2xl">
+        <div className="max-w-[1152px] mx-auto relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-5 max-w-[672px]">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[12px] font-extrabold tracking-wider uppercase text-white shadow-sm">
               <Sparkles size={15} className="text-amber-300" /> Diễn đàn & Khám phá Học thuật
             </div>
             <h1 className="text-[36px] md:text-[46px] font-extrabold leading-[1.15] tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-[#e0ebff]" style={{ fontFamily: "Geist, sans-serif" }}>
               Cộng Đồng Nghiên Cứu AI Lumis
             </h1>
-            <p className="text-[15px] md:text-[17px] text-white/90 leading-relaxed font-medium max-w-xl">
+            <p className="text-[15px] md:text-[17px] text-white/90 leading-relaxed font-medium max-w-[576px]">
               Khám phá, đánh giá và thảo luận hàng ngàn tài liệu nghiên cứu công khai từ sinh viên và giảng viên. Kết hợp Trợ lý AI để phân tích tri thức chuyên sâu ngay lập tức.
             </p>
           </div>
@@ -152,7 +152,7 @@ export default function ForumPage() {
       </section>
 
       {/* Filter & Sort Bar */}
-      <section className="max-w-6xl w-full mx-auto px-6 mt-8 relative z-10 -translate-y-6">
+      <section className="max-w-[1152px] w-full mx-auto px-6 mt-8 relative z-10 -translate-y-6">
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-4 border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Search Box */}
           <div className="relative flex-1 w-full group">
@@ -214,14 +214,14 @@ export default function ForumPage() {
       </section>
 
       {/* Main Feed Content */}
-      <section className="max-w-6xl w-full mx-auto px-6 py-8 flex-1">
+      <section className="max-w-[1152px] w-full mx-auto px-6 py-8 flex-1">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#727785]">
             <Loader2 size={36} className="animate-spin text-[#0058be]" />
             <p className="text-[14px] font-semibold">Đang tải danh sách bài thảo luận cộng đồng...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-lg mx-auto space-y-3">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-[512px] mx-auto space-y-3">
             <AlertCircle size={32} className="text-red-600 mx-auto" />
             <h3 className="text-[16px] font-bold text-[#121c2a]">Đã xảy ra lỗi</h3>
             <p className="text-[13px] text-red-700">{error}</p>
@@ -233,7 +233,7 @@ export default function ForumPage() {
             </button>
           </div>
         ) : documents.length === 0 ? (
-          <div className="w-full max-w-xl mx-auto bg-white/80 backdrop-blur-md rounded-3xl border border-[#c2c6d6]/40 p-14 text-center space-y-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+          <div className="w-full max-w-[576px] mx-auto bg-white/80 backdrop-blur-md rounded-3xl border border-[#c2c6d6]/40 p-14 text-center space-y-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-[#eff4ff]/50 to-transparent pointer-events-none" />
             <div className="w-20 h-20 rounded-full bg-[#eff4ff] text-[#0058be] flex items-center justify-center mx-auto relative z-10 shadow-sm">
               <BookOpen size={36} />
@@ -242,7 +242,7 @@ export default function ForumPage() {
               <h3 className="text-[20px] font-bold text-[#121c2a]" style={{ fontFamily: "Geist, sans-serif" }}>
                 Chưa có tài liệu nào trong danh mục này
               </h3>
-              <p className="text-[14px] text-[#727785] max-w-md mx-auto leading-relaxed mt-2">
+              <p className="text-[14px] text-[#727785] max-w-[448px] mx-auto leading-relaxed mt-2">
                 Bạn có thể là người đầu tiên chia sẻ tài liệu và khởi tạo chủ đề thảo luận học thuật với cộng đồng Lumis AI!
               </p>
             </div>
