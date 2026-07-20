@@ -1044,7 +1044,7 @@ function WorkspaceContent() {
               <motion.div
                 key={ref.id}
                 onClick={() => setSelectedCitationModal(ref)}
-                className="bg-white border border-[#c2c6d6]/40 rounded-xl overflow-hidden shadow-sm cursor-pointer"
+                className="bg-white border border-[#c2c6d6]/40 rounded-xl overflow-hidden shadow-sm cursor-pointer shrink-0"
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 + i * 0.1, duration: 0.4 }}
