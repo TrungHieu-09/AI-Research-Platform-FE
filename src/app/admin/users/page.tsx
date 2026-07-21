@@ -167,12 +167,14 @@ export default function UsersPage() {
     const email = createUserForm.email.trim()
     const password = createUserForm.password.trim()
 
+    setCreateUserMessage(null)
+
     if (!name || !email || !password) {
-      showToast("Vui lòng nhập đủ họ tên, tài khoản email và mật khẩu.", "error")
+      setCreateUserMessage({ text: "Vui lòng nhập đủ họ tên, tài khoản email và mật khẩu.", type: "error" })
       return
     }
     if (password.length < 6) {
-      showToast("Mật khẩu cần tối thiểu 6 ký tự.", "error")
+      setCreateUserMessage({ text: "Mật khẩu cần tối thiểu 6 ký tự.", type: "error" })
       return
     }
 
@@ -203,12 +205,16 @@ export default function UsersPage() {
         throw new Error(err.error || err.message || "Không thể tạo tài khoản người dùng.")
       }
 
-      showToast("Đã tạo tài khoản sinh viên. User đăng nhập được ngay và có thể xác thực Gmail trong Hồ sơ.", "success")
+      setCreateUserMessage({ text: "Đã tạo tài khoản sinh viên. User đăng nhập được ngay và có thể xác thực Gmail trong Hồ sơ.", type: "success" })
+
       setCreateUserForm({ name: "", email: "", password: "" })
-      setIsCreateModalOpen(false)
+      setTimeout(() => {
+        setIsCreateModalOpen(false)
+        setCreateUserMessage(null)
+      }, 900)
       fetchUsers()
     } catch (err: any) {
-      showToast(err.message || "Không thể tạo tài khoản người dùng.", "error")
+      setCreateUserMessage({ text: err.message || "Không thể tạo tài khoản người dùng.", type: "error" })
     } finally {
       setCreatingUser(false)
     }
