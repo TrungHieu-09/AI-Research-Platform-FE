@@ -281,7 +281,26 @@ export default function LibraryPage() {
   // Handle Add Document to Collection
   const handleAddDocToCollection = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!targetDocIdForCol || !selectedColForAdd) return
+    if (!targetDocIdForCol || !selectedColForAdd) {
+      showToast("Vui lòng chọn tài liệu và bộ sưu tập trước khi thêm.", "error")
+      return
+    }
+
+    const targetDoc = docs.find(d => d.id === targetDocIdForCol) || selectedDocDetails
+    const targetCollection = collections.find(col => col.id === selectedColForAdd)
+    const documentTitle = targetDoc?.title || "Tài liệu"
+    const collectionName = targetCollection?.name || "bộ sưu tập đã chọn"
+
+    const isAlreadyInCollection = targetDoc?.collectionList?.some((item: any) => {
+      const existingCollectionId = item.collection?.id || item.collectionId || item.id
+      return existingCollectionId === selectedColForAdd
+    })
+
+    if (isAlreadyInCollection) {
+      showToast(`"${documentTitle}" đã được thêm vào bộ sưu tập "${collectionName}" trước đó.`, "error")
+      return
+    }
+
     setAddingToCol(true)
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
@@ -295,23 +314,51 @@ export default function LibraryPage() {
       })
 
       if (res.ok) {
-        showToast("Đã thêm tài liệu vào bộ sưu tập!", "success")
+        showToast(`Đã thêm "${documentTitle}" vào bộ sưu tập "${collectionName}".`, "success")
         setIsAddToColModalOpen(false)
+        setTargetDocIdForCol(null)
+        setSelectedColForAdd("")
+        setShowQuickCreateInput(false)
+        setQuickColName("")
         fetchAllData()
       } else {
-        const err = await res.json()
-        showToast(err.error || "Tài liệu có thể đã nằm trong bộ sưu tập này.", "error")
+        let err: any = {}
+        try {
+          err = await res.json()
+        } catch {
+          err = {}
+        }
+
+        const rawError = String(err.error || err.message || "")
+        const isDuplicateError =
+          res.status === 409 ||
+          rawError.toLowerCase().includes("unique constraint") ||
+          rawError.includes("collectionId") && rawError.includes("documentId")
+
+        const fallbackMessage = isDuplicateError
+          ? `"${documentTitle}" đã được thêm vào bộ sưu tập "${collectionName}" trước đó.`
+          : res.status === 404
+            ? "Không tìm thấy tài liệu hoặc bộ sưu tập đã chọn."
+            : res.status === 401 || res.status === 403
+              ? "Bạn không có quyền thêm tài liệu vào bộ sưu tập này."
+              : `Chưa thể thêm "${documentTitle}" vào bộ sưu tập "${collectionName}".`
+
+        showToast(fallbackMessage, "error")
       }
     } catch (err) {
-      showToast("Lỗi kết nối máy chủ.", "error")
+      showToast(`Không thể thêm "${documentTitle}" vào bộ sưu tập vì mất kết nối máy chủ.`, "error")
     } finally {
       setAddingToCol(false)
     }
   }
-
   // Quick Create Collection and immediately add targeted document
   const handleQuickCreateAndAdd = async () => {
     if (!quickColName.trim() || !targetDocIdForCol || !token) return
+
+    const targetDoc = docs.find(d => d.id === targetDocIdForCol) || selectedDocDetails
+    const documentTitle = targetDoc?.title || "Tài liệu"
+    const collectionName = quickColName.trim()
+
     setIsQuickCreatingCol(true)
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
@@ -321,7 +368,7 @@ export default function LibraryPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ name: quickColName.trim(), description: "Tạo nhanh từ thư viện" })
+        body: JSON.stringify({ name: collectionName, description: "Tạo nhanh từ thư viện" })
       })
 
       if (colRes.ok) {
@@ -336,26 +383,42 @@ export default function LibraryPage() {
         })
 
         if (addRes.ok) {
-          showToast(`Đã tạo bộ sưu tập "${quickColName.trim()}" và thêm tài liệu thành công!`, "success")
+          showToast(`Đã tạo bộ sưu tập "${collectionName}" và thêm "${documentTitle}" vào đó.`, "success")
           setQuickColName("")
           setShowQuickCreateInput(false)
           setIsAddToColModalOpen(false)
+          setTargetDocIdForCol(null)
+          setSelectedColForAdd("")
           fetchAllData()
         } else {
-          showToast("Đã tạo bộ sưu tập nhưng lỗi khi thêm tài liệu.", "error")
+          let addErr: any = {}
+          try {
+            addErr = await addRes.json()
+          } catch {
+            addErr = {}
+          }
+
+          showToast(
+            addErr.error || addErr.message || `Đã tạo bộ sưu tập "${collectionName}", nhưng chưa thêm được "${documentTitle}".`,
+            "error"
+          )
           fetchAllData()
         }
       } else {
-        const err = await colRes.json()
-        showToast(err.error || "Tên bộ sưu tập đã tồn tại hoặc không hợp lệ.", "error")
+        let err: any = {}
+        try {
+          err = await colRes.json()
+        } catch {
+          err = {}
+        }
+        showToast(err.error || err.message || `Không thể tạo bộ sưu tập "${collectionName}". Tên có thể đã tồn tại hoặc không hợp lệ.`, "error")
       }
     } catch (e) {
-      showToast("Lỗi kết nối khi tạo nhanh bộ sưu tập.", "error")
+      showToast(`Không thể tạo bộ sưu tập "${collectionName}" vì mất kết nối máy chủ.`, "error")
     } finally {
       setIsQuickCreatingCol(false)
     }
   }
-
   const handleCopyLink = (docId: string) => {
     const origin = typeof window !== "undefined" ? window.location.origin : ""
     const url = `${origin}/user/documents/${docId}`
@@ -434,7 +497,7 @@ export default function LibraryPage() {
       {toastMessage && (
         <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-5 duration-300">
           <div className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold max-w-sm",
+            "flex items-start gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold leading-relaxed w-[min(520px,calc(100vw-32px))]",
             toastMessage.type === "success" 
               ? "bg-white border-[#0058be]/20 text-[#121c2a]" 
               : "bg-red-50 border-red-200 text-red-700"
@@ -444,7 +507,7 @@ export default function LibraryPage() {
             ) : (
               <AlertCircle className="text-red-600 shrink-0" size={18} />
             )}
-            <span>{toastMessage.text}</span>
+            <span className="block min-w-0 whitespace-normal break-words">{toastMessage.text}</span>
           </div>
         </div>
       )}
