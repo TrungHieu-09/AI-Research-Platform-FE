@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  BarChart3,
   Bell,
   BookOpen,
   CheckCircle2,
@@ -43,6 +44,12 @@ const adminNavLinks = [
     href: "/admin/documents?status=PENDING",
     icon: FileText,
     activePrefix: "/admin/documents",
+  },
+  {
+    name: "Reports",
+    href: "/admin/reports/documents",
+    icon: BarChart3,
+    activePrefix: "/admin/reports",
   },
   {
     name: "Settings",
@@ -413,6 +420,8 @@ export function AdminTopNav() {
     </header>
   )
 }
+
+
 
 
 

@@ -10,6 +10,29 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
 
+function getDocumentOwner(doc: any) {
+  return doc?.owner || doc?.user || doc?.uploader || doc?.createdBy || {}
+}
+
+function isOwnerEmailVerified(owner: any) {
+  const verificationStatus = String(owner?.verificationStatus || owner?.emailVerificationStatus || "").toUpperCase()
+  return Boolean(
+    owner?.emailVerified ||
+    owner?.isEmailVerified ||
+    owner?.verified ||
+    owner?.emailVerifiedAt ||
+    owner?.verifiedAt ||
+    verificationStatus === "VERIFIED" ||
+    verificationStatus === "EMAIL_VERIFIED" ||
+    String(owner?.status || "").toUpperCase() === "ACTIVE"
+  )
+}
+
+function getOwnerTrustMeta(owner: any) {
+  return isOwnerEmailVerified(owner)
+    ? { label: "User đã xác thực", className: "bg-emerald-50 text-emerald-700 border-emerald-200" }
+    : { label: "User chưa xác thực", className: "bg-amber-50 text-amber-800 border-amber-200" }
+}
 export default function DocumentDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
   const router = useRouter()
   const { token } = useAuth()
@@ -234,10 +257,21 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
                 <div>
                   <span className="text-xs font-bold text-[#727785] block uppercase tracking-wide">Người tải lên</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <User size={16} className="text-[#0058be]" />
-                    <span className="font-semibold text-[#121c2a]">{doc.user?.name || doc.user?.email || "Sinh viên"}</span>
-                  </div>
+                  {(() => {
+                    const owner = getDocumentOwner(doc)
+                    const trust = getOwnerTrustMeta(owner)
+                    return (
+                      <div className="mt-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <User size={16} className="text-[#0058be]" />
+                          <span className="font-semibold text-[#121c2a]">{owner?.name || owner?.email || "Sinh viên"}</span>
+                        </div>
+                        <span className={cn("inline-flex items-center rounded-lg border px-2.5 py-1 text-[11px] font-extrabold", trust.className)}>
+                          {trust.label}
+                        </span>
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 <div>
