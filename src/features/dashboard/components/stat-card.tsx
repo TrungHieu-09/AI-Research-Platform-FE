@@ -3,8 +3,8 @@
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-import { motion, useInView, useMotionValue, useSpring } from "framer-motion"
-import { useRef, useState, useEffect } from "react"
+import { motion, useMotionValue, useSpring } from "framer-motion"
+import { useState, useEffect } from "react"
 
 interface StatCardProps {
   title: string
@@ -19,45 +19,54 @@ interface StatCardProps {
   index?: number
 }
 
+function formatStatValue(value: number) {
+  return value >= 1000
+    ? value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    : value.toFixed(0)
+}
+
 /* ─── Animated Number ─────────────────────── */
 function AnimatedValue({ value }: { value: string | number }) {
-  const ref = useRef<HTMLHeadingElement>(null)
-  const inView = useInView(ref, { once: true })
-
   // Try to parse numeric value (strip non-digit chars except dot)
   const numericStr = String(value).replace(/[^0-9.]/g, "")
   const numeric = parseFloat(numericStr)
-  const isNumeric = !isNaN(numeric)
+  const isNumeric = Number.isFinite(numeric)
   const suffix = String(value).replace(/[0-9.,]/g, "") // e.g. "%" or ""
 
-  const motionVal = useMotionValue(0)
+  const motionVal = useMotionValue(isNumeric ? numeric : 0)
   const spring = useSpring(motionVal, { damping: 28, stiffness: 70 })
-  const [display, setDisplay] = useState("0")
+  const [display, setDisplay] = useState(() => isNumeric ? formatStatValue(numeric) : String(value))
 
   useEffect(() => {
-    if (inView && isNumeric) motionVal.set(numeric)
-  }, [inView, numeric, isNumeric, motionVal])
+    if (!isNumeric) {
+      setDisplay(String(value))
+      return
+    }
+
+    motionVal.set(numeric)
+  }, [isNumeric, motionVal, numeric, value])
 
   useEffect(() => {
-    return spring.on("change", v => {
-      const formatted = v >= 1000
-        ? v.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        : v.toFixed(0)
-      setDisplay(formatted)
+    if (!isNumeric) return
+
+    const unsubscribe = spring.on("change", v => {
+      setDisplay(formatStatValue(v))
     })
-  }, [spring])
+
+    setDisplay(formatStatValue(numeric))
+    return unsubscribe
+  }, [isNumeric, numeric, spring])
 
   if (!isNumeric) {
     return <h3 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-2">{value}</h3>
   }
 
   return (
-    <h3 ref={ref} className="text-3xl font-bold tracking-tight text-[#121c2a] mb-2">
+    <h3 className="text-3xl font-bold tracking-tight text-[#121c2a] mb-2">
       {display}{suffix}
     </h3>
   )
 }
-
 export function StatCard({ title, value, icon: Icon, description, href, trend, index = 0 }: StatCardProps) {
   const CardContent = (
     <div className="flex items-start justify-between">
