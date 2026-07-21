@@ -11,6 +11,29 @@ import Link from "next/link"
 import { useAuth } from "@/features/auth/auth-context"
 import { cn } from "@/lib/utils"
 
+function getDocumentOwner(doc: any) {
+  return doc?.owner || doc?.user || doc?.uploader || doc?.createdBy || {}
+}
+
+function isOwnerEmailVerified(owner: any) {
+  const verificationStatus = String(owner?.verificationStatus || owner?.emailVerificationStatus || "").toUpperCase()
+  return Boolean(
+    owner?.emailVerified ||
+    owner?.isEmailVerified ||
+    owner?.verified ||
+    owner?.emailVerifiedAt ||
+    owner?.verifiedAt ||
+    verificationStatus === "VERIFIED" ||
+    verificationStatus === "EMAIL_VERIFIED" ||
+    String(owner?.status || "").toUpperCase() === "ACTIVE"
+  )
+}
+
+function getOwnerTrustMeta(owner: any) {
+  return isOwnerEmailVerified(owner)
+    ? { label: "User đã xác thực", className: "bg-emerald-50 text-emerald-700 border-emerald-200" }
+    : { label: "User chưa xác thực", className: "bg-amber-50 text-amber-800 border-amber-200" }
+}
 export default function DocumentsPage() {
   const router = useRouter()
   const { token } = useAuth()
@@ -275,9 +298,22 @@ export default function DocumentsPage() {
                           >
                             {doc.title}
                           </button>
-                          <p className="text-[12px] text-[#727785] truncate">
-                            Bởi: <strong className="text-[#424754]">{doc.owner?.name || doc.owner?.email || "Sinh viên"}</strong> · {new Date(doc.createdAt).toLocaleDateString("vi-VN")}
-                          </p>
+                          {(() => {
+                            const owner = getDocumentOwner(doc)
+                            const trust = getOwnerTrustMeta(owner)
+                            return (
+                              <div className="space-y-1">
+                                <p className="text-[12px] text-[#727785] truncate">
+                                  Bởi: <strong className="text-[#424754]">{owner?.name || owner?.email || "Sinh viên"}</strong> · {new Date(doc.createdAt).toLocaleDateString("vi-VN")}
+                                </p>
+                                {doc.visibility === "PUBLIC" && (
+                                  <span className={cn("inline-flex items-center rounded-lg border px-2 py-0.5 text-[10.5px] font-extrabold", trust.className)}>
+                                    {trust.label}
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })()}
                         </div>
                       </div>
                     </td>

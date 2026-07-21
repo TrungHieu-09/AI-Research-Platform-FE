@@ -15,14 +15,16 @@ import {
   Camera,
   Lock,
   ChevronDown,
+  Send,
+  AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
 import { useTheme } from "@/features/theme/theme-context"
 
 /* ─── Toggle Component ─── */
-function Toggle({ checked, onChange }: { checked?: boolean; onChange?: () => void }) {
-  const [on, setOn] = React.useState(checked ?? false)
+function Toggle({ checked, defaultChecked, onChange }: { checked?: boolean; defaultChecked?: boolean; onChange?: () => void }) {
+  const [on, setOn] = React.useState(checked ?? defaultChecked ?? false)
   const handleClick = () => {
     const next = !on
     setOn(next)
@@ -100,17 +102,35 @@ function SectionHeader({ title, subtitle }: { title: string, subtitle: string })
   )
 }
 
+
+function isEmailVerifiedProfile(user: any) {
+  const verificationStatus = String(user?.verificationStatus || user?.emailVerificationStatus || "").toUpperCase()
+  return Boolean(
+    user?.emailVerified ||
+    user?.isEmailVerified ||
+    user?.verified ||
+    user?.emailVerifiedAt ||
+    user?.verifiedAt ||
+    verificationStatus === "VERIFIED" ||
+    verificationStatus === "EMAIL_VERIFIED" ||
+    String(user?.status || "").toUpperCase() === "ACTIVE"
+  )
+}
 const TABS = [
   { id: "profile", label: "Hồ sơ", icon: User },
   { id: "notifications", label: "Thông báo", icon: Bell },
 ]
 
 export default function UserSettingsPage() {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, token, refreshProfile } = useAuth()
   const [tab, setTab] = React.useState("profile")
   const [saved, setSaved] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState("")
+  const [emailOtp, setEmailOtp] = React.useState("")
+  const [emailVerifyLoading, setEmailVerifyLoading] = React.useState(false)
+  const [emailVerifyMessage, setEmailVerifyMessage] = React.useState("")
+  const [emailVerifyError, setEmailVerifyError] = React.useState("")
 
   // Local state for form fields
   const [firstName, setFirstName] = React.useState("")
@@ -141,6 +161,62 @@ export default function UserSettingsPage() {
     }
   }
 
+
+  const requestEmailOtp = async () => {
+    if (!user) return
+    setEmailVerifyError("")
+    setEmailVerifyMessage("")
+    setEmailVerifyLoading(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const res = await fetch(`${baseUrl}/api/users/me/email-verification/request-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || data.message || "Không thể gửi OTP xác thực Gmail.")
+      setEmailVerifyMessage("Đã gửi mã OTP xác thực về Gmail của bạn.")
+    } catch (err: any) {
+      setEmailVerifyError(err.message || "Không thể gửi OTP xác thực Gmail.")
+    } finally {
+      setEmailVerifyLoading(false)
+    }
+  }
+
+  const verifyEmailOtp = async () => {
+    if (!user) return
+    if (!emailOtp.trim()) {
+      setEmailVerifyError("Vui lòng nhập mã OTP.")
+      return
+    }
+    setEmailVerifyError("")
+    setEmailVerifyMessage("")
+    setEmailVerifyLoading(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const res = await fetch(`${baseUrl}/api/users/me/email-verification/verify-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ otpCode: emailOtp.trim() }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || data.message || "Mã OTP không hợp lệ hoặc đã hết hạn.")
+      setEmailVerifyMessage("Xác thực Gmail thành công. Hồ sơ của bạn đã được cập nhật.")
+      setEmailOtp("")
+      await refreshProfile()
+    } catch (err: any) {
+      setEmailVerifyError(err.message || "Không thể xác thực Gmail.")
+    } finally {
+      setEmailVerifyLoading(false)
+    }
+  }
   if (!user) return null
 
   return (
@@ -201,6 +277,12 @@ export default function UserSettingsPage() {
               <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                 Hoạt động
+              </span>
+              <span className={cn(
+                "text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1",
+                isEmailVerifiedProfile(user) ? "text-emerald-700 bg-emerald-50" : "text-amber-800 bg-amber-50"
+              )}>
+                {isEmailVerifiedProfile(user) ? "Gmail đã xác thực" : "Gmail chưa xác thực"}
               </span>
             </div>
           </div>
@@ -275,6 +357,61 @@ export default function UserSettingsPage() {
                   <p className="text-[11.5px] text-[#9ca3af] flex items-center gap-1 mt-0.5">
                     <Info size={11} /> Liên hệ IT Support để thay đổi email trường.
                   </p>
+                </div>
+
+                <div className={cn(
+                  "rounded-2xl border p-4",
+                  isEmailVerifiedProfile(user) ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"
+                )}>
+                  <div className="flex items-start gap-3">
+                    <div className={cn(
+                      "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                      isEmailVerifiedProfile(user) ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
+                    )}>
+                      {isEmailVerifiedProfile(user) ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13.5px] font-extrabold text-[#1a2333]">
+                        {isEmailVerifiedProfile(user) ? "Gmail đã được xác thực" : "Xác thực Gmail để tăng độ uy tín"}
+                      </p>
+                      <p className="mt-1 text-[12px] font-medium leading-relaxed text-[#6b7280]">
+                        {isEmailVerifiedProfile(user)
+                          ? "Tài khoản này đã xác thực bằng OTP. Admin sẽ thấy trạng thái uy tín khi xét duyệt tài liệu công khai."
+                          : "Nếu tài khoản do admin tạo, hãy gửi OTP và nhập mã xác thực để được đánh dấu là user đáng tin cậy."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {!isEmailVerifiedProfile(user) && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+                      <input
+                        type="text"
+                        value={emailOtp}
+                        onChange={(event) => setEmailOtp(event.target.value)}
+                        placeholder="Nhập mã OTP Gmail"
+                        className="rounded-xl border border-amber-200 bg-white px-3.5 py-2.5 text-[13px] font-semibold text-[#1a2333] outline-none transition-all focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15"
+                      />
+                      <button
+                        type="button"
+                        onClick={requestEmailOtp}
+                        disabled={emailVerifyLoading}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0058be]/20 bg-white px-4 py-2.5 text-[13px] font-bold text-[#0058be] transition-colors hover:bg-[#eff4ff] disabled:opacity-50"
+                      >
+                        <Send size={14} /> Gửi OTP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={verifyEmailOtp}
+                        disabled={emailVerifyLoading || !emailOtp.trim()}
+                        className="rounded-xl bg-[#0058be] px-4 py-2.5 text-[13px] font-bold text-white shadow-md shadow-[#0058be]/20 transition-colors hover:bg-[#004fa8] disabled:opacity-50"
+                      >
+                        Xác thực
+                      </button>
+                    </div>
+                  )}
+
+                  {emailVerifyMessage && <p className="mt-3 text-[12px] font-bold text-emerald-700">{emailVerifyMessage}</p>}
+                  {emailVerifyError && <p className="mt-3 text-[12px] font-bold text-red-600">{emailVerifyError}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -380,3 +517,4 @@ export default function UserSettingsPage() {
     </div>
   )
 }
+

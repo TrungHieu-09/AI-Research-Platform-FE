@@ -10,6 +10,46 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/features/auth/auth-context"
 import { cn } from "@/lib/utils"
 
+function isEmailVerifiedUser(user: any) {
+  const verificationStatus = String(user?.verificationStatus || user?.emailVerificationStatus || "").toUpperCase()
+  return Boolean(
+    user?.emailVerified ||
+    user?.isEmailVerified ||
+    user?.verified ||
+    user?.emailVerifiedAt ||
+    user?.verifiedAt ||
+    verificationStatus === "VERIFIED" ||
+    verificationStatus === "EMAIL_VERIFIED" ||
+    String(user?.status || "").toUpperCase() === "ACTIVE"
+  )
+}
+
+function getVerificationMeta(user: any) {
+  const verified = isEmailVerifiedUser(user)
+  const active = String(user?.status || "").toUpperCase() === "ACTIVE"
+  if (verified && active) {
+    return {
+      label: "Đã xác thực",
+      helper: "Gmail đã xác thực · uy tín tốt",
+      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      dotClassName: "bg-emerald-500",
+    }
+  }
+  if (verified) {
+    return {
+      label: "Đã xác thực",
+      helper: "Gmail đã xác thực",
+      className: "bg-blue-50 text-blue-700 border-blue-200",
+      dotClassName: "bg-blue-500",
+    }
+  }
+  return {
+    label: "Chưa xác thực",
+    helper: "Cần xác thực Gmail bằng OTP",
+    className: "bg-amber-50 text-amber-800 border-amber-200",
+    dotClassName: "bg-amber-500",
+  }
+}
 export default function UsersPage() {
   const router = useRouter()
   const { token, user: currentUser } = useAuth()
@@ -32,6 +72,10 @@ export default function UsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [creatingUser, setCreatingUser] = useState(false)
+  const [createUserForm, setCreateUserForm] = useState({ name: "", email: "", password: "" })
+  const [createUserMessage, setCreateUserMessage] = useState<{ text: string; type: "success" | "error" } | null>(null)
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToastMessage({ text, type })
@@ -115,6 +159,60 @@ export default function UsersPage() {
     }
   }
 
+
+  const handleCreateUser = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!token) return
+    const name = createUserForm.name.trim()
+    const email = createUserForm.email.trim()
+    const password = createUserForm.password.trim()
+
+    if (!name || !email || !password) {
+      showToast("Vui lòng nhập đủ họ tên, tài khoản email và mật khẩu.", "error")
+      return
+    }
+    if (password.length < 6) {
+      showToast("Mật khẩu cần tối thiểu 6 ký tự.", "error")
+      return
+    }
+
+    setCreatingUser(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const res = await fetch(`${baseUrl}/api/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-user-role": "ADMIN",
+          ...(currentUser?.id ? { "x-user-id": currentUser.id } : {}),
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role: "STUDENT",
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        if (res.status === 409) {
+          throw new Error("Tài khoản/Gmail này đã tồn tại. Vui lòng dùng email khác hoặc kiểm tra lại danh sách user.")
+        }
+        throw new Error(err.error || err.message || "Không thể tạo tài khoản người dùng.")
+      }
+
+      showToast("Đã tạo tài khoản sinh viên. User đăng nhập được ngay và có thể xác thực Gmail trong Hồ sơ.", "success")
+      setCreateUserForm({ name: "", email: "", password: "" })
+      setIsCreateModalOpen(false)
+      fetchUsers()
+    } catch (err: any) {
+      showToast(err.message || "Không thể tạo tài khoản người dùng.", "error")
+    } finally {
+      setCreatingUser(false)
+    }
+  }
   return (
     <div className="space-y-8">
       {/* Toast */}
@@ -156,6 +254,14 @@ export default function UsersPage() {
             Quản lý tài khoản sinh viên, cấp quyền truy cập cao cấp (`Premium`) hoặc khóa / mở khóa tài khoản.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsCreateModalOpen(true)}
+          className="inline-flex w-fit items-center gap-2 rounded-2xl bg-[#0058be] px-5 py-2.5 text-[14px] font-bold text-white shadow-md shadow-[#0058be]/20 transition-all hover:bg-[#2170e4]"
+        >
+          <Plus size={18} />
+          Thêm user
+        </button>
       </div>
 
       {/* Filters Bar */}
@@ -216,13 +322,14 @@ export default function UsersPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[850px]">
+            <table className="w-full text-left border-collapse min-w-[980px]">
               <thead>
                 <tr className="bg-[#f8f9ff] border-b border-[#c2c6d6]/40 text-[#727785] text-[11px] font-extrabold uppercase tracking-wider">
                   <th className="py-4 px-6">Tài khoản & Email</th>
                   <th className="py-4 px-6">Vai trò (Role)</th>
                   <th className="py-4 px-6">Gói AI (Tier)</th>
                   <th className="py-4 px-6">Trạng thái</th>
+                  <th className="py-4 px-6">Xác thực Gmail</th>
                   <th className="py-4 px-6 text-center">Tài liệu / Phiên AI</th>
                   <th className="py-4 px-6 text-right">Thao tác</th>
                 </tr>
@@ -315,6 +422,90 @@ export default function UsersPage() {
         )}
       </div>
 
+
+      {/* Create User Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+          <form onSubmit={handleCreateUser} className="relative w-full max-w-[560px] space-y-5 rounded-3xl border border-[#c2c6d6]/40 bg-white p-6 shadow-2xl sm:p-8">
+            <button
+              type="button"
+              onClick={() => { setIsCreateModalOpen(false); setCreateUserMessage(null) }}
+              className="absolute right-5 top-5 p-2 text-gray-400 transition-colors hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+
+            <div>
+              <span className="rounded-full bg-[#eff4ff] px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-[#0058be]">
+                ADMIN CREATE USER
+              </span>
+              <h3 className="mt-3 text-2xl font-bold text-[#121c2a]">Thêm tài khoản sinh viên</h3>
+              <p className="mt-1.5 text-[13px] font-medium text-[#727785]">
+                Admin tạo tài khoản ban đầu. User sẽ vào Hồ sơ để xác thực Gmail bằng OTP trước khi được xem là uy tín.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <label className="block space-y-1.5">
+                <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#727785]">Name</span>
+                <input
+                  value={createUserForm.name}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, name: event.target.value }))}
+                  placeholder="Nguyễn Văn A"
+                  className="w-full rounded-xl border border-[#c2c6d6]/60 bg-[#f8f9ff] px-4 py-2.5 text-[14px] font-medium text-[#121c2a] outline-none transition-all focus:border-[#0058be]"
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#727785]">Tài khoản / Gmail</span>
+                <input
+                  type="email"
+                  value={createUserForm.email}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, email: event.target.value }))}
+                  placeholder="student@fpt.edu.vn"
+                  className="w-full rounded-xl border border-[#c2c6d6]/60 bg-[#f8f9ff] px-4 py-2.5 text-[14px] font-medium text-[#121c2a] outline-none transition-all focus:border-[#0058be]"
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-[12px] font-extrabold uppercase tracking-wider text-[#727785]">Mật khẩu</span>
+                <input
+                  type="password"
+                  value={createUserForm.password}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, password: event.target.value }))}
+                  placeholder="Tối thiểu 6 ký tự"
+                  className="w-full rounded-xl border border-[#c2c6d6]/60 bg-[#f8f9ff] px-4 py-2.5 text-[14px] font-medium text-[#121c2a] outline-none transition-all focus:border-[#0058be]"
+                />
+              </label>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-[12px] font-semibold leading-relaxed text-amber-800">
+              Tài khoản do admin tạo nên mặc định nên là <strong>chưa xác thực Gmail</strong>. Sau khi user nhập OTP trong trang cá nhân, hệ thống mới hiển thị là đã xác thực/uy tín.
+            </div>
+
+            {createUserMessage && (
+              <div className={cn(
+                "flex items-start gap-2.5 rounded-2xl border p-4 text-[13px] font-bold leading-relaxed",
+                createUserMessage.type === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-red-200 bg-red-50 text-red-700"
+              )}>
+                {createUserMessage.type === "success" ? <CheckCircle2 size={18} className="mt-0.5 shrink-0" /> : <AlertTriangle size={18} className="mt-0.5 shrink-0" />}
+                <span>{createUserMessage.text}</span>
+              </div>
+            )}
+
+            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => { setIsCreateModalOpen(false); setCreateUserMessage(null) }} className="rounded-xl bg-gray-100 px-5 py-2.5 text-[13px] font-bold text-[#121c2a] transition-colors hover:bg-gray-200">
+                Hủy
+              </button>
+              <button type="submit" disabled={creatingUser} className="rounded-xl bg-[#0058be] px-6 py-2.5 text-[13px] font-bold text-white shadow-md shadow-[#0058be]/20 transition-colors hover:bg-[#2170e4] disabled:opacity-50">
+                {creatingUser ? "Đang tạo..." : "Tạo user"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       {/* Edit User Modal */}
       {isEditModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
@@ -408,4 +599,6 @@ export default function UsersPage() {
     </div>
   )
 }
+
+
 
