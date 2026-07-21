@@ -244,7 +244,7 @@ export function AdminTopNav() {
 
       <nav className="hidden lg:flex items-center gap-1">
         {adminNavLinks.map(({ name, href, icon: Icon, activePrefix }) => {
-          const active = pathname === href || pathname.startsWith(activePrefix + "/")
+          const active = pathname.startsWith(activePrefix)
           const showPendingBadge = name === "Documents" && pendingDocumentCount > 0
 
           return (
@@ -377,7 +377,7 @@ export function AdminTopNav() {
 
               <div className="py-1 lg:hidden">
                 {adminNavLinks.map(({ name, href, icon: Icon, activePrefix }) => {
-                  const active = pathname === href || pathname.startsWith(activePrefix + "/")
+                  const active = pathname.startsWith(activePrefix)
                   const showPendingBadge = name === "Documents" && pendingDocumentCount > 0
 
                   return (
