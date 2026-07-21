@@ -3,11 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import {
   FileText, Eye, Download, Clock, CheckCircle, XCircle,
-  Search, Plus, Filter, AlertCircle, CheckCircle2, Loader2,
+  Search, Filter, AlertCircle, CheckCircle2, Loader2,
   RefreshCw, Ban, ChevronLeft, ChevronRight, X
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { useAuth } from "@/features/auth/auth-context"
 import { cn } from "@/lib/utils"
 
@@ -205,13 +204,6 @@ export default function DocumentsPage() {
             Duyệt hoặc từ chối các bài đăng chia sẻ công khai lên diễn đàn, quản lý vòng đời tài liệu toàn hệ thống.
           </p>
         </div>
-        <Link 
-          href="/admin/documents/upload"
-          className="bg-[#0058be] hover:bg-[#2170e4] text-white px-6 py-2.5 rounded-2xl font-bold shadow-md shadow-[#0058be]/20 transition-all flex items-center gap-2 w-fit text-[14px]"
-        >
-          <Plus size={18} />
-          <span>Đăng Tài Liệu Mới</span>
-        </Link>
       </div>
 
       {/* Filters Bar */}

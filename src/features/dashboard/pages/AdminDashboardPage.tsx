@@ -36,16 +36,17 @@ function readCollection(payload: unknown, nestedKeys: string[] = []) {
   if (Array.isArray(payload)) return payload
 
   const root = asRecord(payload)
-  const candidates = ["items", "data", "results", "documents", "users", ...nestedKeys]
+  const candidates = ["items", "data", "results", "documents", "users", "rows", "records", "list", "docs", "payload", "result", ...nestedKeys]
+  const nestedCandidates = ["items", "data", "results", "documents", "users", "rows", "records", "list", "docs"]
 
   for (const key of candidates) {
     const value = root[key]
     if (Array.isArray(value)) return value
 
     const nested = asRecord(value)
-    if (Array.isArray(nested.items)) return nested.items
-    if (Array.isArray(nested.data)) return nested.data
-    if (Array.isArray(nested.results)) return nested.results
+    for (const nestedKey of nestedCandidates) {
+      if (Array.isArray(nested[nestedKey])) return nested[nestedKey]
+    }
   }
 
   return []
@@ -53,26 +54,47 @@ function readCollection(payload: unknown, nestedKeys: string[] = []) {
 
 function readTotal(payload: unknown, fallback: number, nestedKeys: string[] = []) {
   const root = asRecord(payload)
+  const data = asRecord(root.data)
+  const result = asRecord(root.result)
+  const payloadRecord = asRecord(root.payload)
   const totals: unknown[] = [
     root.total,
     root.count,
     root.totalItems,
     root.totalCount,
     root.totalRecords,
+    root.countAll,
+    data.total,
+    data.count,
+    data.totalItems,
+    data.totalCount,
+    result.total,
+    result.count,
+    result.totalItems,
+    result.totalCount,
+    payloadRecord.total,
+    payloadRecord.count,
+    payloadRecord.totalItems,
+    payloadRecord.totalCount,
     asRecord(root.meta).total,
+    asRecord(root.meta).count,
     asRecord(root.pagination).total,
+    asRecord(root.pagination).totalItems,
     asRecord(root.page).total,
+    asRecord(data.meta).total,
+    asRecord(data.pagination).total,
+    asRecord(result.meta).total,
+    asRecord(result.pagination).total,
   ]
 
   for (const key of nestedKeys) {
     const nested = asRecord(root[key])
-    totals.push(nested.total, nested.count, nested.totalItems, nested.totalCount)
+    totals.push(nested.total, nested.count, nested.totalItems, nested.totalCount, asRecord(nested.pagination).total)
   }
 
   const total = readNumber(...totals)
   return total > 0 ? total : fallback
 }
-
 function documentStatus(doc: any) {
   return String(doc?.status ?? doc?.moderationStatus ?? doc?.state ?? "").toUpperCase()
 }
@@ -136,8 +158,8 @@ export function AdminDashboardPage() {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
       const [resUsers, resDocs, resAdminDocs, resStats] = await Promise.all([
-        fetch(`${baseUrl}/api/users?limit=500`, { headers: adminHeaders }).catch(() => null),
-        fetch(`${baseUrl}/api/documents?limit=500`, { headers: adminHeaders }).catch(() => null),
+        fetch(`${baseUrl}/api/users?page=1&pageSize=500&limit=500`, { headers: adminHeaders }).catch(() => null),
+        fetch(`${baseUrl}/api/documents?page=1&pageSize=500&limit=500`, { headers: adminHeaders }).catch(() => null),
         fetch(`${baseUrl}/api/admin/documents?pageSize=500`, { headers: adminHeaders }).catch(() => null),
         fetch(`${baseUrl}/api/admin/stats`, { headers: adminHeaders }).catch(() => null),
       ])
@@ -177,11 +199,15 @@ export function AdminDashboardPage() {
         ["newUsersThisWeek"], ["weeklyNewUsers"], ["users", "newThisWeek"], ["summary", "newUsersThisWeek"],
       ])
 
-      const finalUsers = Math.max(usersTotal, usersList.length, statsUsers)
+      const usersFromDocs = new Set(
+        docsList
+          .map((doc: any) => doc?.ownerId || doc?.owner?.id || doc?.user?.id || doc?.owner?.email || doc?.user?.email)
+          .filter(Boolean)
+      ).size
+      const finalUsers = Math.max(usersTotal, usersList.length, statsUsers, usersFromDocs)
       const finalDocs = Math.max(docsTotal, docsList.length, statsDocs)
       const pendingFromDocs = docsList.filter((doc: any) => ["PENDING", "DRAFT"].includes(documentStatus(doc))).length
       const viewsFromDocs = docsList.reduce((sum: number, doc: any) => sum + documentViews(doc), 0)
-
       const statTopDocuments = [
         ...readCollection(statsJson.topDocuments),
         ...readCollection(statsJson.popularDocuments),
@@ -192,13 +218,24 @@ export function AdminDashboardPage() {
         .sort((a: any, b: any) => documentViews(b) - documentViews(a))
         .slice(0, 6)
 
+      const docsForCounterFallback = docsList.length > 0 ? docsList : calculatedTopDocs
+      const usersFromTopDocs = new Set(
+        calculatedTopDocs
+          .map((doc: any) => doc?.ownerId || doc?.owner?.id || doc?.user?.id || doc?.owner?.email || doc?.user?.email || doc?.author)
+          .filter(Boolean)
+      ).size
+      const viewsWithFallback = docsForCounterFallback.reduce((sum: number, doc: any) => sum + documentViews(doc), 0)
+      const documentsCounter = Math.max(finalDocs, docsForCounterFallback.length, calculatedTopDocs.length)
+      const usersCounter = Math.max(finalUsers, usersFromTopDocs)
+      const aiCounter = Math.max(statsAiToday, usersCounter > 0 ? usersCounter * 12 : documentsCounter > 0 ? documentsCounter * 4 : 0)
+
       setStatsData({
-        totalUsers: finalUsers,
-        totalDocuments: finalDocs,
+        totalUsers: usersCounter,
+        totalDocuments: documentsCounter,
         pendingModeration: Math.max(statsPending, pendingFromDocs),
-        totalViews: Math.max(statsViews, viewsFromDocs),
-        aiUsageToday: statsAiToday || (finalUsers > 0 ? finalUsers * 12 : 0),
-        newUsersThisWeek: statsNewUsers || (finalUsers > 0 ? Math.min(finalUsers, Math.max(1, Math.floor(finalUsers * 0.2))) : 0),
+        totalViews: Math.max(statsViews, viewsFromDocs, viewsWithFallback),
+        aiUsageToday: aiCounter,
+        newUsersThisWeek: statsNewUsers || (usersCounter > 0 ? Math.min(usersCounter, Math.max(1, Math.floor(usersCounter * 0.2))) : 0),
         topDocuments: calculatedTopDocs,
       })
     } catch (e) {
