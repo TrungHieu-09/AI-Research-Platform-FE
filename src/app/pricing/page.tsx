@@ -106,7 +106,7 @@ export default function PricingPage() {
               </button>
             ) : (
               <button disabled className="w-full py-3 rounded-xl bg-gray-100 text-[#727785] font-bold text-[14px] cursor-not-allowed mb-8 flex items-center justify-center gap-2">
-                Không thể hạ cấp
+                Bạn đang dùng gói cao hơn
               </button>
             )}
 
@@ -150,7 +150,7 @@ export default function PricingPage() {
               </button>
             ) : (
               <button disabled className="w-full py-3 rounded-xl bg-gray-100 text-[#727785] font-bold mb-8 cursor-not-allowed flex items-center justify-center gap-2 text-[14px]">
-                Không thể hạ cấp
+                Bạn đang dùng gói cao hơn
               </button>
             )}
 

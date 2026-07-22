@@ -418,7 +418,7 @@ export function LandingHeader() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-[#424754] hover:bg-[#f8f9ff] hover:text-[#0058be] transition-colors"
                   >
                     <Wallet size={14} className="shrink-0 text-[#727785]" />
-                    Quản lý thanh toán
+                    Quản lý gói dịch vụ
                   </Link>
                   <Link
                     href="/user/settings"

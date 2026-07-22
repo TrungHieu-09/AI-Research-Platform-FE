@@ -336,7 +336,7 @@ export default function StoragePage() {
           <div className="py-16 text-center text-[#727785] space-y-3">
             <FolderOpen size={40} className="mx-auto text-[#c2c6d6]" />
             <p className="text-[16px] font-bold text-[#121c2a]">Bạn chưa tải lên tài liệu nào</p>
-            <p className="text-[13px] max-w-md mx-auto">Tải lên các bài giảng PDF, khóa luận DOCX hoặc ghi chú để bắt đầu nghiên cứu và hỏi đáp AI.</p>
+            <p className="text-[13px] px-4 sm:px-12 md:px-24">Tải lên các bài giảng PDF, khóa luận DOCX hoặc ghi chú để bắt đầu nghiên cứu và hỏi đáp AI.</p>
             <Link href="/user/upload" className="inline-flex items-center gap-2 px-6 py-3 bg-[#0058be] text-white font-bold text-[13px] rounded-2xl mt-2 hover:bg-[#004ca3] transition-colors">
               <CloudUpload size={17} />
               <span>Tải tài liệu ngay</span>
