@@ -198,7 +198,11 @@ export default function UploadDocumentPage() {
           } else {
             try {
               const errData = JSON.parse(xhr.responseText)
-              reject(new Error(errData.error ?? `Lỗi máy chủ (${xhr.status})`))
+              if (errData.duplicate) {
+                reject(new Error(errData.error || "Tài liệu bị từ chối vì đã trùng với tài liệu công khai hiện có."))
+              } else {
+                reject(new Error(errData.error ?? `Lỗi máy chủ (${xhr.status})`))
+              }
             } catch {
               reject(new Error(`Lỗi máy chủ (${xhr.status})`))
             }

@@ -20,6 +20,10 @@ export default function DocumentDetailPage() {
   const [doc, setDoc] = React.useState<any | null>(null)
   const [loadingDoc, setLoadingDoc] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  const [previewObjectUrl, setPreviewObjectUrl] = React.useState("")
+  const [previewLoading, setPreviewLoading] = React.useState(false)
+  const [previewError, setPreviewError] = React.useState("")
+  const [downloading, setDownloading] = React.useState(false)
 
   // Ratings & Comments State
   const [ratingsData, setRatingsData] = React.useState<{ average: number; total: number; items: any[] }>({
@@ -110,6 +114,79 @@ export default function DocumentDetailPage() {
     fetchRatings()
   }, [fetchDocument, fetchRatings])
 
+  React.useEffect(() => {
+    if (!doc?.id || !token) {
+      setPreviewObjectUrl("")
+      return
+    }
+
+    let objectUrl = ""
+    let cancelled = false
+
+    async function loadPreview() {
+      setPreviewLoading(true)
+      setPreviewError("")
+      setPreviewObjectUrl("")
+
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+        const res = await fetch(`${baseUrl}/api/documents/${doc.id}/preview`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.error || "Không thể tải bản xem trước tài liệu.")
+        }
+
+        const blob = await res.blob()
+        objectUrl = URL.createObjectURL(blob)
+        if (!cancelled) setPreviewObjectUrl(objectUrl)
+      } catch (err: any) {
+        if (!cancelled) setPreviewError(err.message || "Không thể tải bản xem trước tài liệu.")
+      } finally {
+        if (!cancelled) setPreviewLoading(false)
+      }
+    }
+
+    loadPreview()
+
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [doc?.id, token])
+
+  const handleDownloadDocument = async () => {
+    if (!doc?.id || !token) return
+
+    setDownloading(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const res = await fetch(`${baseUrl}/api/documents/${doc.id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Không thể tải tệp tài liệu.")
+      }
+
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = objectUrl
+      link.download = `${doc.title || "document"}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(objectUrl)
+    } catch (err: any) {
+      showToast(err.message || "Không thể tải tệp tài liệu.", "error")
+    } finally {
+      setDownloading(false)
+    }
+  }
   // Submit Rating & Review
   const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -206,7 +283,7 @@ export default function DocumentDetailPage() {
     )
   }
 
-  const isPdf = doc.mimeType?.toLowerCase().includes("pdf") || doc.fileUrl?.toLowerCase().endsWith(".pdf")
+  const isPdf = doc.mimeType?.toLowerCase().includes("pdf") || doc.fileUrl?.toLowerCase().endsWith(".pdf") || doc.title?.toLowerCase().endsWith(".pdf")
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-[#f8f9ff] relative">
@@ -256,16 +333,15 @@ export default function DocumentDetailPage() {
             <Sparkles size={15} />
             Hỏi đáp cùng AI
           </Link>
-          {doc.fileUrl && (
-            <a
-              href={doc.fileUrl}
-              download
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#c2c6d6]/60 hover:border-[#0058be] text-[#424754] hover:text-[#0058be] text-[13px] font-semibold transition-colors shadow-sm"
-            >
-              <Download size={15} />
-              Tải xuống
-            </a>
-          )}
+          <button
+            type="button"
+            onClick={handleDownloadDocument}
+            disabled={downloading}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#c2c6d6]/60 hover:border-[#0058be] text-[#424754] hover:text-[#0058be] text-[13px] font-semibold transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {downloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+            Tải xuống
+          </button>
         </div>
       </div>
 
@@ -281,24 +357,34 @@ export default function DocumentDetailPage() {
                 <FileText size={16} className="text-[#0058be]" />
                 <span>Trình xem tài liệu · {(doc.fileSize / 1024 / 1024 || 1.2).toFixed(2)} MB · {doc.pageCount || 1} Trang</span>
               </div>
-              {doc.fileUrl && (
-                <a
-                  href={doc.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {previewObjectUrl && (
+                <button
+                  type="button"
+                  onClick={() => window.open(previewObjectUrl, "_blank", "noopener,noreferrer")}
                   className="flex items-center gap-1 text-[#0058be] hover:underline"
                 >
                   <span>Mở toàn màn hình</span>
                   <ExternalLink size={14} />
-                </a>
+                </button>
               )}
             </div>
 
             {/* Viewer Content Frame */}
             <div className="flex-1 flex flex-col items-center justify-center p-4 bg-[#f1f5f9] min-h-[580px]">
-              {isPdf && doc.fileUrl ? (
+              {previewLoading ? (
+                <div className="flex flex-col items-center justify-center gap-3 text-[#727785]">
+                  <Loader2 size={28} className="animate-spin text-[#0058be]" />
+                  <p className="text-[13px] font-semibold">Đang tải bản xem trước từ storage...</p>
+                </div>
+              ) : previewError ? (
+                <div className="flex flex-col items-center justify-center text-center p-10 bg-white rounded-2xl border border-red-200 w-full max-w-[520px] shadow-sm">
+                  <AlertCircle size={36} className="text-red-600 mb-3" />
+                  <h3 className="text-[17px] font-bold text-[#121c2a] mb-2">Không thể xem tài liệu</h3>
+                  <p className="text-[13px] text-[#727785] leading-relaxed">{previewError}</p>
+                </div>
+              ) : isPdf && previewObjectUrl ? (
                 <iframe
-                  src={`${doc.fileUrl}#toolbar=0`}
+                  src={`${previewObjectUrl}#toolbar=0`}
                   className="w-full h-full min-h-[600px] rounded-2xl border border-gray-200 bg-white"
                   title={doc.title}
                 />
@@ -318,15 +404,14 @@ export default function DocumentDetailPage() {
                     >
                       <Sparkles size={15} /> Tóm tắt với AI
                     </Link>
-                    {doc.fileUrl && (
-                      <a
-                        href={doc.fileUrl}
-                        download
-                        className="px-5 py-2.5 bg-gray-100 text-[#121c2a] rounded-xl text-[13px] font-bold hover:bg-gray-200 transition-colors flex items-center gap-2"
-                      >
-                        <Download size={15} /> Tải tệp gốc
-                      </a>
-                    )}
+                    <button
+                      type="button"
+                      onClick={handleDownloadDocument}
+                      disabled={downloading}
+                      className="px-5 py-2.5 bg-gray-100 text-[#121c2a] rounded-xl text-[13px] font-bold hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {downloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Tải tệp gốc
+                    </button>
                   </div>
                 </div>
               )}

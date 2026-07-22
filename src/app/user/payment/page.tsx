@@ -310,9 +310,9 @@ export default function PaymentOverviewPage() {
                         </span>
                         <span className={cn(
                           "text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1",
-                          rec.status === "COMPLETED" ? "text-green-600" : rec.status === "FAILED" ? "text-red-600" : "text-amber-600"
+                          rec.status === "FAILED" ? "text-red-600" : "text-green-600"
                         )}>
-                          {rec.status === "COMPLETED" ? "THÀNH CÔNG" : rec.status === "FAILED" ? "THẤT BẠI" : "ĐANG CHỜ"}
+                          {rec.status === "FAILED" ? "THẤT BẠI" : "ĐÃ THANH TOÁN"}
                         </span>
                       </div>
                     </motion.div>

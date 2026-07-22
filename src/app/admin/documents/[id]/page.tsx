@@ -116,11 +116,23 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
         fetchDocument(docId)
       } else {
         const err = await res.json().catch(() => ({}))
-        const message = String(err.error || err.message || "")
-        showToast(
-          message || "Lỗi kiểm duyệt tài liệu.",
-          "error"
+        const duplicateTitle = String(err.duplicate?.title || "").trim()
+        const message = String(err.error || err.message || "") || (
+          duplicateTitle
+            ? `Tài liệu bị trùng với "${duplicateTitle}".`
+            : "Lỗi kiểm duyệt tài liệu."
         )
+
+        if (res.status === 409 && err.duplicate && status === "APPROVED") {
+          setRejectionReason(
+            duplicateTitle
+              ? `Tài liệu trùng với "${duplicateTitle}".`
+              : "Tài liệu trùng với yêu cầu/tài liệu đã được gửi trước."
+          )
+          setShowRejectInput(true)
+        }
+
+        showToast(message, "error")
       }
     } catch (e) {
       showToast("Lỗi kết nối kiểm duyệt.", "error")
@@ -132,12 +144,14 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
   return (
     <div className="space-y-8 pb-16 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto">
       {toastMessage && (
-        <div className={cn(
-          "fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl border flex items-center gap-3 text-white font-semibold text-[13px] animate-in slide-in-from-bottom-2",
-          toastMessage.type === "success" ? "bg-green-600 border-green-500" : "bg-red-600 border-red-500"
-        )}>
-          <CheckCircle2 size={18} />
-          <span>{toastMessage.text}</span>
+        <div className="fixed bottom-6 right-4 z-50 w-[min(520px,calc(100vw-32px))] animate-in slide-in-from-bottom-2">
+          <div className={cn(
+            "px-5 py-3.5 rounded-2xl shadow-xl border flex items-start gap-3 text-white font-semibold text-[13px] w-full",
+            toastMessage.type === "success" ? "bg-green-600 border-green-500" : "bg-red-600 border-red-500"
+          )}>
+            <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+            <span className="min-w-0 flex-1 whitespace-normal break-words leading-relaxed">{toastMessage.text}</span>
+          </div>
         </div>
       )}
 

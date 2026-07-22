@@ -988,18 +988,13 @@ export default function LibraryPage() {
                     >
                       <Share2 size={16} />
                     </button>
-
-                    {doc.raw?.fileUrl && (
-                      <a
-                        href={doc.raw.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors"
-                        title="Xem tài liệu trực tiếp"
-                      >
-                        <Eye size={16} />
-                      </a>
-                    )}
+                    <Link
+                      href={`/user/documents/${doc.id}`}
+                      className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-lg transition-colors"
+                      title="Xem tài liệu trực tiếp"
+                    >
+                      <Eye size={16} />
+                    </Link>
 
                     <button 
                       onClick={(e) => handleDeleteDocument(doc.id, e)}
@@ -1032,16 +1027,14 @@ export default function LibraryPage() {
                   <Star size={16} className={cn(selectedDocDetails.isBookmarked && "fill-amber-400 text-amber-500")} />
                 </button>
               )}
-              {selectedDocDetails?.raw?.fileUrl && (
-                <a
-                  href={selectedDocDetails.raw.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {selectedDocDetails && (
+                <Link
+                  href={`/user/documents/${selectedDocDetails.id}`}
                   className="p-1.5 flex items-center justify-center text-[#727785] hover:text-[#0058be] hover:bg-[#eff4ff] rounded-xl transition-colors"
                   title="Xem tài liệu gốc"
                 >
                   <Eye size={16} />
-                </a>
+                </Link>
               )}
               {selectedDocDetails && (
                 <button 

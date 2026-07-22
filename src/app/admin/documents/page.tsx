@@ -113,11 +113,14 @@ export default function DocumentsPage() {
   const canRejectDocument = (doc: any) => doc.visibility === "PUBLIC" && ["PENDING", "APPROVED"].includes(String(doc.status || "").toUpperCase())
   const canRepublishDocument = (doc: any) => doc.visibility === "PUBLIC" && String(doc.status || "").toUpperCase() === "REJECTED"
 
-  const openRejectModal = (doc: any) => {
+  const openRejectModal = (doc: any, defaultReason = "") => {
     if (!canRejectDocument(doc)) {
       showToast("Chỉ tài liệu công khai đang chờ duyệt hoặc đã duyệt mới có thể bị từ chối.", "error")
       return
     }
+
+    setRejectionReason(defaultReason)
+
 
     setSelectedDocForReject(doc)
   }
@@ -150,11 +153,25 @@ export default function DocumentsPage() {
         fetchDocuments()
       } else {
         const err = await res.json().catch(() => ({}))
-        const message = String(err.error || err.message || "")
-        showToast(
-          message || "Không thể thực hiện thao tác kiểm duyệt.",
-          "error"
+        const duplicateTitle = String(err.duplicate?.title || "").trim()
+        const message = String(err.error || err.message || "") || (
+          duplicateTitle
+            ? `Tài liệu bị trùng với "${duplicateTitle}".`
+            : "Không thể thực hiện thao tác kiểm duyệt."
         )
+
+        if (res.status === 409 && err.duplicate && decision === "APPROVED") {
+          const currentDoc = documents.find((item) => String(item.id) === String(docId))
+          const duplicateReason = duplicateTitle
+            ? `Tài liệu trùng với "${duplicateTitle}".`
+            : "Tài liệu trùng với yêu cầu/tài liệu đã được gửi trước."
+
+          if (currentDoc && canRejectDocument(currentDoc)) {
+            openRejectModal(currentDoc, duplicateReason)
+          }
+        }
+
+        showToast(message, "error")
       }
     } catch (e) {
       showToast("Lỗi kết nối máy chủ.", "error")
@@ -167,9 +184,9 @@ export default function DocumentsPage() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 animate-in fade-in slide-in-from-top-5 duration-300">
+        <div className="fixed top-20 right-4 z-50 w-[min(520px,calc(100vw-32px))] animate-in fade-in slide-in-from-top-5 duration-300">
           <div className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold max-w-sm",
+            "flex items-start gap-3 px-4 py-3 rounded-2xl shadow-xl border text-[13px] font-semibold w-full",
             toastMessage.type === "success" 
               ? "bg-white border-[#0058be]/20 text-[#121c2a]" 
               : "bg-red-50 border-red-200 text-red-700"
@@ -179,7 +196,7 @@ export default function DocumentsPage() {
             ) : (
               <AlertCircle className="text-red-600 shrink-0" size={18} />
             )}
-            <span>{toastMessage.text}</span>
+            <span className="min-w-0 flex-1 whitespace-normal break-words leading-relaxed">{toastMessage.text}</span>
           </div>
         </div>
       )}
