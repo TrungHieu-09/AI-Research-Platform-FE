@@ -413,60 +413,7 @@ export default function UserSettingsPage() {
                   </p>
                 </div>
 
-                <div className={cn(
-                  "rounded-2xl border p-4",
-                  isEmailVerifiedProfile(user) ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"
-                )}>
-                  <div className="flex items-start gap-3">
-                    <div className={cn(
-                      "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                      isEmailVerifiedProfile(user) ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"
-                    )}>
-                      {isEmailVerifiedProfile(user) ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13.5px] font-extrabold text-[#1a2333]">
-                        {isEmailVerifiedProfile(user) ? "Gmail đã được xác thực" : "Xác thực Gmail để tăng độ uy tín"}
-                      </p>
-                      <p className="mt-1 text-[12px] font-medium leading-relaxed text-[#6b7280]">
-                        {isEmailVerifiedProfile(user)
-                          ? "Tài khoản này đã xác thực bằng OTP. Admin sẽ thấy trạng thái uy tín khi xét duyệt tài liệu công khai."
-                          : "Nếu tài khoản do admin tạo, hãy gửi OTP và nhập mã xác thực để được đánh dấu là user đáng tin cậy."}
-                      </p>
-                    </div>
-                  </div>
 
-                  {!isEmailVerifiedProfile(user) && (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-                      <input
-                        type="text"
-                        value={emailOtp}
-                        onChange={(event) => setEmailOtp(event.target.value)}
-                        placeholder="Nhập mã OTP Gmail"
-                        className="rounded-xl border border-amber-200 bg-white px-3.5 py-2.5 text-[13px] font-semibold text-[#1a2333] outline-none transition-all focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15"
-                      />
-                      <button
-                        type="button"
-                        onClick={requestEmailOtp}
-                        disabled={emailVerifyLoading}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#0058be]/20 bg-white px-4 py-2.5 text-[13px] font-bold text-[#0058be] transition-colors hover:bg-[#eff4ff] disabled:opacity-50"
-                      >
-                        <Send size={14} /> Gửi OTP
-                      </button>
-                      <button
-                        type="button"
-                        onClick={verifyEmailOtp}
-                        disabled={emailVerifyLoading || !emailOtp.trim()}
-                        className="rounded-xl bg-[#0058be] px-4 py-2.5 text-[13px] font-bold text-white shadow-md shadow-[#0058be]/20 transition-colors hover:bg-[#004fa8] disabled:opacity-50"
-                      >
-                        Xác thực
-                      </button>
-                    </div>
-                  )}
-
-                  {emailVerifyMessage && <p className="mt-3 text-[12px] font-bold text-emerald-700">{emailVerifyMessage}</p>}
-                  {emailVerifyError && <p className="mt-3 text-[12px] font-bold text-red-600">{emailVerifyError}</p>}
-                </div>
 
                 <div className="flex justify-end pt-2">
                   <button
