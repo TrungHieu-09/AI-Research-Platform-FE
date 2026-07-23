@@ -468,7 +468,16 @@ export default function UserSettingsPage() {
                   {emailVerifyError && <p className="mt-3 text-[12px] font-bold text-red-600">{emailVerifyError}</p>}
                 </div>
 
-
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={handleSave}
+                    disabled={loading}
+                    className="flex items-center gap-2 bg-[#0058be] hover:bg-[#004fa8] text-white px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all shadow-md shadow-[#0058be]/20 hover:-translate-y-px active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {loading ? <span className="material-symbols-outlined text-[15px] animate-spin">progress_activity</span> : <Save size={15} />}
+                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                  </button>
+                </div>
               </div>
             </div>
 
