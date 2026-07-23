@@ -560,7 +560,7 @@ export default function ForumPage() {
                           {doc.title}
                         </h2>
                         <p className="mt-2 line-clamp-2 text-[14px] font-medium leading-relaxed text-[#424754]">
-                          {doc.description || "Tài liệu public đã được duyệt. Mở để xem chi tiết, đánh giá và hỏi AI theo nội dung tài liệu."}
+                          {doc.description || "Tài liệu public đã được duyệt. Mở để xem chi tiết, đánh giá và phân tích với AI theo nội dung tài liệu."}
                         </p>
 
                         <div className="mt-4 flex flex-wrap items-center gap-4 text-[13px] font-bold text-[#727785]">

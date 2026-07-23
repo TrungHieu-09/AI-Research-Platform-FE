@@ -478,7 +478,7 @@ export default function DocumentDetailPage() {
             <div>
               <span className="text-[11px] font-bold text-[#727785] uppercase tracking-wider block mb-2">Tóm tắt / Mô tả tài liệu</span>
               <p className="text-[13px] text-[#424754] leading-relaxed bg-[#f8f9ff] p-3 rounded-xl border border-[#c2c6d6]/30">
-                {doc.description || "Tài liệu này chưa có mô tả chi tiết từ tác giả. Hãy hỏi AI Trợ lý học thuật để trích xuất ngay các luận điểm và khái niệm cốt lõi trong tài liệu này."}
+                {doc.description || "Tài liệu này chưa có mô tả chi tiết từ tác giả. Hãy phân tích với AI Trợ lý học thuật để trích xuất ngay các luận điểm và khái niệm cốt lõi trong tài liệu này."}
               </p>
             </div>
 
