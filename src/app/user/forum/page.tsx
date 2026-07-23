@@ -604,7 +604,7 @@ export default function ForumPage() {
                         className="inline-flex items-center gap-2 rounded-2xl bg-[#0058be] px-4 py-2 text-[13px] font-extrabold text-white shadow-md shadow-[#0058be]/15 transition hover:bg-[#004ca3]"
                       >
                         <Sparkles size={15} />
-                        Hỏi AI
+                        Phân tích với AI
                       </Link>
                     </div>
                   </article>

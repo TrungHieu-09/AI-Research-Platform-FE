@@ -1065,7 +1065,7 @@ export default function LibraryPage() {
                     href={`/user/ai-workspace?docId=${selectedDocDetails.id}`}
                     className="flex items-center gap-1 text-[11px] font-bold text-[#0058be] bg-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-gray-100 transition-colors"
                   >
-                    <Sparkles size={12} /> Hỏi AI
+                    <Sparkles size={12} /> Phân tích với AI
                   </Link>
                 </div>
               </div>

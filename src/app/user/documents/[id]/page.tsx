@@ -331,7 +331,7 @@ export default function DocumentDetailPage() {
             className="flex items-center gap-2 px-5 py-2 rounded-full bg-[#0058be] hover:bg-[#004ca3] text-white text-[13px] font-bold shadow-md shadow-[#0058be]/20 transition-all hover:scale-105"
           >
             <Sparkles size={15} />
-            Hỏi đáp cùng AI
+            Phân tích với AI
           </Link>
           <button
             type="button"
@@ -402,7 +402,7 @@ export default function DocumentDetailPage() {
                       href={`/user/ai-workspace?docId=${doc.id}`}
                       className="px-5 py-2.5 bg-[#0058be] text-white rounded-xl text-[13px] font-bold hover:bg-[#004ca3] transition-colors flex items-center gap-2"
                     >
-                      <Sparkles size={15} /> Tóm tắt với AI
+                      <Sparkles size={15} /> Phân tích với AI
                     </Link>
                     <button
                       type="button"

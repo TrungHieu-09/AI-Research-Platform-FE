@@ -1147,7 +1147,7 @@ function WorkspaceContent() {
                 </div>
                 <p className="text-[13.5px] font-bold text-[#1a2333] mb-1">Chưa có nguồn tham khảo</p>
                 <p className="text-[12px] text-[#8b90a0] leading-relaxed max-w-[220px]">
-                  Hỏi AI về tài liệu trong thư viện để hệ thống tự động trích xuất nguồn tham khảo thật sự.
+                  Phân tích với AI về tài liệu trong thư viện để hệ thống tự động trích xuất nguồn tham khảo thật sự.
                 </p>
               </motion.div>
             )}
