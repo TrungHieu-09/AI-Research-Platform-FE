@@ -566,27 +566,9 @@ function WorkspaceContent() {
             setRealAttachedDoc({ id: data.id, title: data.title })
             setIsDocAttached(true)
 
-            // Also inject as uploadedFile so the existing "attached file" flow is used:
-            // - file shows as blue bubble in chat UI
-            // - file is stored in session via [ATTACHED_FILE:...] marker
-            // - backend reads full file content and uses the rich system prompt
-            if (data.fileUrl) {
-              const ext = data.mimeType?.includes("pdf")
-                ? ".pdf"
-                : data.mimeType?.includes("word") || data.mimeType?.includes("document")
-                  ? ".docx"
-                  : data.mimeType?.includes("text")
-                    ? ".txt"
-                    : ""
-              const fileName = data.title.endsWith(ext) ? data.title : `${data.title}${ext}`
-              setUploadedFile({
-                name: fileName,
-                size: data.fileSize || 0,
-                fileUrl: data.fileUrl,
-                fileHash: data.fileHash,
-                mimeType: data.mimeType || "application/pdf"
-              })
-            }
+            // Use RAG (vector search) for library documents - do NOT inject as uploadedFile
+            // The documentId + scope=SINGLE_DOCUMENT path uses vector embeddings for accurate citations
+            setUploadedFile(null)
           }
         })
         .catch(console.error)
@@ -617,22 +599,10 @@ function WorkspaceContent() {
   }
 
   const handleSelectLibraryDoc = (doc: any) => {
-    if (!doc.fileUrl) return
-    const ext = doc.mimeType?.includes("pdf")
-      ? ".pdf"
-      : doc.mimeType?.includes("word") || doc.mimeType?.includes("document")
-        ? ".docx"
-        : doc.mimeType?.includes("text")
-          ? ".txt"
-          : ""
-    const fileName = doc.title.endsWith(ext) ? doc.title : `${doc.title}${ext}`
-    setUploadedFile({
-      name: fileName,
-      size: doc.fileSize || 0,
-      fileUrl: doc.fileUrl,
-      fileHash: doc.fileHash,
-      mimeType: doc.mimeType || "application/pdf",
-    })
+    // Use RAG vector search via documentId — do NOT set uploadedFile (that bypasses RAG)
+    setRealAttachedDoc({ id: doc.id, title: doc.title })
+    setIsDocAttached(true)
+    setUploadedFile(null)  // Clear any previously uploaded file
     setShowLibraryPicker(false)
     setLibrarySearch("")
   }
@@ -702,7 +672,11 @@ function WorkspaceContent() {
     setMessages(prev => [...prev, {
       role: "user",
       content: userMsg,
-      attachedFile: currentUploadedFile ? { name: currentUploadedFile.name, size: currentUploadedFile.size, fileUrl: currentUploadedFile.fileUrl } : undefined
+      attachedFile: currentUploadedFile 
+        ? { name: currentUploadedFile.name, size: currentUploadedFile.size, fileUrl: currentUploadedFile.fileUrl } 
+        : (isDocAttached && realAttachedDoc) 
+          ? { name: realAttachedDoc.title, size: 0, fileUrl: "" } 
+          : undefined
     }])
     setInput("")
     setUploadedFile(null)
@@ -1045,7 +1019,7 @@ function WorkspaceContent() {
                 >
                   <FileText size={14} className="text-[#0058be]" />
                   <span className="text-[12px] font-semibold text-[#121c2a] truncate max-w-[300px]">{realAttachedDoc.title}</span>
-                  <button onClick={() => setIsDocAttached(false)} className="text-[#727785] hover:text-red-500 ml-1 transition-colors">
+                  <button onClick={() => { setIsDocAttached(false); setRealAttachedDoc(null); }} className="text-[#727785] hover:text-red-500 ml-1 transition-colors">
                     <X size={12} />
                   </button>
                 </motion.div>
@@ -1124,42 +1098,59 @@ function WorkspaceContent() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
-            {(realSourceReferences.length > 0 ? realSourceReferences : sourceReferences).map((ref, i) => (
+            {realSourceReferences.length > 0 ? (
+              realSourceReferences.map((ref, i) => (
+                <motion.div
+                  key={ref.id}
+                  onClick={() => setSelectedCitationModal(ref)}
+                  className="bg-white border border-[#c2c6d6]/40 rounded-xl overflow-hidden shadow-sm cursor-pointer shrink-0"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 + i * 0.07, duration: 0.35 }}
+                  whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,88,190,0.10)", borderColor: "rgba(0,88,190,0.25)" }}
+                >
+                  <div className="flex border-l-[4px] border-[#0058be] flex-col p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <motion.span
+                        className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-[5px] bg-[#0058be] text-white text-[10px] font-bold"
+                        whileHover={{ scale: 1.15 }}
+                      >
+                        {ref.citationNumber}
+                      </motion.span>
+                      <span className="text-[11px] font-semibold text-[#727785]">{ref.author}</span>
+                    </div>
+                    <h3 className="text-[13px] font-bold text-[#121c2a] leading-snug mb-1.5">
+                      {ref.title}
+                    </h3>
+                    <p className="text-[12px] text-[#424754] leading-relaxed mb-3 line-clamp-2">
+                      {ref.excerpt}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ref.tags.map((tag: string) => (
+                        <span key={tag} className="px-2 py-0.5 bg-[#f0f4ff] text-[#0058be] rounded-[4px] text-[10px] font-bold border border-[#0058be]/10">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
               <motion.div
-                key={ref.id}
-                onClick={() => setSelectedCitationModal(ref)}
-                className="bg-white border border-[#c2c6d6]/40 rounded-xl overflow-hidden shadow-sm cursor-pointer shrink-0"
-                initial={{ opacity: 0, y: 16 }}
+                className="flex flex-col items-center justify-center flex-1 text-center py-12 px-4"
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 + i * 0.1, duration: 0.4 }}
-                whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,88,190,0.10)", borderColor: "rgba(0,88,190,0.25)" }}
+                transition={{ duration: 0.4 }}
               >
-                <div className="flex border-l-[4px] border-[#0058be] flex-col p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <motion.span
-                      className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-[5px] bg-[#0058be] text-white text-[10px] font-bold"
-                      whileHover={{ scale: 1.15 }}
-                    >
-                      {ref.citationNumber}
-                    </motion.span>
-                    <span className="text-[11px] font-semibold text-[#727785]">{ref.author}</span>
-                  </div>
-                  <h3 className="text-[13px] font-bold text-[#121c2a] leading-snug mb-1.5 group-hover:text-[#0058be] transition-colors">
-                    {ref.title}
-                  </h3>
-                  <p className="text-[12px] text-[#424754] leading-relaxed mb-3 line-clamp-2">
-                    {ref.excerpt}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ref.tags.map((tag: string) => (
-                      <span key={tag} className="px-2 py-0.5 bg-[#f0f4ff] text-[#0058be] rounded-[4px] text-[10px] font-bold border border-[#0058be]/10">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                <div className="w-14 h-14 rounded-2xl bg-[#f0f4ff] flex items-center justify-center mb-4 shadow-sm">
+                  <BookOpen size={24} className="text-[#0058be]/50" />
                 </div>
+                <p className="text-[13.5px] font-bold text-[#1a2333] mb-1">Chưa có nguồn tham khảo</p>
+                <p className="text-[12px] text-[#8b90a0] leading-relaxed max-w-[220px]">
+                  Hỏi AI về tài liệu trong thư viện để hệ thống tự động trích xuất nguồn tham khảo thật sự.
+                </p>
               </motion.div>
-            ))}
+            )}
           </div>
         </motion.div>
       </div>
