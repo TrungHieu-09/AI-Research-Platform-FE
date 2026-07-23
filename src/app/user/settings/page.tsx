@@ -17,6 +17,9 @@ import {
   ChevronDown,
   Send,
   AlertTriangle,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/auth-context"
@@ -135,6 +138,57 @@ export default function UserSettingsPage() {
   // Local state for form fields
   const [firstName, setFirstName] = React.useState("")
   const [lastName, setLastName] = React.useState("")
+
+  // Change password state
+  const [currentPassword, setCurrentPassword] = React.useState("")
+  const [newPassword, setNewPassword] = React.useState("")
+  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [showCurrentPwd, setShowCurrentPwd] = React.useState(false)
+  const [showNewPwd, setShowNewPwd] = React.useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = React.useState(false)
+  const [pwdLoading, setPwdLoading] = React.useState(false)
+  const [pwdSuccess, setPwdSuccess] = React.useState("")
+  const [pwdError, setPwdError] = React.useState("")
+
+  const handleChangePassword = async () => {
+    setPwdError("")
+    setPwdSuccess("")
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPwdError("Vui lòng điền đầy đủ các trường mật khẩu.")
+      return
+    }
+    if (newPassword.length < 6) {
+      setPwdError("Mật khẩu mới phải có ít nhất 6 ký tự.")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPwdError("Mật khẩu xác nhận không khớp.")
+      return
+    }
+    setPwdLoading(true)
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+      const res = await fetch(`${baseUrl}/api/users/me/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || "Đổi mật khẩu thất bại.")
+      setPwdSuccess("Đổi mật khẩu thành công!")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setTimeout(() => setPwdSuccess(""), 4000)
+    } catch (err: any) {
+      setPwdError(err.message || "Đổi mật khẩu thất bại.")
+    } finally {
+      setPwdLoading(false)
+    }
+  }
 
   // Initialize state from user object
   React.useEffect(() => {
@@ -414,18 +468,99 @@ export default function UserSettingsPage() {
                   {emailVerifyError && <p className="mt-3 text-[12px] font-bold text-red-600">{emailVerifyError}</p>}
                 </div>
 
+
+              </div>
+            </div>
+
+            {/* Đổi mật khẩu */}
+            <div className="bg-white rounded-2xl border border-[#eaecf5] shadow-sm p-6">
+              <SectionHeader title="Đổi mật khẩu" subtitle="Cập nhật mật khẩu đăng nhập của bạn" />
+              <div className="space-y-3">
+                {/* Mật khẩu hiện tại */}
                 <div className="space-y-1.5">
-                  <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Vai trò nghiên cứu</label>
+                  <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Mật khẩu hiện tại</label>
                   <div className="relative">
-                    <select className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all appearance-none cursor-pointer pr-10">
-                      <option>🎓 Nghiên cứu sinh (PhD Student)</option>
-                      <option>👨‍🏫 Giảng viên (Professor)</option>
-                      <option>🔬 Trợ lý nghiên cứu</option>
-                      <option>📚 Sinh viên đại học</option>
-                    </select>
-                    <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af] pointer-events-none" />
+                    <input
+                      type={showCurrentPwd ? "text" : "password"}
+                      value={currentPassword}
+                      onChange={e => setCurrentPassword(e.target.value)}
+                      placeholder="Nhập mật khẩu hiện tại"
+                      className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all pr-10"
+                    />
+                    <button type="button" onClick={() => setShowCurrentPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#0058be] transition-colors">
+                      {showCurrentPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
                   </div>
                 </div>
+
+                {/* Mật khẩu mới */}
+                <div className="space-y-1.5">
+                  <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Mật khẩu mới</label>
+                  <div className="relative">
+                    <input
+                      type={showNewPwd ? "text" : "password"}
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Ít nhất 6 ký tự"
+                      className="w-full px-3.5 py-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:border-[#0058be] focus:ring-2 focus:ring-[#0058be]/15 transition-all pr-10"
+                    />
+                    <button type="button" onClick={() => setShowNewPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#0058be] transition-colors">
+                      {showNewPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Xác nhận mật khẩu mới */}
+                <div className="space-y-1.5">
+                  <label className="text-[11.5px] font-bold text-[#6b7280] uppercase tracking-wider">Xác nhận mật khẩu mới</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPwd ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Nhập lại mật khẩu mới"
+                      className={cn(
+                        "w-full px-3.5 py-2.5 bg-[#f9fafb] border rounded-xl text-[13.5px] text-[#1a2333] font-medium focus:outline-none focus:ring-2 transition-all pr-10",
+                        confirmPassword && confirmPassword !== newPassword
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/15"
+                          : "border-[#e5e7eb] focus:border-[#0058be] focus:ring-[#0058be]/15"
+                      )}
+                    />
+                    <button type="button" onClick={() => setShowConfirmPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#0058be] transition-colors">
+                      {showConfirmPwd ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                  {confirmPassword && confirmPassword !== newPassword && (
+                    <p className="text-[11.5px] text-red-500 font-medium flex items-center gap-1">
+                      <Info size={11} /> Mật khẩu xác nhận không khớp.
+                    </p>
+                  )}
+                </div>
+
+                {/* Feedback */}
+                {pwdError && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-[12.5px] font-medium">
+                    <Info size={14} className="shrink-0" /> {pwdError}
+                  </div>
+                )}
+                {pwdSuccess && (
+                  <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-[12.5px] font-bold">
+                    <CheckCircle2 size={14} className="shrink-0" /> {pwdSuccess}
+                  </div>
+                )}
+
+                {/* Button */}
+                <button
+                  type="button"
+                  onClick={handleChangePassword}
+                  disabled={pwdLoading}
+                  className="flex items-center gap-2 bg-[#0058be] hover:bg-[#004fa8] text-white px-5 py-2.5 rounded-xl font-bold text-[13px] transition-all shadow-md shadow-[#0058be]/20 hover:-translate-y-px active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+                >
+                  {pwdLoading
+                    ? <span className="material-symbols-outlined text-[15px] animate-spin">progress_activity</span>
+                    : <KeyRound size={15} />}
+                  {pwdLoading ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
+                </button>
               </div>
             </div>
 
